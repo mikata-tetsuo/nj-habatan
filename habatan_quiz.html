@@ -12,9 +12,9 @@
     min-height: 100vh;
     color: #fff;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 16px;
+    padding: 12px 16px;
   }
   .container { width: 100%; max-width: 620px; }
   .screen { display: none; }
@@ -78,15 +78,15 @@
 
   .hud {
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 12px; flex-wrap: wrap; gap: 6px;
   }
   .hud-item { text-align: center; }
-  .hud-label { font-size: 0.72rem; color: #718096; text-transform: uppercase; letter-spacing: 1px; }
-  .hud-value { font-size: 1.5rem; font-weight: 800; color: #fff; }
+  .hud-label { font-size: 0.65rem; color: #718096; text-transform: uppercase; letter-spacing: 1px; }
+  .hud-value { font-size: 1.3rem; font-weight: 800; color: #fff; }
   .hud-value.gold { color: #f9ca24; }
   .hud-value.green { color: #68d391; }
 
-  .timer-wrap { margin-bottom: 18px; }
+  .timer-wrap { margin-bottom: 10px; }
   .timer-bar-bg { height: 8px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
   .timer-bar {
     height: 100%; width: 100%;
@@ -99,8 +99,8 @@
 
   .q-num { color: #718096; font-size: 0.85rem; margin-bottom: 10px; }
   .q-word {
-    font-size: 2.4rem; font-weight: 800; text-align: center;
-    padding: 24px 20px; letter-spacing: 2px; color: #fff;
+    font-size: clamp(1.5rem, 5vw, 2.4rem); font-weight: 800; text-align: center;
+    padding: 16px 20px; letter-spacing: 2px; color: #fff;
   }
   .combo-badge {
     display: inline-block;
@@ -113,12 +113,12 @@
 
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
   .choice-btn {
-    padding: 16px 12px;
+    padding: 12px 10px;
     background: rgba(255,255,255,0.07);
     border: 2px solid rgba(255,255,255,0.15);
     border-radius: 14px; color: #fff; font-size: 1rem; font-weight: 600;
     cursor: pointer; transition: all 0.18s; text-align: center; line-height: 1.4;
-    min-height: 70px; display: flex; align-items: center; justify-content: center;
+    min-height: 58px; display: flex; align-items: center; justify-content: center;
   }
   .choice-btn:hover:not(:disabled) { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.4); transform: translateY(-2px); }
   .choice-btn.correct { background: rgba(104,211,145,0.25); border-color: #68d391; color: #68d391; }
@@ -2062,6 +2062,7 @@ function showChallengeResult() {
     if (!isMedal) {
       $('btnChNext').textContent = '🔄 もう一度挑戦';
       $('btnChNext').onclick = () => startChallengeSummary(chLevel, chChapterIdx);
+      $('btnChRetry').style.display = 'none';
     } else {
       const words = chGetWords(chLevel);
       const nextChStart = (chChapterIdx + 1) * CH_SUMM;
@@ -2072,6 +2073,10 @@ function showChallengeResult() {
         $('btnChNext').textContent = '🎉 このレベル制覇！';
         $('btnChNext').onclick = () => showChallengeMap();
       }
+      // 合格後も再挑戦できる
+      $('btnChRetry').style.display = 'block';
+      $('btnChRetry').textContent = '🔁 もう一度、挑戦！';
+      $('btnChRetry').onclick = () => startChallengeSummary(chLevel, chChapterIdx);
     }
     setTimeout(() => showCharaImage(correctCount, total), 600);
   }
