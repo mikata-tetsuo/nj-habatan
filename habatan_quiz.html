@@ -770,6 +770,26 @@
     font-size:0.78rem; font-weight:800; color:#b794f4;
     margin-top:2px;
   }
+
+  /* ===== 音声ボタン ===== */
+  .speak-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 1.1rem; padding: 4px 8px; border-radius: 8px;
+    opacity: 0.55; transition: opacity 0.2s, transform 0.15s;
+    vertical-align: middle; line-height: 1;
+  }
+  .speak-btn:hover  { opacity: 1; transform: scale(1.2); }
+  .speak-btn:active { transform: scale(0.9); }
+  .speak-btn.speaking { opacity: 1; animation: speakPulse 0.6s ease-in-out infinite; }
+  @keyframes speakPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
+
+  /* 練習モードの英語パネル下 */
+  .en-speak-wrap { text-align:center; margin-top:6px; }
+
+  /* 間違い単語リスト - タップ可能な英語 */
+  .cw-en { cursor:pointer; }
+  .cw-en:hover { text-decoration: underline dotted; }
+  .cw-en:active { opacity: 0.7; }
 </style>
 </head>
 <body>
@@ -922,7 +942,10 @@
     <div class="card" style="padding:20px;">
       <div class="q-num" id="qNum">No.1</div>
       <div class="combo-badge" id="comboBadge"></div>
-      <div class="q-word" id="qWord">word</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <div class="q-word" id="qWord" style="flex:1;text-align:center;">word</div>
+        <button class="speak-btn" id="speakBtn" title="発音を聞く" style="display:none;">🔊</button>
+      </div>
       <div class="timeout-msg" id="timeoutMsg"></div>
       <div class="choices" id="choices"></div>
     </div>
@@ -964,6 +987,7 @@
         <div class="practice-panel en-panel" id="enPanel">
           <div class="panel-label">英語</div>
           <div class="panel-word" id="pracEnWord">ability</div>
+          <div class="en-speak-wrap"><button class="speak-btn" id="pracSpeakBtn" title="発音を聞く">🔊</button></div>
           <div class="panel-hint">タップで隠す</div>
           <div class="hidden-overlay">
             <div class="eye-icon">🙈</div>
@@ -1162,6 +1186,21 @@ let lastSettings = null;
 
 const $ = id => document.getElementById(id);
 
+// ===== Web Speech API =====
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = 0.85;
+  utter.pitch = 1.0;
+  // 発音中はボタンをアニメーション
+  const btns = document.querySelectorAll('.speak-btn');
+  btns.forEach(b => b.classList.add('speaking'));
+  utter.onend = () => btns.forEach(b => b.classList.remove('speaking'));
+  window.speechSynthesis.speak(utter);
+}
+
 const LEVEL_COUNTS = {1:464, 2:564, 3:749, 4:406, 5:317};
 const LEVEL_NAMES  = {1:'①小学生', 2:'②中1', 3:'③中2', 4:'④中3', 5:'⑤高校受験'};
 let selectedLevels = new Set([1]);
@@ -1353,6 +1392,16 @@ function showQuestion() {
   $('qNum').innerHTML = 'No.' + q.word.id + ' <span class="level-badge lv-badge-' + lv + '">' + lvNames[lv] + '</span>';
   const dir = window._direction || 'en2ja';
   $('qWord').textContent = dir === 'en2ja' ? q.word.en : q.word.ja;
+  // 🔊ボタン: 英語が表示されるとき（en2ja）のみ表示
+  const speakBtn = $('speakBtn');
+  if (speakBtn) {
+    if (dir === 'en2ja') {
+      speakBtn.style.display = 'inline-block';
+      speakBtn.onclick = () => speak(q.word.en);
+    } else {
+      speakBtn.style.display = 'none';
+    }
+  }
 
   const badge = $('comboBadge');
   if (combo >= 3) { badge.textContent = '🔥 ' + combo + '連コンボ中！'; badge.classList.add('show'); }
@@ -1400,6 +1449,9 @@ function onTimeout() {
   $('hudCombo').textContent = '-';
   $('timeoutMsg').textContent = '⏰ タイムオーバー！';
   soundTimeout();
+  // タイムオーバー時も正解の英単語を発音（記憶定着）
+  const _tq = questions[current];
+  if (_tq) setTimeout(() => speak(_tq.word.en), 400);
   const q = questions[current];
   missWords.push(q.word);
   document.querySelectorAll('.choice-btn').forEach(btn => {
@@ -1421,6 +1473,7 @@ function onAnswer(choice, btn, q) {
   if (choice.id === q.word.id) {
     btn.classList.add('correct');
     soundCorrect();
+    setTimeout(() => speak(q.word.en), 350); // 正解後に英単語を発音
     correctCount++;
     combo++;
     maxCombo = Math.max(maxCombo, combo);
@@ -1552,7 +1605,8 @@ function showResult() {
     missWords.forEach(w => {
       const d = document.createElement('div');
       d.className = 'miss-item';
-      d.innerHTML = '<span class="en">' + w.en + '</span><span class="ja">' + w.ja + '</span>';
+      d.innerHTML = '<span class="en" title="タップで発音" style="cursor:pointer">' + w.en + ' 🔊</span><span class="ja">' + w.ja + '</span>';
+      d.querySelector('.en').addEventListener('click', () => speak(w.en));
       missEl.appendChild(d);
     });
     soundOtsukare();
@@ -2089,7 +2143,8 @@ function showChallengeResult() {
     missWords.forEach(w => {
       const d = document.createElement('div');
       d.className = 'ch-word-row';
-      d.innerHTML = '<span class="cw-en">' + w.en + '</span><span class="cw-ja">' + w.ja + '</span>';
+      d.innerHTML = '<span class="cw-en" title="タップで発音">' + w.en + ' 🔊</span><span class="cw-ja">' + w.ja + '</span>';
+      d.querySelector('.cw-en').addEventListener('click', () => speak(w.en));
       reviewEl.appendChild(d);
     });
   } else {
@@ -2152,6 +2207,9 @@ function showPracticeCard(dir) {
 
   enEl.textContent = w.en;
   jaEl.textContent = w.ja;
+  // 🔊ボタン
+  const pracSpeak = $('pracSpeakBtn');
+  if (pracSpeak) pracSpeak.onclick = () => speak(w.en);
   const plv = w.level || 1;
   const plvNames = {1:'①小学生',2:'②中1',3:'③中2',4:'④中3',5:'⑤高校受験'};
   $('pracLvBadge').className = 'level-badge lv-badge-' + plv;
