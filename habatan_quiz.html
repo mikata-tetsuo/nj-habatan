@@ -593,6 +593,55 @@
   .mode-card.testmode .mode-card-title { color:#f9ca24; }
   .mode-card.testmode:hover, .mode-card.testmode.active { border-color:rgba(249,202,36,0.5); }
 
+  /* 復習カード */
+  .mode-card.review .mode-card-icon { background:linear-gradient(135deg,#9b2335,#fc8181); }
+  .mode-card.review .mode-card-title { color:#fc8181; }
+  .mode-card.review:hover, .mode-card.review.active { border-color:rgba(252,129,129,0.5); }
+  .review-home-count { font-size:0.72rem; color:#fc8181; font-weight:700; margin-top:2px; }
+
+  /* 練習モード ⭐ ボタン */
+  .prac-star-btn {
+    background:none; border:1px solid rgba(255,255,255,0.2);
+    border-radius:10px; color:#a0aec0;
+    padding:5px 14px; font-size:0.82rem; font-weight:700;
+    cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  }
+  .prac-star-btn.starred { background:rgba(252,129,129,0.15); border-color:#fc8181; color:#fc8181; }
+  .prac-star-btn:hover { border-color:#fc8181; color:#fc8181; }
+
+  /* 復習リスト画面 */
+  .review-list-wrap { max-height:360px; overflow-y:auto; margin-bottom:14px; }
+  .review-word-row {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px; border-bottom:1px solid rgba(255,255,255,0.07);
+  }
+  .review-word-row:last-child { border-bottom:none; }
+  .review-word-en { font-weight:700; color:#63b3ed; cursor:pointer; font-size:0.95rem; flex-shrink:0; }
+  .review-word-en:hover { text-decoration:underline dotted; }
+  .review-word-ja { color:#a0aec0; font-size:0.88rem; flex:1; }
+  .review-word-del { background:none; border:none; font-size:1.1rem; cursor:pointer; opacity:0.5; padding:2px 6px; }
+  .review-word-del:hover { opacity:1; }
+  .review-empty { text-align:center; color:#718096; padding:36px 0; font-size:0.9rem; line-height:1.8; }
+  .review-btn-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .btn-rv-practice {
+    padding:12px; border:none; border-radius:12px;
+    background:linear-gradient(135deg,#1a6b4a,#68d391);
+    color:#fff; font-size:0.95rem; font-weight:800; cursor:pointer; transition:transform 0.1s;
+  }
+  .btn-rv-test {
+    padding:12px; border:none; border-radius:12px;
+    background:linear-gradient(135deg,#b7791f,#f9ca24);
+    color:#1a1a2e; font-size:0.95rem; font-weight:800; cursor:pointer; transition:transform 0.1s;
+  }
+  .btn-rv-practice:hover, .btn-rv-test:hover { transform:translateY(-2px); }
+  .btn-rv-practice:disabled, .btn-rv-test:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+  .btn-rv-clear {
+    width:100%; padding:8px; border-radius:10px;
+    background:none; border:1px solid rgba(252,129,129,0.35);
+    color:#fc8181; font-size:0.82rem; font-weight:700; cursor:pointer; transition:all 0.2s;
+  }
+  .btn-rv-clear:hover { background:rgba(252,129,129,0.1); }
+
   /* 設定パネル（スライド展開） */
   .settings-panel {
     max-height:0; overflow:hidden;
@@ -923,6 +972,19 @@
         </div>
       </div>
 
+      <!-- 復習リスト -->
+      <div class="mode-card review" id="cardReview">
+        <div class="mode-card-header">
+          <div class="mode-card-icon">⭐</div>
+          <div class="mode-card-text">
+            <div class="mode-card-title">復習リスト</div>
+            <div class="mode-card-desc">間違えた単語・お気に入りをまとめて練習</div>
+            <div class="review-home-count" id="reviewCountHome">0語</div>
+          </div>
+          <div class="mode-card-arrow">›</div>
+        </div>
+      </div>
+
     </div>
 
     <!-- 難易度セレクタ（ホーム画面） -->
@@ -1002,7 +1064,10 @@
     </div>
 
     <div class="card" style="padding:18px;">
-      <div style="margin-bottom:10px;"><span id="pracLvBadge" class="level-badge lv-badge-1">①小学生</span></div>
+      <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span id="pracLvBadge" class="level-badge lv-badge-1">①小学生</span>
+        <button class="prac-star-btn" id="pracStarBtn">☆ 復習リストに追加</button>
+      </div>
       <div class="practice-panels">
         <!-- 英語パネル -->
         <div class="practice-panel en-panel" id="enPanel">
@@ -1042,6 +1107,22 @@
         <button class="btn-to-quiz challenge" id="btnPracToChallenge">🏆 このままチャレンジ！</button>
         <button class="btn-to-quiz" id="btnPracToQuiz">📝 このままテスト！</button>
       </div>
+    </div>
+  </div>
+
+  <!-- REVIEW SCREEN -->
+  <div id="reviewScreen" class="screen">
+    <div class="practice-hud">
+      <div class="practice-progress">⭐ 復習リスト</div>
+      <button class="btn-prac-home" id="btnReviewHome">🏠 ホームに戻る</button>
+    </div>
+    <div class="card" style="padding:18px;">
+      <div id="reviewListWrap" class="review-list-wrap"></div>
+      <div class="review-btn-row">
+        <button class="btn-rv-practice" id="btnReviewPractice">📖 復習練習</button>
+        <button class="btn-rv-test" id="btnReviewTest">⚡ 復習テスト</button>
+      </div>
+      <button class="btn-rv-clear" id="btnReviewClear">🗑 まとめて削除</button>
     </div>
   </div>
 
@@ -1484,6 +1565,7 @@ function onTimeout() {
   if (_tq) setTimeout(() => speak(_tq.word.en), 400);
   const q = questions[current];
   missWords.push(q.word);
+  rvAdd(q.word.id);
   document.querySelectorAll('.choice-btn').forEach(btn => {
     btn.disabled = true;
     const _dir = window._direction || 'en2ja';
@@ -1538,6 +1620,7 @@ function onAnswer(choice, btn, q) {
       if (b.textContent === (_dir2 === 'en2ja' ? q.word.ja : q.word.en)) b.classList.add('reveal');
     });
     missWords.push(q.word);
+    rvAdd(q.word.id);
     showFeedback('❌', '#fc8181');
   }
   setTimeout(nextOrResult, 900);
@@ -1744,6 +1827,20 @@ function chGetWords(lv) {
   return WORDS.filter(w => w.level === lv).sort((a,b) => a.lnum - b.lnum);
 }
 
+// =============================================
+// 復習リスト (localStorage)
+// =============================================
+function rvLoad() { try { return JSON.parse(localStorage.getItem('habatan_review') || '[]'); } catch { return []; } }
+function rvSave(list) { localStorage.setItem('habatan_review', JSON.stringify(list)); }
+function rvAdd(id) { const l = rvLoad(); if (!l.includes(id)) { l.push(id); rvSave(l); } updateReviewCountHome(); }
+function rvRemove(id) { rvSave(rvLoad().filter(x => x !== id)); updateReviewCountHome(); }
+function rvHas(id) { return rvLoad().includes(id); }
+function updateReviewCountHome() {
+  const n = rvLoad().length;
+  $('reviewCountHome').textContent = n + '語';
+}
+
+// =============================================
 // ===== 進捗 localStorage =====
 function chGetProg() {
   try { return JSON.parse(localStorage.getItem('habitanChallenge') || '{}'); }
@@ -2252,6 +2349,11 @@ function showPracticeCard(dir) {
   $('btnPracPrev').disabled = pracIdx === 0;
   $('btnPracNext').disabled = pracIdx === pracWords.length - 1;
 
+  // ⭐ボタン状態更新
+  const starred = rvHas(w.id);
+  $('pracStarBtn').textContent = starred ? '⭐ 登録中' : '☆ 復習リストに追加';
+  $('pracStarBtn').classList.toggle('starred', starred);
+
   // 隠す状態を反映
   $('enPanel').classList.toggle('hidden', pracHideEn);
   $('jaPanel').classList.toggle('hidden', pracHideJa);
@@ -2316,6 +2418,95 @@ $('btnPracToQuiz').addEventListener('click', () => {
 });
 
 $('btnPracHome').addEventListener('click', () => showScreen('startScreen'));
+
+// ⭐ボタン（練習モード）
+$('pracStarBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const w = pracWords[pracIdx];
+  if (!w) return;
+  if (rvHas(w.id)) { rvRemove(w.id); } else { rvAdd(w.id); }
+  showPracticeCard(null);
+});
+
+// =============================================
+// 復習リスト画面
+// =============================================
+function renderReviewScreen() {
+  const ids = rvLoad();
+  const wrap = $('reviewListWrap');
+  const hasList = ids.length > 0;
+  $('btnReviewPractice').disabled = !hasList;
+  $('btnReviewTest').disabled     = !hasList;
+  if (!hasList) {
+    wrap.innerHTML = '<div class="review-empty">復習リストは空です 📭<br>テストで間違えた単語や<br>練習モードで ⭐ した単語が追加されます</div>';
+    return;
+  }
+  const words = WORDS.filter(w => ids.includes(w.id)).sort((a, b) => a.id - b.id);
+  wrap.innerHTML = '';
+  words.forEach(w => {
+    const row = document.createElement('div');
+    row.className = 'review-word-row';
+    row.innerHTML =
+      '<span class="review-word-en" data-id="' + w.id + '">' + w.en + ' 🔊</span>' +
+      '<span class="review-word-ja">' + w.ja + '</span>' +
+      '<button class="review-word-del" data-id="' + w.id + '" title="リストから削除">⭐</button>';
+    row.querySelector('.review-word-en').addEventListener('click', () => speak(w.en));
+    row.querySelector('.review-word-del').addEventListener('click', () => { rvRemove(w.id); renderReviewScreen(); });
+    wrap.appendChild(row);
+  });
+}
+
+$('cardReview').addEventListener('click', () => {
+  updateReviewCountHome();
+  renderReviewScreen();
+  showScreen('reviewScreen');
+});
+
+$('btnReviewHome').addEventListener('click', () => showScreen('startScreen'));
+
+$('btnReviewClear').addEventListener('click', () => {
+  if (!confirm('復習リストをすべて削除しますか？')) return;
+  rvSave([]);
+  updateReviewCountHome();
+  renderReviewScreen();
+});
+
+// 復習練習
+$('btnReviewPractice').addEventListener('click', () => {
+  const ids = rvLoad();
+  pracWords = WORDS.filter(w => ids.includes(w.id)).sort((a, b) => a.id - b.id);
+  if (!pracWords.length) return;
+  pracIdx = 0; pracHideEn = false; pracHideJa = false;
+  pracLastSettings = null;
+  showScreen('practiceScreen');
+  showPracticeCard('next');
+});
+
+// 復習テスト
+$('btnReviewTest').addEventListener('click', () => {
+  const ids = rvLoad();
+  const pool = WORDS.filter(w => ids.includes(w.id));
+  if (!pool.length) return;
+  questions = pool.map(q => {
+    const wrongs = WORDS.filter(w => w.id !== q.id).sort(() => Math.random() - 0.5).slice(0, 3);
+    return { word: q, choices: [q, ...wrongs].sort(() => Math.random() - 0.5) };
+  });
+  questionCount = pool.length;
+  applyDifficulty();
+  resetState();
+  showScreen('gameScreen');
+  showQuestion();
+});
+
+// ホーム画面表示時に件数を更新
+const _origShowScreen = showScreen;
+showScreen = function(id) {
+  _origShowScreen(id);
+  if (id === 'startScreen') updateReviewCountHome();
+};
+
+// 初期件数表示
+updateReviewCountHome();
 
 </script>
 </body>
