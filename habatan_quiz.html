@@ -119,6 +119,7 @@
     border-radius: 14px; color: #fff; font-size: 1rem; font-weight: 600;
     cursor: pointer; transition: all 0.18s; text-align: center; line-height: 1.4;
     min-height: 58px; display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent; outline: none;
   }
   .choice-btn:hover:not(:disabled) { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.4); transform: translateY(-2px); }
   .choice-btn.correct { background: rgba(104,211,145,0.25); border-color: #68d391; color: #68d391; }
@@ -1423,6 +1424,16 @@ window.addEventListener('error', function(e) {
 });
 // === ここまで ===
 
+// ===== SPEECH =====
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = 0.9;
+  window.speechSynthesis.speak(u);
+}
+
 // ===== SOUND =====
 const AC = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -1801,6 +1812,7 @@ function onTimeout() {
 function onAnswer(choice, btn, q) {
   if (answered) return;
   answered = true;
+  btn.blur();
   clearInterval(timerInterval);
   const elapsed = (performance.now() - startTime) / 1000;
   document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
