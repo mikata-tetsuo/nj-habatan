@@ -518,10 +518,10 @@
   @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(249,202,36,0.4)} 50%{box-shadow:0 0 0 6px rgba(249,202,36,0)} }
 
   .summary-dot {
-    min-width: 54px; height: 44px; border-radius: 10px; border: 2px solid;
+    min-width: 54px; height: auto; min-height: 44px; border-radius: 10px; border: 2px solid;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     cursor: pointer; font-size: 0.68rem; font-weight: 700; transition: all 0.18s;
-    padding: 0 6px; margin-left: 4px; line-height: 1.2;
+    padding: 4px 6px; margin-left: 4px; line-height: 1.2;
   }
   .summary-dot.locked   { border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.2); cursor: not-allowed; }
   .summary-dot.available{ border-color: #f6ad55; color: #f6ad55; background: rgba(246,173,85,0.1); }
@@ -793,6 +793,45 @@
   .ch-score-big.perfect { color:#f9ca24; }
   .ch-pts-score.perfect { color:#f9ca24; font-size:1.8rem; }
 
+  /* 全スピードボーナス満点 */
+  @keyframes speedPerfectBounce {
+    0%   { transform: scale(1)    rotate(-6deg); }
+    20%  { transform: scale(1.35) rotate( 6deg); }
+    40%  { transform: scale(1.1)  rotate(-4deg); }
+    60%  { transform: scale(1.3)  rotate( 5deg); }
+    80%  { transform: scale(1.05) rotate(-3deg); }
+    100% { transform: scale(1)    rotate(-6deg); }
+  }
+  @keyframes speedPerfectHalo {
+    0%,100% {
+      filter: drop-shadow(0 0 6px #ff4d4d)
+              drop-shadow(0 0 18px #f0932b)
+              drop-shadow(0 0 36px #f9ca24);
+    }
+    50% {
+      filter: drop-shadow(0 0 18px #ff4d4d)
+              drop-shadow(0 0 50px #f0932b)
+              drop-shadow(0 0 90px #f9ca24)
+              drop-shadow(0 0 120px #fff);
+    }
+  }
+  @keyframes fireGlow {
+    0%,100% { text-shadow: 0 0 20px #ff4d4d, 0 0 50px #f0932b; }
+    50%     { text-shadow: 0 0 40px #ff4d4d, 0 0 90px #f0932b, 0 0 140px #f9ca24; }
+  }
+  .ch-result-icon .speed-perfect {
+    display: inline-block; font-size: 1.4em;
+    animation: speedPerfectBounce 0.9s ease-in-out infinite,
+               speedPerfectHalo   1.3s ease-in-out infinite;
+  }
+  .ch-result-title.speed-perfect {
+    background: linear-gradient(90deg, #ff4d4d, #f0932b, #f9ca24, #f0932b, #ff4d4d);
+    background-size: 200% auto;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmer 1.4s linear infinite, fireGlow 1.4s ease-in-out infinite;
+  }
+  .ch-pts-score.speed-perfect { color:#ff4d4d; font-size:2.2rem; text-shadow:0 0 16px rgba(255,77,77,0.5); }
+
   @keyframes scorePop {
     0%   { transform:scale(0.5); opacity:0; }
     70%  { transform:scale(1.15); }
@@ -819,6 +858,16 @@
     border-color:#f9ca24 !important; color:#f9ca24 !important;
     background:rgba(249,202,36,0.12) !important;
   }
+  @keyframes dotSpeedGlow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,77,77,0.6), 0 0 8px rgba(249,202,36,0.3); }
+    50%     { box-shadow: 0 0 0 6px rgba(255,77,77,0), 0 0 20px rgba(249,202,36,0.7); }
+  }
+  .stage-dot.speed-perfect {
+    border-color:#ff4d4d !important; color:#ff4d4d !important;
+    background: linear-gradient(135deg, rgba(255,77,77,0.18), rgba(249,202,36,0.12)) !important;
+    animation: dotSpeedGlow 1.2s ease-in-out infinite !important;
+  }
+  .stage-dot.speed-perfect .dot-pts { color:#f0932b; }
   .dot-pts {
     font-size:0.55rem; font-weight:700; margin-top:2px;
     opacity:0.85; line-height:1;
@@ -1128,6 +1177,7 @@
   .auth-name { font-size:0.85rem; font-weight:700; color:var(--text,#1E293B); max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .btn-logout { background:none; border:1px solid var(--borderMd,rgba(0,0,0,0.14)); border-radius:8px; padding:5px 10px; font-size:0.75rem; color:var(--text2,#64748B); cursor:pointer; }
   .btn-logout:hover { color:var(--text,#1E293B); }
+  .auth-streak { font-size:0.72rem; font-weight:700; color:#f0932b; white-space:nowrap; background:rgba(249,202,36,0.12); border:1px solid rgba(249,202,36,0.3); border-radius:99px; padding:3px 8px; }
   /* ランキング */
   .ranking-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
   .ranking-title { font-size:1.2rem; font-weight:800; flex:1; text-align:center; color:var(--text,#1E293B); }
@@ -1188,6 +1238,7 @@
         </button>
       </div>
       <div id="authUserSection" class="auth-user-wrap" style="display:none">
+        <span id="authStreak" class="auth-streak" style="display:none"></span>
         <img id="authAvatar" class="auth-avatar" src="" alt="">
         <span id="authName" class="auth-name"></span>
         <button id="btnEditNickname" class="btn-edit-nickname" title="ニックネームを変更">✏️</button>
@@ -1689,25 +1740,25 @@ const DIFFICULTIES = {
     timeLimit:999, speedThreshold:999,
     scoreCorrect:60, scoreSpeed:0,
     comboPts:[20, 40, 80],
-    noTimer:true
+    noTimer:true, speedPerfectBonus:0
   },
   beginner: {
     name:'ビギナー', emoji:'🌱',
     timeLimit:6.0, speedThreshold:3.0,
     scoreCorrect:80, scoreSpeed:20,
-    comboPts:[30, 60, 120]
+    comboPts:[30, 60, 120], speedPerfectBonus:100
   },
   normal: {
     name:'ノーマル', emoji:'⚡',
     timeLimit:4.0, speedThreshold:2.0,
     scoreCorrect:100, scoreSpeed:50,
-    comboPts:[50, 100, 200]
+    comboPts:[50, 100, 200], speedPerfectBonus:300
   },
   expert: {
     name:'エキスパート', emoji:'🔥',
     timeLimit:3.0, speedThreshold:1.5,
     scoreCorrect:150, scoreSpeed:100,
-    comboPts:[100, 200, 500]
+    comboPts:[100, 200, 500], speedPerfectBonus:600
   }
 };
 let currentDifficulty = 'normal';
@@ -2355,7 +2406,7 @@ function chGetSummary(lv, summIdx) {
   const p = chGetProg()[chProgKey(lv)];
   return (p && p.summaries && p.summaries[summIdx]) || null;
 }
-function chMarkStageCleared(lv, globalStageIdx, pts, isPerfect) {
+function chMarkStageCleared(lv, globalStageIdx, pts, isPerfect, isSpeedPerfect) {
   const p = chGetProg();
   const k = chProgKey(lv);
   if (!p[k]) p[k] = { stages:{}, summaries:{} };
@@ -2364,9 +2415,16 @@ function chMarkStageCleared(lv, globalStageIdx, pts, isPerfect) {
   p[k].stages[globalStageIdx] = {
     cleared: true,
     bestPts: Math.max(prevPts, pts || 0),
-    perfect: isPerfect || (prev && prev.perfect) || false
+    perfect: isPerfect || (prev && prev.perfect) || false,
+    speedPerfect: isSpeedPerfect || (prev && prev.speedPerfect) || false
   };
   chSaveProg(p);
+}
+function chIsStageSpeedPerfect(lv, globalStageIdx) {
+  const p = chGetProg()[chProgKey(lv)];
+  if (!p || !p.stages) return false;
+  const s = p.stages[globalStageIdx];
+  return !!(s && s.speedPerfect);
 }
 function chMarkSummary(lv, summIdx, score, total, pts) {
   const p = chGetProg();
@@ -2505,15 +2563,17 @@ function showChallengeMap() {
 
       const stageWordStart = chStart + si * CH_STAGE + 1;
       const stageWordEnd   = Math.min(stageWordStart + CH_STAGE - 1, words.length);
-      const isPerfDot = cleared && chIsStagePerfect(chLevel, gsi);
-      const bestPtsDot = chGetStagePts(chLevel, gsi);
-      const dotIcon = isPerfDot ? '🏆' : (cleared ? '✓' : '▶');
+      const isPerfDot      = cleared && chIsStagePerfect(chLevel, gsi);
+      const isSpeedPerfDot = cleared && chIsStageSpeedPerfect(chLevel, gsi);
+      const bestPtsDot     = chGetStagePts(chLevel, gsi);
+      const dotIcon = isPerfDot || isSpeedPerfDot ? '🏆' : (cleared ? '✓' : '▶');
       let dotHtml = dotIcon + '<br><span style="font-size:0.6rem">' + stageWordStart + '-' + stageWordEnd + '</span>';
       if (cleared && bestPtsDot > 0) {
         dotHtml += '<div class="dot-pts">' + bestPtsDot.toLocaleString() + 'pt</div>';
       }
       dot.innerHTML = dotHtml;
-      if (isPerfDot) dot.classList.add('perfect');
+      if (isSpeedPerfDot) dot.classList.add('speed-perfect');
+      else if (isPerfDot) dot.classList.add('perfect');
       dot.title = `No.${stageWordStart}〜${stageWordEnd}`;
 
       if (!isLocked || cleared) {
@@ -2527,10 +2587,12 @@ function showChallengeMap() {
     let summClass = 'summary-dot ';
     if (summData && summData.trophy) {
       summClass += 'trophy';
-      summDot.innerHTML = '<span class="dot-icon">🏆</span><span>満点</span>';
+      const tPts = summData.bestPts ? '<div class="dot-pts">' + summData.bestPts.toLocaleString() + 'pt</div>' : '';
+      summDot.innerHTML = '<span class="dot-icon">🏆</span><span>満点</span>' + tPts;
     } else if (summData && summData.medal) {
       summClass += 'medal';
-      summDot.innerHTML = '<span class="dot-icon">🥈</span><span>' + summData.score + '/' + summData.total + '</span>';
+      const mPts = summData.bestPts ? '<div class="dot-pts">' + summData.bestPts.toLocaleString() + 'pt</div>' : '';
+      summDot.innerHTML = '<span class="dot-icon">🥈</span><span>' + summData.score + '/' + summData.total + '</span>' + mPts;
     } else if (allCleared) {
       summClass += 'available';
       summDot.innerHTML = '<span class="dot-icon">📝</span><span>テスト</span>';
@@ -2607,7 +2669,8 @@ function showChallengeResult() {
     // ステージクリア処理
     const gsi = chChapterIdx * 5 + chStageIdx;
     const isPerfect = (correctCount === total);
-    chMarkStageCleared(chLevel, gsi, score, isPerfect);
+    const isSpeedPerfect = isPerfect && speedBonusTotal >= total * SCORE_SPEED;
+    chMarkStageCleared(chLevel, gsi, score, isPerfect, isSpeedPerfect);
 
     $('chResultSub').textContent = `Chapter ${chChapterIdx + 1} ・ Stage ${chStageIdx + 1}`;
     $('chScoreBig').textContent = correctCount + ' / ' + total + ' 正解';
@@ -2622,8 +2685,21 @@ function showChallengeResult() {
     $('chResultTitle').classList.remove('perfect');
     $('chScoreBig').classList.remove('perfect');
     setTimeout(() => ptsEl.classList.add('pop'), 10);
-
-    if (isPerfect) {
+    if (isSpeedPerfect) {
+      const spBonus = DIFFICULTIES[currentDifficulty].speedPerfectBonus || 0;
+      score += spBonus;
+      ptsEl.innerHTML = score.toLocaleString() + '<span class="pts-unit">pt</span>';
+      $('chResultIcon').innerHTML = '<span class="speed-perfect">🏆⚡</span>';
+      $('chResultTitle').textContent = '神速パーフェクト！！';
+      $('chResultTitle').className = 'ch-result-title speed-perfect';
+      $('chScoreBig').className = 'ch-score-big perfect';
+      ptsEl.classList.add('speed-perfect');
+      if (spBonus > 0) setTimeout(() => showBonusFlash('⚡ 神速ボーナス +' + spBonus + 'pt', true), 800);
+      soundPerfect();
+      launchConfetti();
+      launchStarBurst();
+      launchFireworks();
+    } else if (isPerfect) {
       $('chResultIcon').textContent = '⭐';
       $('chResultTitle').textContent = 'パーフェクト！';
       $('chResultTitle').className = 'ch-result-title perfect';
@@ -2677,10 +2753,17 @@ function showChallengeResult() {
   } else {
     // まとめテスト結果
     $('btnChRetry').style.display = 'none';
-    chMarkSummary(chLevel, chChapterIdx, correctCount, total, score);
     const pct = correctCount / total;
     const isTrophy = (correctCount === total);
     const isMedal  = pct >= 0.8;
+
+    // まとめボーナス（合格以上のみ）
+    const summBonus = isTrophy ? 1000 : isMedal ? 500 : 0;
+    if (summBonus > 0) {
+      score += summBonus;
+      setTimeout(() => showBonusFlash('📝 まとめボーナス +' + summBonus + 'pt'), 600);
+    }
+    chMarkSummary(chLevel, chChapterIdx, correctCount, total, score);
 
     if (isTrophy) {
       $('chResultIcon').textContent = '🏆';
@@ -2702,6 +2785,24 @@ function showChallengeResult() {
     }
     $('chResultSub').textContent = `Chapter ${chChapterIdx + 1} まとめテスト`;
     $('chScoreBig').textContent = correctCount + ' / ' + total + ' 正解（' + Math.round(pct*100) + '%）';
+
+    // まとめテストのポイント表示
+    const isSummarySpeedPerfect = isTrophy && speedBonusTotal >= total * SCORE_SPEED;
+    if (isSummarySpeedPerfect) {
+      const spBonus = DIFFICULTIES[currentDifficulty].speedPerfectBonus || 0;
+      score += spBonus;
+      if (spBonus > 0) setTimeout(() => showBonusFlash('⚡ 神速ボーナス +' + spBonus + 'pt', true), 800);
+    }
+    const ptsEl2 = $('chPtsScore');
+    ptsEl2.style.display = 'block';
+    ptsEl2.innerHTML = score.toLocaleString() + '<span class="pts-unit">pt</span>';
+    ptsEl2.classList.remove('pop', 'perfect', 'speed-perfect');
+    if (isSummarySpeedPerfect) {
+      ptsEl2.classList.add('speed-perfect');
+    } else if (isTrophy) {
+      ptsEl2.classList.add('perfect');
+    }
+    setTimeout(() => ptsEl2.classList.add('pop'), 10);
 
     if (!isMedal) {
       $('btnChNext').textContent = '🔄 もう一度挑戦';
@@ -2981,20 +3082,30 @@ const fbAuth = firebase.auth();
 const fbDb   = firebase.firestore();
 let fbUser     = null;
 let fbNickname = null;
+let fbStreak   = 0;
 
 // ===== AUTH UI =====
 function updateAuthUI() {
-  const loginSec = document.getElementById('authLoginSection');
-  const userSec  = document.getElementById('authUserSection');
+  const loginSec  = document.getElementById('authLoginSection');
+  const userSec   = document.getElementById('authUserSection');
+  const streakEl  = document.getElementById('authStreak');
   if (fbUser) {
     loginSec.style.display = 'none';
     userSec.style.display  = 'flex';
     document.getElementById('authAvatar').src = fbUser.photoURL || '';
     document.getElementById('authName').textContent = fbNickname || fbUser.displayName || 'ユーザー';
+    if (fbStreak >= 1) {
+      streakEl.textContent = fbStreak + '日連続ログイン中🔥';
+      streakEl.style.display = 'inline-block';
+    } else {
+      streakEl.style.display = 'none';
+    }
   } else {
     loginSec.style.display = 'block';
     userSec.style.display  = 'none';
+    streakEl.style.display = 'none';
     fbNickname = null;
+    fbStreak   = 0;
   }
 }
 
@@ -3002,8 +3113,10 @@ function updateAuthUI() {
 async function loadNickname(user) {
   try {
     const doc = await fbDb.collection('users').doc(user.uid).get();
-    fbNickname = (doc.exists && doc.data().nickname) ? doc.data().nickname : null;
-  } catch(e) { fbNickname = null; }
+    const data = doc.exists ? doc.data() : {};
+    fbNickname = data.nickname || null;
+    fbStreak   = data.loginStreak || 0;
+  } catch(e) { fbNickname = null; fbStreak = 0; }
 }
 
 function openNicknameModal(isEdit) {
@@ -3048,10 +3161,13 @@ fbAuth.onAuthStateChanged(async user => {
 });
 
 // ===== ログインボーナス =====
-const BONUS_TABLE = [100, 150, 200, 200, 300, 300, 500];
 function getTodayJST() {
   return new Date().toLocaleDateString('ja-JP',
     {timeZone:'Asia/Tokyo', year:'numeric', month:'2-digit', day:'2-digit'});
+}
+function calcLoginBonus(streak) {
+  const table = [50, 70, 100, 120, 140, 160, 200, 220, 240, 300];
+  return table[Math.min(streak, 10) - 1];
 }
 async function checkLoginBonus(user) {
   try {
@@ -3064,8 +3180,10 @@ async function checkLoginBonus(user) {
     prev.setDate(prev.getDate() - 1);
     const prevStr = prev.toLocaleDateString('ja-JP',
       {timeZone:'Asia/Tokyo', year:'numeric', month:'2-digit', day:'2-digit'});
-    const streak = (data.lastLoginDate === prevStr) ? Math.min((data.loginStreak||0)+1, 7) : 1;
-    const bonus  = BONUS_TABLE[streak - 1];
+    const streak = (data.lastLoginDate === prevStr) ? (data.loginStreak || 0) + 1 : 1;
+    const bonus  = calcLoginBonus(streak);
+    fbStreak = streak;
+    updateAuthUI();
     await ref.set({
       displayName: user.displayName,
       photoURL: user.photoURL || '',
@@ -3077,9 +3195,13 @@ async function checkLoginBonus(user) {
   } catch(e) { console.error('Bonus:', e); }
 }
 function showLoginBonusModal(bonus, streak) {
+  const isMax = bonus >= 300;
+  const title = streak === 1 ? '初回ログインボーナス！🎉' : streak + '日連続ログイン！🔥';
+  const next = calcLoginBonus(streak + 1);
+  const sub = isMax ? '🏆 MAX達成！明日も続けよう！' : '次回ログインで +' + next + 'pt';
+  document.querySelector('#loginBonusModal .modal-title').textContent = title;
   document.getElementById('bonusPtsText').textContent = '+' + bonus + 'pt';
-  document.getElementById('bonusStreakText').textContent =
-    streak === 1 ? '初回ログインボーナス！🎉' : streak + '日連続ログイン！🔥';
+  document.getElementById('bonusStreakText').textContent = sub;
   document.getElementById('loginBonusModal').style.display = 'flex';
 }
 document.getElementById('btnBonusClose').addEventListener('click', () => {
