@@ -117,11 +117,14 @@
     background: rgba(255,255,255,0.07);
     border: 2px solid rgba(255,255,255,0.15);
     border-radius: 14px; color: #fff; font-size: 1rem; font-weight: 600;
-    cursor: pointer; transition: all 0.18s; text-align: center; line-height: 1.4;
+    cursor: pointer; transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.18s; text-align: center; line-height: 1.4;
     min-height: 58px; display: flex; align-items: center; justify-content: center;
     -webkit-tap-highlight-color: transparent; outline: none;
+    -webkit-appearance: none; appearance: none;
   }
-  .choice-btn:hover:not(:disabled) { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.4); transform: translateY(-2px); }
+  @media (hover: hover) {
+    .choice-btn:hover:not(:disabled) { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.4); transform: translateY(-2px); }
+  }
   .choice-btn.correct { background: rgba(104,211,145,0.25); border-color: #68d391; color: #68d391; }
   .choice-btn.wrong { background: rgba(252,129,129,0.2); border-color: #fc8181; color: #fc8181; }
   .choice-btn.reveal { background: rgba(104,211,145,0.1); border-color: rgba(104,211,145,0.4); color: #68d391; }
@@ -909,7 +912,9 @@
 
   /* 選択肢ボタン */
   .choice-btn { background: var(--surface); border-color: var(--borderMd); color: var(--text); }
-  .choice-btn:hover:not(:disabled) { background: var(--surface2); border-color: rgba(0,0,0,0.28); transform: translateY(-2px); }
+  @media (hover: hover) {
+    .choice-btn:hover:not(:disabled) { background: var(--surface2); border-color: rgba(0,0,0,0.28); transform: translateY(-2px); }
+  }
   .choice-btn.correct { background: rgba(16,185,129,0.12); border-color: #10B981; color: #065F46; }
   .choice-btn.wrong   { background: rgba(239,68,68,0.1); border-color: #EF4444; color: #991B1B; }
   .choice-btn.reveal  { background: rgba(16,185,129,0.07); border-color: rgba(16,185,129,0.4); color: #059669; }
