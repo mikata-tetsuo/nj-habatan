@@ -1151,6 +1151,15 @@
   /* スコア送信バッジ */
   .score-submitted-badge { display:none; background:rgba(104,211,145,0.12); border:1px solid rgba(104,211,145,0.4); border-radius:8px; padding:6px 12px; font-size:0.82rem; color:#059669; text-align:center; margin-top:8px; }
   .score-submitted-badge.show { display:block; }
+  /* ランキング モードタブ */
+  .rank-mode-tabs { display:flex; gap:8px; margin-bottom:12px; }
+  .rank-mode-tab { flex:1; padding:10px 8px; border-radius:10px; border:1px solid var(--borderMd,rgba(0,0,0,0.14)); background:none; color:var(--text2,#64748B); font-size:0.92rem; font-weight:700; cursor:pointer; transition:all 0.2s; }
+  .rank-mode-tab.active { background:rgba(249,202,36,0.15); border-color:#f9ca24; color:#f9ca24; }
+  /* ニックネームモーダル */
+  .nickname-input { width:100%; padding:11px 14px; border:1.5px solid var(--borderMd,rgba(0,0,0,0.18)); border-radius:12px; font-size:1rem; background:var(--surface2,#F5F2EC); color:var(--text,#1E293B); outline:none; text-align:center; }
+  .nickname-input:focus { border-color:#f9ca24; box-shadow:0 0 0 2px rgba(249,202,36,0.2); }
+  .btn-edit-nickname { background:none; border:none; font-size:0.85rem; cursor:pointer; padding:2px 5px; color:var(--text3,#9CA3AF); line-height:1; }
+  .btn-edit-nickname:hover { color:var(--text,#1E293B); }
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
@@ -1173,6 +1182,7 @@
       <div id="authUserSection" class="auth-user-wrap" style="display:none">
         <img id="authAvatar" class="auth-avatar" src="" alt="">
         <span id="authName" class="auth-name"></span>
+        <button id="btnEditNickname" class="btn-edit-nickname" title="ニックネームを変更">✏️</button>
         <button id="btnLogout" class="btn-logout">ログアウト</button>
       </div>
     </div>
@@ -1382,7 +1392,11 @@
       <button class="map-back" id="btnRankingBack">← ホーム</button>
       <div class="ranking-title">🥇 ランキング</div>
     </div>
-    <div class="rank-tabs">
+    <div class="rank-mode-tabs">
+      <button class="rank-mode-tab active" data-mode="test">⚡ テスト</button>
+      <button class="rank-mode-tab" data-mode="challenge">🏆 チャレンジ</button>
+    </div>
+    <div class="rank-tabs" id="rankDiffTabs">
       <button class="rank-tab active" data-diff="all">🏆 総合</button>
       <button class="rank-tab" data-diff="expert">🔥 エキスパート</button>
       <button class="rank-tab" data-diff="normal">⚡ ノーマル</button>
@@ -1395,6 +1409,18 @@
     </div>
     <div class="ranking-login-hint" id="rankingLoginHint" style="display:none">
       💡 Googleログインするとスコアがランキングに登録されます
+    </div>
+  </div>
+
+  <!-- NICKNAME MODAL -->
+  <div id="nicknameModal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <div class="modal-icon">✏️</div>
+      <div class="modal-title" id="nicknameModalTitle">ニックネームを設定</div>
+      <div style="color:#64748B;font-size:0.85rem;margin-bottom:16px;" id="nicknameModalDesc">ランキングに表示される名前です</div>
+      <input type="text" id="nicknameInput" class="nickname-input" placeholder="ニックネーム（15文字以内）" maxlength="15">
+      <div style="font-size:0.75rem;color:#9CA3AF;margin-top:6px;margin-bottom:12px;">※ 後から変更できます</div>
+      <button class="btn-modal-close" id="btnNicknameSave">決定！</button>
     </div>
   </div>
 
@@ -2864,7 +2890,8 @@ firebase.initializeApp({
 });
 const fbAuth = firebase.auth();
 const fbDb   = firebase.firestore();
-let fbUser = null;
+let fbUser     = null;
+let fbNickname = null;
 
 // ===== AUTH UI =====
 function updateAuthUI() {
@@ -2874,20 +2901,61 @@ function updateAuthUI() {
     loginSec.style.display = 'none';
     userSec.style.display  = 'flex';
     document.getElementById('authAvatar').src = fbUser.photoURL || '';
-    document.getElementById('authName').textContent = fbUser.displayName || 'ユーザー';
+    document.getElementById('authName').textContent = fbNickname || fbUser.displayName || 'ユーザー';
   } else {
     loginSec.style.display = 'block';
     userSec.style.display  = 'none';
+    fbNickname = null;
   }
 }
+
+// ===== ニックネーム =====
+async function loadNickname(user) {
+  try {
+    const doc = await fbDb.collection('users').doc(user.uid).get();
+    fbNickname = (doc.exists && doc.data().nickname) ? doc.data().nickname : null;
+  } catch(e) { fbNickname = null; }
+}
+
+function openNicknameModal(isEdit) {
+  document.getElementById('nicknameModalTitle').textContent = isEdit ? 'ニックネームを変更' : 'ニックネームを設定';
+  document.getElementById('nicknameModalDesc').textContent  = isEdit ? 'ランキングに表示される名前を変更します' : 'ランキングに表示される名前です';
+  document.getElementById('nicknameInput').value = isEdit ? (fbNickname || '') : '';
+  document.getElementById('nicknameModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('nicknameInput').focus(), 100);
+}
+
+async function saveNickname() {
+  if (!fbUser) return;
+  const val = document.getElementById('nicknameInput').value.trim().slice(0, 15);
+  if (!val) { document.getElementById('nicknameInput').focus(); return; }
+  try {
+    await fbDb.collection('users').doc(fbUser.uid).set({ nickname: val }, { merge: true });
+    fbNickname = val;
+    updateAuthUI();
+    document.getElementById('nicknameModal').style.display = 'none';
+  } catch(e) { console.error('Nickname:', e); }
+}
+
+document.getElementById('btnNicknameSave').addEventListener('click', saveNickname);
+document.getElementById('nicknameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveNickname(); });
+document.getElementById('btnEditNickname').addEventListener('click', () => openNicknameModal(true));
+
+// ===== ログイン =====
 document.getElementById('btnGoogleLogin').addEventListener('click', () => {
   fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => console.error(e));
 });
 document.getElementById('btnLogout').addEventListener('click', () => fbAuth.signOut());
-fbAuth.onAuthStateChanged(user => {
+fbAuth.onAuthStateChanged(async user => {
   fbUser = user;
-  updateAuthUI();
-  if (user) checkLoginBonus(user);
+  if (user) {
+    await loadNickname(user);
+    updateAuthUI();
+    if (!fbNickname) openNicknameModal(false);
+    checkLoginBonus(user);
+  } else {
+    updateAuthUI();
+  }
 });
 
 // ===== ログインボーナス =====
@@ -2929,16 +2997,17 @@ document.getElementById('btnBonusClose').addEventListener('click', () => {
   document.getElementById('loginBonusModal').style.display = 'none';
 });
 
-// ===== スコア登録 =====
+// ===== テストスコア登録 (rankings_test) =====
 async function submitScoreToRanking(scoreVal, difficulty, correct, total) {
   if (!fbUser) return;
+  const name = fbNickname || fbUser.displayName || '名無し';
   try {
-    const ref = fbDb.collection('rankings').doc(fbUser.uid);
+    const ref = fbDb.collection('rankings_test').doc(fbUser.uid);
     const doc = await ref.get();
     const ex  = doc.data();
     if (!ex || scoreVal > (ex.score || 0)) {
       await ref.set({
-        displayName: fbUser.displayName,
+        displayName: name,
         photoURL: fbUser.photoURL || '',
         score: scoreVal,
         difficulty: difficulty,
@@ -2952,36 +3021,80 @@ async function submitScoreToRanking(scoreVal, difficulty, correct, total) {
   } catch(e) { console.error('Score:', e); }
 }
 
+// ===== チャレンジスコア登録 (rankings_challenge) =====
+async function submitChallengeScore() {
+  if (!fbUser) return;
+  const name  = fbNickname || fbUser.displayName || '名無し';
+  const total = chGetTotalScore();
+  if (total <= 0) return;
+  try {
+    const ref = fbDb.collection('rankings_challenge').doc(fbUser.uid);
+    const doc = await ref.get();
+    const ex  = doc.data();
+    if (!ex || total > (ex.score || 0)) {
+      await ref.set({
+        displayName: name,
+        photoURL: fbUser.photoURL || '',
+        score: total,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  } catch(e) { console.error('Challenge score:', e); }
+}
+
+// チャレンジ結果後にスコアを送信
+const _origShowChallengeResult = showChallengeResult;
+showChallengeResult = function() {
+  _origShowChallengeResult.apply(this, arguments);
+  submitChallengeScore();
+};
+
 // ===== ランキング表示 =====
+let rankingMode       = 'test';
 let rankingDiffFilter = 'all';
+
+function updateDiffTabVisibility() {
+  const el = document.getElementById('rankDiffTabs');
+  if (el) el.style.display = rankingMode === 'test' ? 'flex' : 'none';
+}
+
 async function renderRankingScreen() {
   const listEl = document.getElementById('rankingList');
   const hintEl = document.getElementById('rankingLoginHint');
   listEl.innerHTML = '<div class="ranking-loading">読み込み中... ⏳</div>';
   if (hintEl) hintEl.style.display = fbUser ? 'none' : 'block';
   try {
-    const snap = await fbDb.collection('rankings').orderBy('score', 'desc').limit(50).get();
+    const col  = rankingMode === 'challenge' ? 'rankings_challenge' : 'rankings_test';
+    const snap = await fbDb.collection(col).orderBy('score', 'desc').limit(50).get();
     let docs = snap.docs;
-    if (rankingDiffFilter !== 'all') docs = docs.filter(d => d.data().difficulty === rankingDiffFilter);
+    if (rankingMode === 'test' && rankingDiffFilter !== 'all') {
+      docs = docs.filter(d => d.data().difficulty === rankingDiffFilter);
+    }
     docs = docs.slice(0, 30);
     if (!docs.length) {
-      listEl.innerHTML = '<div class="ranking-empty">まだ記録がありません 🤔<br>テストを受けてランキングに載ろう！</div>';
+      const msg = rankingMode === 'challenge'
+        ? 'チャレンジをプレイしてランキングに載ろう！'
+        : 'テストを受けてランキングに載ろう！';
+      listEl.innerHTML = '<div class="ranking-empty">まだ記録がありません 🤔<br>' + msg + '</div>';
       return;
     }
     const DL = {expert:'🔥エキスパート', normal:'⚡ノーマル', beginner:'🌱ビギナー', nolimit:'∞無制限'};
     listEl.innerHTML = docs.map((doc, i) => {
       const d = doc.data(), isMe = fbUser && doc.id === fbUser.uid;
-      const medal = ['🥇','🥈','🥉'][i] || (i+1)+'';
+      const medal = ['🥇','🥈','🥉'][i] || (i + 1) + '';
       const nc    = ['top1','top2','top3'][i] || '';
       const avatarHtml = d.photoURL
         ? '<img class="rank-avatar" src="' + d.photoURL + '" alt="">'
         : '<span class="rank-avatar"></span>';
+      const diffBadge = rankingMode === 'test'
+        ? '<span class="rank-diff-badge">' + (DL[d.difficulty] || '') + '</span>'
+        : '';
       return '<div class="rank-row' + (isMe ? ' rank-me' : '') + '">' +
         '<span class="rank-num ' + nc + '">' + medal + '</span>' +
         avatarHtml +
         '<span class="rank-name">' + (d.displayName || '名無し') + (isMe ? ' 👈' : '') + '</span>' +
         '<span class="rank-score">' + (d.score || 0).toLocaleString() + 'pt</span>' +
-        '<span class="rank-diff-badge">' + (DL[d.difficulty] || '') + '</span>' +
+        diffBadge +
         '</div>';
     }).join('');
   } catch(e) {
@@ -2989,10 +3102,23 @@ async function renderRankingScreen() {
     console.error('Ranking:', e);
   }
 }
+
 document.getElementById('btnRankingBack').addEventListener('click', () => showScreen('startScreen'));
 document.getElementById('cardRanking').addEventListener('click', () => {
   showScreen('rankingScreen');
+  updateDiffTabVisibility();
   renderRankingScreen();
+});
+document.querySelectorAll('.rank-mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.rank-mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    rankingMode = tab.dataset.mode;
+    rankingDiffFilter = 'all';
+    document.querySelectorAll('.rank-tab').forEach(t => t.classList.toggle('active', t.dataset.diff === 'all'));
+    updateDiffTabVisibility();
+    renderRankingScreen();
+  });
 });
 document.querySelectorAll('.rank-tab').forEach(tab => {
   tab.addEventListener('click', () => {
