@@ -936,11 +936,10 @@
     background: linear-gradient(135deg, rgba(249,202,36,0.12), rgba(249,202,36,0.06));
     border: 1px solid rgba(249,202,36,0.3); border-radius: 14px;
   }
-  .total-pts-label { font-size: 0.75rem; font-weight: 700; color: #a0aec0; letter-spacing: 0.04em; }
+  .total-pts-label { font-size: 0.75rem; font-weight: 700; color: #a0aec0; letter-spacing: 0.04em; white-space: nowrap; }
   .total-pts-value { font-size: 2rem; font-weight: 900; color: #f9ca24;
     text-shadow: 0 0 16px rgba(249,202,36,0.45); line-height: 1; }
   .total-pts-unit  { font-size: 0.85rem; font-weight: 700; color: #f9ca24; }
-  .total-pts-breakdown { font-size: 0.68rem; color: #718096; margin-left: 8px; white-space: nowrap; }
   .home-credit a { color: #63b3ed; text-decoration: underline; text-underline-offset: 2px; }
   .home-credit a:hover { color: #90cdf4; }
   .home-text { text-align: left; }
@@ -1272,7 +1271,6 @@
       <span class="total-pts-label">総合計</span>
       <span class="total-pts-value" id="totalPtsValue">0</span>
       <span class="total-pts-unit">pt</span>
-      <span class="total-pts-breakdown" id="totalPtsBreakdown"></span>
     </div>
 
     <div class="mode-cards">
@@ -1346,6 +1344,7 @@
           <div class="mode-card-text">
             <div class="mode-card-title">テスト</div>
             <div class="mode-card-desc">4択・タイマー制。コンボでスコアを稼ごう！</div>
+            <div class="ch-card-score" id="testCardHighScore"></div>
           </div>
           <div class="mode-card-arrow">›</div>
         </div>
@@ -2506,6 +2505,13 @@ function chGetNextStage(lv) {
   return totalStages - 1; // 全クリア時は最終
 }
 
+// ホームのテストカードにハイスコア表示
+function updateTestCardScore() {
+  const el = document.getElementById('testCardHighScore');
+  if (!el) return;
+  el.textContent = fbTestPts > 0 ? 'ハイスコア ' + fbTestPts.toLocaleString() + ' pt' : '';
+}
+
 // ホームのチャレンジカードに総合スコア表示
 function updateChHomeScore() {
   const el = document.getElementById('chCardTotalScore');
@@ -3130,6 +3136,7 @@ let fbIsStudent   = false;
 let fbInviteAsked = false;
 let fbBonusPts    = 0;   // ログインボーナス累積
 let fbChallengePts = 0;  // チャレンジ累積
+let fbTestPts      = 0;  // テストハイスコア
 const INVITE_CODE = 'NJ2026';
 
 // ===== AUTH UI =====
@@ -3139,7 +3146,6 @@ function updateAuthUI() {
   const streakEl  = document.getElementById('authStreak');
   const totalEl   = document.getElementById('homeTotalPts');
   const totalVal  = document.getElementById('totalPtsValue');
-  const totalBreak= document.getElementById('totalPtsBreakdown');
   if (fbUser) {
     loginSec.style.display = 'none';
     userSec.style.display  = 'flex';
@@ -3152,10 +3158,10 @@ function updateAuthUI() {
       streakEl.style.display = 'none';
     }
     // 総合計pt
-    const total = fbBonusPts + fbChallengePts;
-    totalVal.textContent  = total.toLocaleString();
-    totalBreak.textContent = '(ボーナス ' + fbBonusPts.toLocaleString() + ' + チャレンジ ' + fbChallengePts.toLocaleString() + ')';
+    const total = fbBonusPts + fbChallengePts + fbTestPts;
+    totalVal.textContent = total.toLocaleString();
     totalEl.style.display = 'flex';
+    updateTestCardScore();
   } else {
     loginSec.style.display = 'block';
     userSec.style.display  = 'none';
@@ -3165,21 +3171,27 @@ function updateAuthUI() {
     fbStreak       = 0;
     fbBonusPts     = 0;
     fbChallengePts = 0;
+    fbTestPts      = 0;
   }
 }
 
 // ===== ニックネーム =====
 async function loadNickname(user) {
   try {
-    const doc = await fbDb.collection('users').doc(user.uid).get();
-    const data = doc.exists ? doc.data() : {};
+    const [userDoc, testDoc] = await Promise.all([
+      fbDb.collection('users').doc(user.uid).get(),
+      fbDb.collection('rankings_test').doc(user.uid).get()
+    ]);
+    const data     = userDoc.exists ? userDoc.data() : {};
+    const testData = testDoc.exists ? testDoc.data() : {};
     fbNickname     = data.nickname || null;
     fbStreak       = data.loginStreak || 0;
     fbIsStudent    = data.isStudent === true;
     fbInviteAsked  = Object.prototype.hasOwnProperty.call(data, 'isStudent');
     fbBonusPts     = data.totalBonusPoints || 0;
     fbChallengePts = data.totalChallengePoints || 0;
-  } catch(e) { fbNickname = null; fbStreak = 0; fbIsStudent = false; fbInviteAsked = false; fbBonusPts = 0; fbChallengePts = 0; }
+    fbTestPts      = testData.score || 0;
+  } catch(e) { fbNickname = null; fbStreak = 0; fbIsStudent = false; fbInviteAsked = false; fbBonusPts = 0; fbChallengePts = 0; fbTestPts = 0; }
 }
 
 function openNicknameModal(isEdit) {
@@ -3289,6 +3301,8 @@ async function checkLoginBonus(user) {
       loginStreak: streak,
       totalBonusPoints: firebase.firestore.FieldValue.increment(bonus)
     }, {merge: true});
+    fbBonusPts += bonus;
+    updateAuthUI();
     showLoginBonusModal(bonus, streak);
   } catch(e) { console.error('Bonus:', e); }
 }
@@ -3325,6 +3339,9 @@ async function submitScoreToRanking(scoreVal, difficulty, correct, total) {
         isStudent: fbIsStudent,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+      fbTestPts = scoreVal;
+      updateTestCardScore();
+      updateAuthUI();
       const badge = document.getElementById('scoreSubmittedBadge');
       if (badge) { badge.classList.add('show'); setTimeout(() => badge.classList.remove('show'), 3000); }
     }
