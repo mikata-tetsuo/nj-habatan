@@ -613,6 +613,13 @@
   .mode-card.ranking .mode-card-icon { background:linear-gradient(135deg,#7b5c00,#f9ca24); }
   .mode-card.ranking .mode-card-title { color:#f9ca24; }
   .mode-card.ranking:hover { border-color:rgba(249,202,36,0.4); }
+  .mode-card.ranking.locked { opacity:0.6; }
+  .mode-card.ranking.locked .mode-card-icon { background:linear-gradient(135deg,#444,#777); filter:grayscale(0.5); }
+  .mode-card.ranking.locked .mode-card-title { color:#a0aec0; }
+  @keyframes rankLockShake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+  }
+  .mode-card.ranking.shake { animation: rankLockShake 0.4s ease; }
   .review-home-count { font-size:0.72rem; color:#fc8181; font-weight:700; margin-top:2px; }
 
   /* 単語帳モード ⭐ ボタン */
@@ -1428,7 +1435,7 @@
           <div class="mode-card-icon">🥇</div>
           <div class="mode-card-text">
             <div class="mode-card-title">ランキング</div>
-            <div class="mode-card-desc">みんなのスコアをチェックしよう！目指せ兵庫県、単語ナンバー1！</div>
+            <div class="mode-card-desc" id="rankingCardDesc">みんなのスコアをチェックしよう！目指せ兵庫県、単語ナンバー1！</div>
           </div>
           <div class="mode-card-arrow">›</div>
         </div>
@@ -1590,7 +1597,7 @@
         <div class="practice-panel en-panel" id="enPanel">
           <div class="panel-label">英語</div>
           <div class="panel-word" id="pracEnWord">ability</div>
-          <div class="en-speak-wrap"><button class="speak-btn" id="pracSpeakBtn" title="発音を聞く">🔊</button></div>
+          <div class="en-speak-wrap"><button class="speak-btn" id="pracSpeakBtnSm" title="発音を聞く">🔊</button></div>
           <div class="panel-hint">タップで隠す</div>
           <div class="hidden-overlay">
             <div class="eye-icon">🙈</div>
@@ -1611,7 +1618,7 @@
 
       <!-- 音声ボタン -->
       <div class="prac-speak-row">
-        <button class="speak-btn prac-speak-btn" id="pracSpeakBtn" title="英語の発音を聞く">🔊 英語の発音</button>
+        <button class="speak-btn prac-speak-btn" id="pracSpeakBtnLg" title="英語の発音を聞く">🔊 英語の発音</button>
       </div>
 
       <!-- ナビゲーション -->
@@ -2981,6 +2988,17 @@ $('btnPractice').addEventListener('click', () => {
 });
 
 // パネルタップで個別トグル（両方非表示は禁止）
+// 英語パネル内の小さい🔊ボタン（パネルのトグルに伝播させない）
+$('pracSpeakBtnSm').addEventListener('click', e => {
+  e.stopPropagation();
+  speak(pracWords[pracIdx].en);
+});
+
+// 下部の「英語の発音」ボタン
+$('pracSpeakBtnLg').addEventListener('click', () => {
+  speak(pracWords[pracIdx].en);
+});
+
 $('enPanel').addEventListener('click', () => {
   const next = !pracHideEn;
   if (next && pracHideJa) return; // 両方非表示になるので無視
@@ -3166,6 +3184,9 @@ function updateAuthUI() {
     totalVal.textContent = total.toLocaleString();
     totalEl.style.display = 'flex';
     updateTestCardScore();
+    // ランキングカード：ログイン済み → 通常表示
+    document.getElementById('cardRanking').classList.remove('locked');
+    document.getElementById('rankingCardDesc').textContent = 'みんなのスコアをチェックしよう！目指せ兵庫県、単語ナンバー1！';
   } else {
     loginSec.style.display = 'block';
     userSec.style.display  = 'none';
@@ -3176,6 +3197,9 @@ function updateAuthUI() {
     fbBonusPts     = 0;
     fbChallengePts = 0;
     fbTestPts      = 0;
+    // ランキングカード：未ログイン → ロック表示
+    document.getElementById('cardRanking').classList.add('locked');
+    document.getElementById('rankingCardDesc').textContent = '🔒 Googleログインすると見られます';
   }
 }
 
@@ -3468,6 +3492,15 @@ async function renderRankingScreen() {
 
 document.getElementById('btnRankingBack').addEventListener('click', () => showScreen('startScreen'));
 document.getElementById('cardRanking').addEventListener('click', () => {
+  if (!fbUser) {
+    // 未ログイン：シェイクして気づかせる
+    const card = document.getElementById('cardRanking');
+    card.classList.remove('shake');
+    void card.offsetWidth; // reflow
+    card.classList.add('shake');
+    card.addEventListener('animationend', () => card.classList.remove('shake'), { once: true });
+    return;
+  }
   showScreen('rankingScreen');
   updateDiffTabVisibility();
   renderRankingScreen();
