@@ -939,6 +939,37 @@
   .nj-logo { height: 4.2rem; width: auto; border-radius: 6px; flex-shrink: 0; }
   .nj-logo-bottom { text-align: center; margin-top: 32px; padding-bottom: 16px; }
   .home-credit { text-align: center; margin-top: 16px; padding-bottom: 20px; font-size: 0.72rem; color: #718096; }
+  /* 新着情報ボタン */
+  .btn-news {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: linear-gradient(135deg, rgba(249,202,36,0.15), rgba(240,147,43,0.1));
+    border: 1px solid rgba(249,202,36,0.4); border-radius: 99px;
+    padding: 5px 14px; font-size: 0.78rem; font-weight: 700;
+    color: #f9ca24; cursor: pointer; margin-top: 6px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-news:hover { background: linear-gradient(135deg, rgba(249,202,36,0.25), rgba(240,147,43,0.18)); transform: scale(1.04); }
+  /* 更新履歴モーダル */
+  .modal-box.news-box {
+    max-width: 340px; padding: 28px 24px 20px; text-align: left;
+  }
+  .news-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .news-modal-title { font-size: 1.15rem; font-weight: 800; color: var(--text, #1E293B); }
+  .news-modal-close {
+    background: none; border: none; font-size: 1.3rem; cursor: pointer;
+    color: #718096; padding: 2px 6px; border-radius: 6px; line-height: 1;
+  }
+  .news-modal-close:hover { background: rgba(0,0,0,0.07); }
+  .news-list { max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding-right: 2px; }
+  .news-item-date {
+    font-size: 0.72rem; font-weight: 800; color: #f9ca24;
+    background: rgba(249,202,36,0.12); border: 1px solid rgba(249,202,36,0.25);
+    border-radius: 99px; padding: 2px 10px; display: inline-block; margin-bottom: 6px;
+  }
+  .news-item-label { font-size: 0.95rem; font-weight: 800; color: var(--text, #1E293B); margin-bottom: 5px; }
+  .news-item-entries { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 3px; }
+  .news-item-entries li { font-size: 0.8rem; color: var(--text2, #4A5568); padding-left: 14px; position: relative; }
+  .news-item-entries li::before { content: '・'; position: absolute; left: 0; color: #a0aec0; }
   /* 総合計pt */
   .home-total-pts {
     display: flex; align-items: baseline; justify-content: center; gap: 4px;
@@ -1275,6 +1306,7 @@
     <div class="home-title">
       <h1>はば単テスト</h1>
       <p>はばたけ世界へ！『はば単2,500』</p>
+      <button class="btn-news" id="btnNews">🆕 新着情報</button>
     </div>
 
     <div id="homeTotalPts" class="home-total-pts" style="display:none">
@@ -1545,6 +1577,17 @@
   </div>
 
   <!-- INVITE CODE MODAL -->
+  <!-- 新着情報モーダル -->
+  <div id="newsModal" class="modal-overlay" style="display:none">
+    <div class="modal-box news-box">
+      <div class="news-modal-header">
+        <div class="news-modal-title">🆕 新着情報</div>
+        <button class="news-modal-close" id="btnNewsClose">✕</button>
+      </div>
+      <div class="news-list" id="newsList"></div>
+    </div>
+  </div>
+
   <div id="inviteModal" class="modal-overlay" style="display:none">
     <div class="modal-box">
       <div class="modal-icon">🏫</div>
@@ -3160,6 +3203,55 @@ let fbBonusPts    = 0;   // ログインボーナス累積
 let fbChallengePts = 0;  // チャレンジ累積
 let fbTestPts      = 0;  // テストハイスコア
 const INVITE_CODE = 'NJ2026';
+
+// ===== 更新履歴 =====
+// 新しい情報は上に追加してください👇
+const CHANGELOG = [
+  // =============================================
+  // ↓↓↓ 新しい更新情報はここに追加してください ↓↓↓
+  // =============================================
+  {
+    date: '2026.04.30',
+    label: 'β版リリース🎉',
+    items: [
+      'はば単2500語対応',
+      'チャレンジモード実装',
+      '単語帳モード実装',
+      '復習リスト実装',
+      'Googleログイン・ランキング機能実装',
+      'ログインボーナス実装',
+      '英語音声対応',
+    ]
+  },
+  // =============================================
+  // ↑↑↑ 新しい更新情報はここに追加してください ↑↑↑
+  // =============================================
+];
+
+function renderNewsModal() {
+  const list = document.getElementById('newsList');
+  list.innerHTML = CHANGELOG.map(entry => `
+    <div>
+      <div class="news-item-date">${entry.date}</div>
+      <div class="news-item-label">${entry.label}</div>
+      <ul class="news-item-entries">
+        ${entry.items.map(item => `<li>${item}</li>`).join('')}
+      </ul>
+    </div>
+  `).join('');
+}
+
+document.getElementById('btnNews').addEventListener('click', () => {
+  renderNewsModal();
+  document.getElementById('newsModal').style.display = 'flex';
+});
+document.getElementById('btnNewsClose').addEventListener('click', () => {
+  document.getElementById('newsModal').style.display = 'none';
+});
+document.getElementById('newsModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('newsModal'))
+    document.getElementById('newsModal').style.display = 'none';
+});
 
 // ===== AUTH UI =====
 function updateAuthUI() {
