@@ -610,6 +610,9 @@
   .mode-card.review .mode-card-icon { background:linear-gradient(135deg,#9b2335,#fc8181); }
   .mode-card.review .mode-card-title { color:#fc8181; }
   .mode-card.review:hover, .mode-card.review.active { border-color:rgba(252,129,129,0.5); }
+  .mode-card.ranking .mode-card-icon { background:linear-gradient(135deg,#7b5c00,#f9ca24); }
+  .mode-card.ranking .mode-card-title { color:#f9ca24; }
+  .mode-card.ranking:hover { border-color:rgba(249,202,36,0.4); }
   .review-home-count { font-size:0.72rem; color:#fc8181; font-weight:700; margin-top:2px; }
 
   /* 単語帳モード ⭐ ボタン */
@@ -1288,55 +1291,6 @@
         </div>
       </div>
 
-      <!-- 練習 -->
-      <div class="mode-card practice" id="cardPractice">
-        <div class="mode-card-header">
-          <div class="mode-card-icon">📖</div>
-          <div class="mode-card-text">
-            <div class="mode-card-title">単語帳モード</div>
-            <div class="mode-card-desc">番号・レベル別にカードをめくって覚える</div>
-          </div>
-          <div class="mode-card-arrow">›</div>
-        </div>
-        <div class="settings-panel" id="settingsPractice">
-          <div class="settings-inner">
-            <div class="setting-section">
-              <div class="setting-label">出題方向</div>
-              <div class="radio-group" style="margin-bottom:0">
-                <label><input type="radio" name="direction" value="en2ja" checked><span>英語 → 日本語</span></label>
-                <label><input type="radio" name="direction" value="ja2en"><span>日本語 → 英語</span></label>
-              </div>
-            </div>
-            <div class="setting-section">
-              <div class="setting-label">出題範囲</div>
-              <div class="radio-group" style="margin-bottom:10px">
-                <label><input type="radio" name="mode" value="range"><span>番号指定</span></label>
-                <label><input type="radio" name="mode" value="level" checked><span>レベル指定</span></label>
-                <label><input type="radio" name="mode" value="random"><span>ランダム</span></label>
-              </div>
-              <div id="rangeInputs" class="range-row" style="display:none;">
-                <label>番号</label>
-                <input type="number" id="rangeFrom" value="1" min="1" max="2500"> 〜
-                <input type="number" id="rangeTo" value="100" min="1" max="2500">
-                <span style="color:#718096;font-size:0.82rem;">（全2,500語）</span>
-              </div>
-              <div id="levelInputs">
-                <div class="level-grid">
-                  <button class="level-btn selected" data-lv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span><span class="lv-count">464語</span></button>
-                  <button class="level-btn" data-lv="2"><span class="lv-num">②</span><span class="lv-name">中1</span><span class="lv-count">564語</span></button>
-                  <button class="level-btn" data-lv="3"><span class="lv-num">③</span><span class="lv-name">中2</span><span class="lv-count">749語</span></button>
-                  <button class="level-btn" data-lv="4"><span class="lv-num">④</span><span class="lv-name">中3</span><span class="lv-count">406語</span></button>
-                  <button class="level-btn" data-lv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span><span class="lv-count">317語</span></button>
-                  <button class="level-btn-all" id="btnLevelAll">すべて選択 / すべて解除</button>
-                </div>
-                <div style="color:#718096;font-size:0.78rem;margin-top:8px;" id="levelCountMsg">選択中: 464語</div>
-              </div>
-            </div>
-            <button class="btn-action-practice" id="btnPractice">📖 単語帳スタート</button>
-          </div>
-        </div>
-      </div>
-
       <!-- テスト -->
       <div class="mode-card testmode" id="cardTest">
         <div class="mode-card-header">
@@ -1405,6 +1359,55 @@
         </div>
       </div>
 
+      <!-- 練習 -->
+      <div class="mode-card practice" id="cardPractice">
+        <div class="mode-card-header">
+          <div class="mode-card-icon">📖</div>
+          <div class="mode-card-text">
+            <div class="mode-card-title">単語帳モード</div>
+            <div class="mode-card-desc">番号・レベル別にカードをめくって覚える</div>
+          </div>
+          <div class="mode-card-arrow">›</div>
+        </div>
+        <div class="settings-panel" id="settingsPractice">
+          <div class="settings-inner">
+            <div class="setting-section">
+              <div class="setting-label">出題方向</div>
+              <div class="radio-group" style="margin-bottom:0">
+                <label><input type="radio" name="direction" value="en2ja" checked><span>英語 → 日本語</span></label>
+                <label><input type="radio" name="direction" value="ja2en"><span>日本語 → 英語</span></label>
+              </div>
+            </div>
+            <div class="setting-section">
+              <div class="setting-label">出題範囲</div>
+              <div class="radio-group" style="margin-bottom:10px">
+                <label><input type="radio" name="mode" value="range"><span>番号指定</span></label>
+                <label><input type="radio" name="mode" value="level" checked><span>レベル指定</span></label>
+                <label><input type="radio" name="mode" value="random"><span>ランダム</span></label>
+              </div>
+              <div id="rangeInputs" class="range-row" style="display:none;">
+                <label>番号</label>
+                <input type="number" id="rangeFrom" value="1" min="1" max="2500"> 〜
+                <input type="number" id="rangeTo" value="100" min="1" max="2500">
+                <span style="color:#718096;font-size:0.82rem;">（全2,500語）</span>
+              </div>
+              <div id="levelInputs">
+                <div class="level-grid">
+                  <button class="level-btn selected" data-lv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span><span class="lv-count">464語</span></button>
+                  <button class="level-btn" data-lv="2"><span class="lv-num">②</span><span class="lv-name">中1</span><span class="lv-count">564語</span></button>
+                  <button class="level-btn" data-lv="3"><span class="lv-num">③</span><span class="lv-name">中2</span><span class="lv-count">749語</span></button>
+                  <button class="level-btn" data-lv="4"><span class="lv-num">④</span><span class="lv-name">中3</span><span class="lv-count">406語</span></button>
+                  <button class="level-btn" data-lv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span><span class="lv-count">317語</span></button>
+                  <button class="level-btn-all" id="btnLevelAll">すべて選択 / すべて解除</button>
+                </div>
+                <div style="color:#718096;font-size:0.78rem;margin-top:8px;" id="levelCountMsg">選択中: 464語</div>
+              </div>
+            </div>
+            <button class="btn-action-practice" id="btnPractice">📖 単語帳スタート</button>
+          </div>
+        </div>
+      </div>
+
       <!-- 復習リスト -->
       <div class="mode-card review" id="cardReview">
         <div class="mode-card-header">
@@ -1420,12 +1423,12 @@
 
 
       <!-- ランキング -->
-      <div class="mode-card" id="cardRanking" style="cursor:pointer;">
+      <div class="mode-card ranking" id="cardRanking" style="cursor:pointer;">
         <div class="mode-card-header">
           <div class="mode-card-icon">🥇</div>
           <div class="mode-card-text">
             <div class="mode-card-title">ランキング</div>
-            <div class="mode-card-desc">全国プレイヤーのベストスコアを見よう！</div>
+            <div class="mode-card-desc">みんなのスコアをチェックしよう！目指せ兵庫県、単語ナンバー1！</div>
           </div>
           <div class="mode-card-arrow">›</div>
         </div>
