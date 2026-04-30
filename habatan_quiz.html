@@ -929,6 +929,18 @@
   .nj-logo { height: 4.2rem; width: auto; border-radius: 6px; flex-shrink: 0; }
   .nj-logo-bottom { text-align: center; margin-top: 32px; padding-bottom: 16px; }
   .home-credit { text-align: center; margin-top: 16px; padding-bottom: 20px; font-size: 0.72rem; color: #718096; }
+  /* 総合計pt */
+  .home-total-pts {
+    display: flex; align-items: baseline; justify-content: center; gap: 4px;
+    margin: -8px 0 18px; padding: 10px 20px;
+    background: linear-gradient(135deg, rgba(249,202,36,0.12), rgba(249,202,36,0.06));
+    border: 1px solid rgba(249,202,36,0.3); border-radius: 14px;
+  }
+  .total-pts-label { font-size: 0.75rem; font-weight: 700; color: #a0aec0; letter-spacing: 0.04em; }
+  .total-pts-value { font-size: 2rem; font-weight: 900; color: #f9ca24;
+    text-shadow: 0 0 16px rgba(249,202,36,0.45); line-height: 1; }
+  .total-pts-unit  { font-size: 0.85rem; font-weight: 700; color: #f9ca24; }
+  .total-pts-breakdown { font-size: 0.68rem; color: #718096; margin-left: 8px; white-space: nowrap; }
   .home-credit a { color: #63b3ed; text-decoration: underline; text-underline-offset: 2px; }
   .home-credit a:hover { color: #90cdf4; }
   .home-text { text-align: left; }
@@ -1254,6 +1266,13 @@
     <div class="home-title">
       <h1>はば単テスト</h1>
       <p>はばたけ世界へ！『はば単2,500』</p>
+    </div>
+
+    <div id="homeTotalPts" class="home-total-pts" style="display:none">
+      <span class="total-pts-label">総合計</span>
+      <span class="total-pts-value" id="totalPtsValue">0</span>
+      <span class="total-pts-unit">pt</span>
+      <span class="total-pts-breakdown" id="totalPtsBreakdown"></span>
     </div>
 
     <div class="mode-cards">
@@ -3109,6 +3128,8 @@ let fbNickname    = null;
 let fbStreak      = 0;
 let fbIsStudent   = false;
 let fbInviteAsked = false;
+let fbBonusPts    = 0;   // ログインボーナス累積
+let fbChallengePts = 0;  // チャレンジ累積
 const INVITE_CODE = 'NJ2026';
 
 // ===== AUTH UI =====
@@ -3116,6 +3137,9 @@ function updateAuthUI() {
   const loginSec  = document.getElementById('authLoginSection');
   const userSec   = document.getElementById('authUserSection');
   const streakEl  = document.getElementById('authStreak');
+  const totalEl   = document.getElementById('homeTotalPts');
+  const totalVal  = document.getElementById('totalPtsValue');
+  const totalBreak= document.getElementById('totalPtsBreakdown');
   if (fbUser) {
     loginSec.style.display = 'none';
     userSec.style.display  = 'flex';
@@ -3127,12 +3151,20 @@ function updateAuthUI() {
     } else {
       streakEl.style.display = 'none';
     }
+    // 総合計pt
+    const total = fbBonusPts + fbChallengePts;
+    totalVal.textContent  = total.toLocaleString();
+    totalBreak.textContent = '(ボーナス ' + fbBonusPts.toLocaleString() + ' + チャレンジ ' + fbChallengePts.toLocaleString() + ')';
+    totalEl.style.display = 'flex';
   } else {
     loginSec.style.display = 'block';
     userSec.style.display  = 'none';
     streakEl.style.display = 'none';
-    fbNickname = null;
-    fbStreak   = 0;
+    totalEl.style.display  = 'none';
+    fbNickname     = null;
+    fbStreak       = 0;
+    fbBonusPts     = 0;
+    fbChallengePts = 0;
   }
 }
 
@@ -3141,11 +3173,13 @@ async function loadNickname(user) {
   try {
     const doc = await fbDb.collection('users').doc(user.uid).get();
     const data = doc.exists ? doc.data() : {};
-    fbNickname    = data.nickname || null;
-    fbStreak      = data.loginStreak || 0;
-    fbIsStudent   = data.isStudent === true;
-    fbInviteAsked = Object.prototype.hasOwnProperty.call(data, 'isStudent');
-  } catch(e) { fbNickname = null; fbStreak = 0; fbIsStudent = false; fbInviteAsked = false; }
+    fbNickname     = data.nickname || null;
+    fbStreak       = data.loginStreak || 0;
+    fbIsStudent    = data.isStudent === true;
+    fbInviteAsked  = Object.prototype.hasOwnProperty.call(data, 'isStudent');
+    fbBonusPts     = data.totalBonusPoints || 0;
+    fbChallengePts = data.totalChallengePoints || 0;
+  } catch(e) { fbNickname = null; fbStreak = 0; fbIsStudent = false; fbInviteAsked = false; fbBonusPts = 0; fbChallengePts = 0; }
 }
 
 function openNicknameModal(isEdit) {
@@ -3218,6 +3252,7 @@ fbAuth.onAuthStateChanged(async user => {
     if (!fbNickname) openNicknameModal(false);
     else if (!fbInviteAsked) showInviteModal();
     checkLoginBonus(user);
+    syncChallengePtsToFirestore(); // ローカルのチャレンジptをFirestoreに同期
   } else {
     updateAuthUI();
   }
@@ -3318,11 +3353,27 @@ async function submitChallengeScore() {
   } catch(e) { console.error('Challenge score:', e); }
 }
 
-// チャレンジ結果後にスコアを送信
+// チャレンジ累積ptをFirestoreに同期
+async function syncChallengePtsToFirestore() {
+  if (!fbUser) return;
+  const pts = chGetTotalScore();
+  if (pts <= 0) return;
+  try {
+    await fbDb.collection('users').doc(fbUser.uid).set(
+      { totalChallengePoints: pts },
+      { merge: true }
+    );
+    fbChallengePts = pts;
+    updateAuthUI();
+  } catch(e) { console.error('SyncChPts:', e); }
+}
+
+// チャレンジ結果後にスコアを送信＆累積pt同期
 const _origShowChallengeResult = showChallengeResult;
 showChallengeResult = function() {
   _origShowChallengeResult.apply(this, arguments);
   submitChallengeScore();
+  syncChallengePtsToFirestore();
 };
 
 // ===== ランキング表示 =====
