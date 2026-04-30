@@ -3272,24 +3272,38 @@ fbAuth.onAuthStateChanged(async user => {
 
 // ===== ログインボーナス =====
 function getTodayJST() {
-  return new Date().toLocaleDateString('ja-JP',
-    {timeZone:'Asia/Tokyo', year:'numeric', month:'2-digit', day:'2-digit'});
+  // ロケール非依存で常に YYYY-MM-DD 形式を返す
+  const d = new Date();
+  const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9 * 60) * 60 * 1000);
+  return jst.getFullYear() + '-'
+    + String(jst.getMonth() + 1).padStart(2, '0') + '-'
+    + String(jst.getDate()).padStart(2, '0');
 }
 function calcLoginBonus(streak) {
   const table = [50, 70, 100, 120, 140, 160, 200, 220, 240, 300];
   return table[Math.min(streak, 10) - 1];
 }
 async function checkLoginBonus(user) {
+  const today = getTodayJST();
+  // 同端末での二重付与をローカルで即ブロック
+  const localKey = 'habitanLastBonus_' + user.uid;
+  if (localStorage.getItem(localKey) === today) return;
   try {
     const ref  = fbDb.collection('users').doc(user.uid);
     const doc  = await ref.get();
     const data = doc.data() || {};
-    const today = getTodayJST();
-    if (data.lastLoginDate === today) return;
-    const prev = new Date();
-    prev.setDate(prev.getDate() - 1);
-    const prevStr = prev.toLocaleDateString('ja-JP',
-      {timeZone:'Asia/Tokyo', year:'numeric', month:'2-digit', day:'2-digit'});
+    // Firestoreでも確認（別端末対策）
+    if (data.lastLoginDate === today) {
+      localStorage.setItem(localKey, today);
+      return;
+    }
+    // 前日の日付を YYYY-MM-DD で計算
+    const d = new Date();
+    const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9 * 60) * 60 * 1000);
+    jst.setDate(jst.getDate() - 1);
+    const prevStr = jst.getFullYear() + '-'
+      + String(jst.getMonth() + 1).padStart(2, '0') + '-'
+      + String(jst.getDate()).padStart(2, '0');
     const streak = (data.lastLoginDate === prevStr) ? (data.loginStreak || 0) + 1 : 1;
     const bonus  = calcLoginBonus(streak);
     fbStreak = streak;
@@ -3301,6 +3315,7 @@ async function checkLoginBonus(user) {
       loginStreak: streak,
       totalBonusPoints: firebase.firestore.FieldValue.increment(bonus)
     }, {merge: true});
+    localStorage.setItem(localKey, today); // ローカルにも保存
     fbBonusPts += bonus;
     updateAuthUI();
     showLoginBonusModal(bonus, streak);
