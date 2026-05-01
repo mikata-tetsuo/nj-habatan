@@ -4173,7 +4173,7 @@ async function updateOverallRanking() {
       score: totalPts,
       isStudent: fbIsStudent,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      ...calcPeriodUpdates(ex, totalPts)
+      ...calcChallengePeriodUpdates(ex, totalPts)
     }, {merge: true});
   } catch(e) { console.error('Overall ranking:', e); }
 }
@@ -4203,12 +4203,8 @@ async function renderRankingScreen() {
     if (rankingPeriod === 'yearly') {
       // 年間 = 全件（既存データも含む）をall-timeスコアで表示
       items.sort((a,b) => (b.score||0)-(a.score||0));
-    } else if (rankingMode === 'overall') {
-      // 総合デイリー/ウィークリー/マンスリー：期間内に活動したユーザーをtotalPtsで
-      items = items.filter(d => d[pInfo.kf] === curKey);
-      items.sort((a,b) => (b.score||0)-(a.score||0));
     } else {
-      // チャレンジ/テスト：期間内のベストスコアで
+      // デイリー/ウィークリー/マンスリー：期間内の獲得ptで（総合・チャレンジ・テスト共通）
       items = items
         .filter(d => d[pInfo.kf] === curKey && (d[pInfo.sf]||0) > 0)
         .sort((a,b) => (b[pInfo.sf]||0)-(a[pInfo.sf]||0));
@@ -4227,7 +4223,7 @@ async function renderRankingScreen() {
       const avatarHtml = d.photoURL
         ? '<img class="rank-avatar" src="'+d.photoURL+'" alt="">'
         : '<span class="rank-avatar"></span>';
-      const scoreVal = rankingMode==='overall' ? (d.score||0) : (d[pInfo.sf]||0);
+      const scoreVal = rankingPeriod==='yearly' ? (d.score||0) : (d[pInfo.sf]||0);
       const diffBadge = rankingMode==='test'
         ? '<span class="rank-diff-badge">'+(DL[d.difficulty]||'')+'</span>' : '';
       return '<div class="rank-row'+(isMe?' rank-me':'')+'">' +
