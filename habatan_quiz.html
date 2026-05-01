@@ -3706,6 +3706,13 @@ const CHANGELOG = [
   // =============================================
   {
     date: '2026.05.01',
+    label: 'アップデート vol.3 🏆',
+    items: [
+      'チャレンジのデイリー/ウィークリー/マンスリーランキングを「今期間内の獲得pt」で表示するよう修正',
+    ]
+  },
+  {
+    date: '2026.05.01',
     label: 'アップデート vol.2 ✨',
     items: [
       'ランキングに「総合」カテゴリを追加',
@@ -4047,7 +4054,7 @@ async function submitChallengeScore() {
       displayName: name, photoURL: fbUser.photoURL||'',
       isStudent: fbIsStudent,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      ...calcPeriodUpdates(ex, total)
+      ...calcChallengePeriodUpdates(ex, total)
     };
     if (isNewBest) updateData.score = total;
     await ref.set(updateData, {merge: true});
@@ -4113,6 +4120,38 @@ function calcPeriodUpdates(ex, newScore) {
       updates[sf] = Math.max(ex[sf] || 0, newScore);
     } else {
       updates[sf] = newScore;
+    }
+    updates[kf] = key;
+  }
+  return updates;
+}
+
+// チャレンジ用：累積ではなく「期間内の増分」をd_score等に記録する
+function calcChallengePeriodUpdates(ex, total) {
+  const periods = [
+    {type:'daily',   sf:'d_score', kf:'d_key', bf:'d_base'},
+    {type:'weekly',  sf:'w_score', kf:'w_key', bf:'w_base'},
+    {type:'monthly', sf:'m_score', kf:'m_key', bf:'m_base'},
+    {type:'yearly',  sf:'y_score', kf:'y_key', bf: null},
+  ];
+  const updates = {};
+  for (const {type, sf, kf, bf} of periods) {
+    const key = getPeriodKey(type);
+    if (!bf) {
+      // 年間は累積合計をそのまま
+      updates[sf] = total;
+      updates[kf] = key;
+      continue;
+    }
+    if (ex[kf] === key) {
+      // 同じ期間：増分 = 現在累積 - 期間開始時ベース
+      const base = (ex[bf] !== undefined) ? ex[bf] : 0;
+      updates[sf] = Math.max(total - base, 0);
+    } else {
+      // 新しい期間：ベースをFirestoreの前回累積に設定
+      const prevTotal = ex.score || 0;
+      updates[bf] = prevTotal;
+      updates[sf] = Math.max(total - prevTotal, 0);
     }
     updates[kf] = key;
   }
