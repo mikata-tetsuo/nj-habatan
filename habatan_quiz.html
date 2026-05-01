@@ -414,11 +414,11 @@
   .level-btn .lv-count { font-size: 0.62rem; color: #718096; display: block; }
   .level-btn:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
   .level-btn.selected { color: #1a1a2e; border-color: transparent; }
-  .level-btn[data-lv="1"].selected { background: #68d391; }
-  .level-btn[data-lv="2"].selected { background: #63b3ed; }
-  .level-btn[data-lv="3"].selected { background: #f6ad55; }
-  .level-btn[data-lv="4"].selected { background: #fc8181; }
-  .level-btn[data-lv="5"].selected { background: #b794f4; }
+  .level-btn[data-lv="1"].selected,    .level-btn[data-testlv="1"].selected { background: #68d391; }
+  .level-btn[data-lv="2"].selected,    .level-btn[data-testlv="2"].selected { background: #63b3ed; }
+  .level-btn[data-lv="3"].selected,    .level-btn[data-testlv="3"].selected { background: #f6ad55; }
+  .level-btn[data-lv="4"].selected,    .level-btn[data-testlv="4"].selected { background: #fc8181; }
+  .level-btn[data-lv="5"].selected,    .level-btn[data-testlv="5"].selected { background: #b794f4; }
   .level-btn-all {
     grid-column: span 5; padding: 7px;
     border-radius: 8px; font-size: 0.82rem; font-weight: 700;
@@ -1195,11 +1195,11 @@
   .level-btn .lv-count { color: var(--text3); }
   .level-btn:hover { border-color: rgba(0,0,0,0.28); color: var(--text); }
   .level-btn.selected { color: #fff; }
-  .level-btn[data-lv="1"].selected { background: #10B981; }
-  .level-btn[data-lv="2"].selected { background: #3B82F6; }
-  .level-btn[data-lv="3"].selected { background: #F59E0B; }
-  .level-btn[data-lv="4"].selected { background: #EF4444; }
-  .level-btn[data-lv="5"].selected { background: #8B5CF6; }
+  .level-btn[data-lv="1"].selected,    .level-btn[data-testlv="1"].selected { background: #10B981; }
+  .level-btn[data-lv="2"].selected,    .level-btn[data-testlv="2"].selected { background: #3B82F6; }
+  .level-btn[data-lv="3"].selected,    .level-btn[data-testlv="3"].selected { background: #F59E0B; }
+  .level-btn[data-lv="4"].selected,    .level-btn[data-testlv="4"].selected { background: #EF4444; }
+  .level-btn[data-lv="5"].selected,    .level-btn[data-testlv="5"].selected { background: #8B5CF6; }
   .level-btn-all { background: var(--surface2); border-color: var(--borderMd); color: var(--text2); }
   .level-btn-all:hover { background: var(--surface); color: var(--text); }
   #levelCountMsg { color: var(--text2) !important; }
@@ -1444,14 +1444,14 @@
               </div>
               <div id="testLevelInputs">
                 <div class="level-grid">
-                  <button class="level-btn selected" data-testlv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span><span class="lv-count">464語</span></button>
+                  <button class="level-btn" data-testlv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span><span class="lv-count">464語</span></button>
                   <button class="level-btn" data-testlv="2"><span class="lv-num">②</span><span class="lv-name">中1</span><span class="lv-count">564語</span></button>
-                  <button class="level-btn" data-testlv="3"><span class="lv-num">③</span><span class="lv-name">中2</span><span class="lv-count">749語</span></button>
+                  <button class="level-btn selected" data-testlv="3"><span class="lv-num">③</span><span class="lv-name">中2</span><span class="lv-count">749語</span></button>
                   <button class="level-btn" data-testlv="4"><span class="lv-num">④</span><span class="lv-name">中3</span><span class="lv-count">406語</span></button>
                   <button class="level-btn" data-testlv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span><span class="lv-count">317語</span></button>
                   <button class="level-btn-all" id="btnTestLevelAll">すべて選択 / すべて解除</button>
                 </div>
-                <div style="color:#718096;font-size:0.78rem;margin-top:8px;" id="testLevelCountMsg">選択中: 464語</div>
+                <div style="color:#718096;font-size:0.78rem;margin-top:8px;" id="testLevelCountMsg">選択中: 749語</div>
               </div>
             </div>
             <div class="setting-section">
@@ -2110,7 +2110,7 @@ document.querySelectorAll('input[name=mode]').forEach(r => {
 });
 
 // ===== テスト専用レベル選択 =====
-let testSelectedLevels = new Set([1]);
+let testSelectedLevels = new Set([3]);
 
 function updateTestLevelUI() {
   document.querySelectorAll('.level-btn[data-testlv]').forEach(btn => {
@@ -2132,7 +2132,7 @@ document.querySelectorAll('.level-btn[data-testlv]').forEach(btn => {
   });
 });
 $('btnTestLevelAll').addEventListener('click', () => {
-  testSelectedLevels = testSelectedLevels.size === 5 ? new Set([1]) : new Set([1,2,3,4,5]);
+  testSelectedLevels = testSelectedLevels.size === 5 ? new Set([3]) : new Set([1,2,3,4,5]);
   updateTestLevelUI();
 });
 
