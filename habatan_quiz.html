@@ -4161,10 +4161,15 @@ async function renderRankingScreen() {
     const snap = await fbDb.collection(colName).orderBy('score','desc').limit(200).get();
     let items = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
 
-    if (rankingMode === 'overall') {
+    if (rankingPeriod === 'yearly') {
+      // 年間 = 全件（既存データも含む）をall-timeスコアで表示
+      items.sort((a,b) => (b.score||0)-(a.score||0));
+    } else if (rankingMode === 'overall') {
+      // 総合デイリー/ウィークリー/マンスリー：期間内に活動したユーザーをtotalPtsで
       items = items.filter(d => d[pInfo.kf] === curKey);
       items.sort((a,b) => (b.score||0)-(a.score||0));
     } else {
+      // チャレンジ/テスト：期間内のベストスコアで
       items = items
         .filter(d => d[pInfo.kf] === curKey && (d[pInfo.sf]||0) > 0)
         .sort((a,b) => (b[pInfo.sf]||0)-(a[pInfo.sf]||0));
