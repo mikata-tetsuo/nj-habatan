@@ -665,6 +665,19 @@
   }
   .btn-rv-clear:hover { background:rgba(252,129,129,0.1); }
 
+  /* 復習リスト 設定パネル */
+  .rv-settings-panel {
+    background:rgba(255,255,255,0.04); border-radius:12px;
+    padding:12px 14px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.08);
+  }
+  .rv-settings-panel .setting-section { margin-bottom:8px; }
+  .rv-settings-panel .setting-section:last-child { margin-bottom:0; }
+  .rv-settings-panel .setting-label { font-size:0.78rem; font-weight:700; color:#718096; margin-bottom:5px; text-transform:uppercase; letter-spacing:.04em; }
+  .rv-settings-panel .radio-group { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:0; }
+  .rv-settings-panel .radio-group label { display:flex; align-items:center; gap:4px; cursor:pointer; font-size:0.82rem; background:rgba(255,255,255,0.05); padding:4px 9px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); transition:all .15s; }
+  .rv-settings-panel .radio-group label:has(input:checked) { background:rgba(99,179,237,0.18); border-color:#63b3ed; color:#63b3ed; }
+  .rv-settings-panel .toggle-row { display:flex; align-items:center; justify-content:space-between; }
+
   /* 設定パネル（スライド展開） */
   .settings-panel {
     max-height:0; overflow:hidden;
@@ -925,6 +938,31 @@
     transition: all 0.2s;
     letter-spacing: 0.5px;
   }
+  /* トグルスイッチ */
+  .toggle-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .toggle-switch { position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0; }
+  .toggle-switch input { opacity:0; width:0; height:0; }
+  .toggle-knob { position:absolute; cursor:pointer; inset:0; background:#718096; border-radius:24px; transition:.25s; }
+  .toggle-knob:before { content:''; position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.25s; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+  .toggle-switch input:checked ~ .toggle-knob { background:#63b3ed; }
+  .toggle-switch input:checked ~ .toggle-knob:before { transform:translateX(20px); }
+  /* 自動めくりバー */
+  .auto-flip-bar { display:flex; align-items:center; gap:8px; padding:6px 0 2px; }
+  .auto-flip-progress { flex:1; height:5px; background:rgba(99,179,237,0.15); border-radius:3px; overflow:hidden; }
+  .auto-flip-fill { height:100%; background:linear-gradient(90deg,#63b3ed,#4fd1c5); border-radius:3px; width:100%; }
+  .btn-auto-pause { font-size:0.85rem; background:none; border:1px solid rgba(99,179,237,0.4); border-radius:8px; padding:4px 10px; color:#63b3ed; cursor:pointer; white-space:nowrap; transition:background 0.15s; }
+  .btn-auto-pause:hover { background:rgba(99,179,237,0.1); }
+  /* フラッシュカードモード ヒント */
+  .flip-hint { font-size:0.72rem; color:#63b3ed; text-align:center; margin-top:6px; opacity:0.8; }
+  /* 自動めくりメニュー */
+  .auto-flip-menu {
+    margin-top:10px; padding:12px 14px; border-radius:12px;
+    background:rgba(99,179,237,0.07); border:1px solid rgba(99,179,237,0.2);
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .afl-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .afl-label { font-size:0.7rem; font-weight:700; color:#718096; white-space:nowrap; min-width:52px; }
+  .afl-row .count-btn-sm { padding:5px 8px; font-size:0.75rem; }
   .prac-speak-btn:hover { background: rgba(99,179,237,0.22); border-color: #63b3ed; }
   .prac-speak-btn.speaking { opacity: 1; animation: speakPulse 0.6s ease-in-out infinite; }
 
@@ -1355,7 +1393,7 @@
               <div class="radio-group" style="margin-bottom:10px">
                 <label><input type="radio" name="testMode" value="range"><span>番号指定</span></label>
                 <label><input type="radio" name="testMode" value="level" checked><span>レベル指定</span></label>
-                <label><input type="radio" name="testMode" value="random"><span>ランダム</span></label>
+                <label><input type="radio" name="testMode" value="random"><span>全て</span></label>
               </div>
               <div id="testRangeInputs" class="range-row" style="display:none;">
                 <label>番号</label>
@@ -1422,7 +1460,7 @@
               <div class="radio-group" style="margin-bottom:10px">
                 <label><input type="radio" name="mode" value="range"><span>番号指定</span></label>
                 <label><input type="radio" name="mode" value="level" checked><span>レベル指定</span></label>
-                <label><input type="radio" name="mode" value="random"><span>ランダム</span></label>
+                <label><input type="radio" name="mode" value="random"><span>全て</span></label>
               </div>
               <div id="rangeInputs" class="range-row" style="display:none;">
                 <label>番号</label>
@@ -1440,6 +1478,52 @@
                   <button class="level-btn-all" id="btnLevelAll">すべて選択 / すべて解除</button>
                 </div>
                 <div style="color:#718096;font-size:0.78rem;margin-top:8px;" id="levelCountMsg">選択中: 464語</div>
+              </div>
+            </div>
+            <div class="setting-section">
+              <div class="setting-label">表示順</div>
+              <div class="radio-group" style="margin-bottom:0">
+                <label><input type="radio" name="pracOrder" value="alpha" checked><span>🔤 アルファベット順</span></label>
+                <label><input type="radio" name="pracOrder" value="random"><span>🔀 ランダム</span></label>
+              </div>
+            </div>
+            <div class="setting-section">
+              <div class="setting-label">学習スタイル</div>
+              <div class="radio-group" style="margin-bottom:0">
+                <label><input type="radio" name="studyStyle" value="normal" checked><span>📖 通常</span></label>
+                <label><input type="radio" name="studyStyle" value="en2ja"><span>🔤 英⇒日</span></label>
+                <label><input type="radio" name="studyStyle" value="ja2en"><span>🀄 日⇒英</span></label>
+              </div>
+            </div>
+            <div class="setting-section">
+              <div class="toggle-row">
+                <span class="setting-label" style="margin:0">🔄 自動めくり</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="pracAutoFlipToggle">
+                  <span class="toggle-knob"></span>
+                </label>
+              </div>
+              <div id="autoFlipMenu" class="auto-flip-menu" style="display:none">
+                <div class="afl-row">
+                  <span class="afl-label">読み上げ</span>
+                  <button class="count-btn-sm" data-lang="en">英語</button>
+                  <button class="count-btn-sm" data-lang="ja">日本語</button>
+                  <button class="count-btn-sm active" data-lang="en2ja">英⇒日</button>
+                  <button class="count-btn-sm" data-lang="ja2en">日⇒英</button>
+                </div>
+                <div class="afl-row">
+                  <span class="afl-label">読み上げ後</span>
+                  <button class="count-btn-sm" data-sec="0">0秒</button>
+                  <button class="count-btn-sm active" data-sec="1">1秒</button>
+                  <button class="count-btn-sm" data-sec="3">3秒</button>
+                  <button class="count-btn-sm" data-sec="5">5秒</button>
+                </div>
+                <div class="afl-row">
+                  <span class="afl-label">読み上げ速度</span>
+                  <button class="count-btn-sm" data-rate="0.6">ゆっくり</button>
+                  <button class="count-btn-sm active" data-rate="0.9">ふつう</button>
+                  <button class="count-btn-sm" data-rate="1.3">はやい</button>
+                </div>
               </div>
             </div>
             <button class="btn-action-practice" id="btnPractice">📖 単語帳スタート</button>
@@ -1664,6 +1748,17 @@
         <button class="speak-btn prac-speak-btn" id="pracSpeakBtnLg" title="英語の発音を聞く">🔊 英語の発音</button>
       </div>
 
+      <!-- フリップヒント（英⇒日 / 日⇒英モード） -->
+      <div class="flip-hint" id="pracFlipHint" style="display:none"></div>
+
+      <!-- 自動めくりバー -->
+      <div class="auto-flip-bar" id="autoFlipBar" style="display:none">
+        <button class="btn-auto-pause" id="btnAutoFlipPause">⏸</button>
+        <div class="auto-flip-progress">
+          <div class="auto-flip-fill" id="autoFlipFill"></div>
+        </div>
+      </div>
+
       <!-- ナビゲーション -->
       <div class="practice-nav">
         <button class="btn-nav prev" id="btnPracPrev">← 前へ</button>
@@ -1685,6 +1780,48 @@
       <button class="btn-prac-home" id="btnReviewHome">🏠 ホームに戻る</button>
     </div>
     <div class="card" style="padding:18px;">
+      <!-- 復習練習の設定 -->
+      <div class="rv-settings-panel" id="rvSettingsPanel">
+        <div class="setting-section">
+          <div class="setting-label">学習スタイル</div>
+          <div class="radio-group">
+            <label><input type="radio" name="rvStudyStyle" value="normal" checked><span>📖 通常</span></label>
+            <label><input type="radio" name="rvStudyStyle" value="en2ja"><span>🔤 英⇒日</span></label>
+            <label><input type="radio" name="rvStudyStyle" value="ja2en"><span>🀄 日⇒英</span></label>
+          </div>
+        </div>
+        <div class="setting-section">
+          <div class="toggle-row">
+            <span class="setting-label" style="margin:0">🔄 自動めくり</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="rvAutoFlipToggle">
+              <span class="toggle-knob"></span>
+            </label>
+          </div>
+          <div id="rvAutoFlipMenu" class="auto-flip-menu" style="display:none">
+            <div class="afl-row">
+              <span class="afl-label">読み上げ</span>
+              <button class="count-btn-sm" data-rvlang="en">英語</button>
+              <button class="count-btn-sm" data-rvlang="ja">日本語</button>
+              <button class="count-btn-sm active" data-rvlang="en2ja">英⇒日</button>
+              <button class="count-btn-sm" data-rvlang="ja2en">日⇒英</button>
+            </div>
+            <div class="afl-row">
+              <span class="afl-label">読み上げ後</span>
+              <button class="count-btn-sm" data-rvsec="0">0秒</button>
+              <button class="count-btn-sm active" data-rvsec="1">1秒</button>
+              <button class="count-btn-sm" data-rvsec="3">3秒</button>
+              <button class="count-btn-sm" data-rvsec="5">5秒</button>
+            </div>
+            <div class="afl-row">
+              <span class="afl-label">読み上げ速度</span>
+              <button class="count-btn-sm" data-rvrate="0.6">ゆっくり</button>
+              <button class="count-btn-sm active" data-rvrate="0.9">ふつう</button>
+              <button class="count-btn-sm" data-rvrate="1.3">はやい</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div id="reviewListWrap" class="review-list-wrap"></div>
       <div class="review-btn-row">
         <button class="btn-rv-practice" id="btnReviewPractice">📖 復習練習</button>
@@ -1759,7 +1896,15 @@ function speak(text) {
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'en-US';
-  u.rate = 0.9;
+  u.rate = typeof pracSpeakRate !== 'undefined' ? pracSpeakRate : 0.9;
+  window.speechSynthesis.speak(u);
+}
+function speakJa(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ja-JP';
+  u.rate = typeof pracSpeakRate !== 'undefined' ? pracSpeakRate : 0.9;
   window.speechSynthesis.speak(u);
 }
 
@@ -1969,10 +2114,10 @@ $('cardChallenge').addEventListener('click', () => toggleModeCard('cardChallenge
 $('cardPractice').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardPractice'));
 $('cardTest').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardTest'));
 
-// count-btn-sm
-document.querySelectorAll('.count-btn-sm').forEach(btn => {
+// count-btn-sm (問題数ボタン：data-n を持つものだけ対象)
+document.querySelectorAll('.count-btn-sm[data-n]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.count-btn-sm').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.count-btn-sm[data-n]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     questionCount = parseInt(btn.dataset.n);
   });
@@ -2974,18 +3119,33 @@ showResult = function() {
 // PRACTICE MODE
 // =============================================
 let pracWords = [], pracIdx = 0, pracHideEn = false, pracHideJa = false;
+let pracStudyMode  = 'normal'; // 'normal' | 'en2ja' | 'ja2en'
+let pracAutoFlip   = false;
+let pracAutoFlipSec = 1;
+let pracAutoFlipPaused = false;
+let pracAutoFlipTimer  = null;
+let pracRevealed   = false;
+let pracSpeakRate     = 0.9;   // 読み上げ速度
+let pracAutoFlipLang  = 'en2ja'; // 'en'|'ja'|'en2ja'|'ja2en'
 let pracLastSettings = null;
 
 function buildPracticeWords() {
-  const mode = document.querySelector('input[name=mode]:checked').value;
-  const from = parseInt($('rangeFrom').value) || 1;
-  const to   = parseInt($('rangeTo').value)   || 100;
+  const mode  = document.querySelector('input[name=mode]:checked').value;
+  const order = document.querySelector('input[name=pracOrder]:checked')?.value || 'alpha';
+  const from  = parseInt($('rangeFrom').value) || 1;
+  const to    = parseInt($('rangeTo').value)   || 100;
   let pool;
   if (mode === 'range') pool = WORDS.filter(w => w.id >= from && w.id <= to);
   else if (mode === 'level') pool = WORDS.filter(w => [...selectedLevels].includes(w.level));
   else pool = [...WORDS];
   if (pool.length === 0) { alert('出題範囲に単語がありません'); return false; }
-  pracWords = pool.sort((a, b) => a.id - b.id);
+  // 表示順
+  if (order === 'random') {
+    pool = pool.sort(() => Math.random() - 0.5);
+  } else {
+    pool = pool.sort((a, b) => a.id - b.id);
+  }
+  pracWords = pool;
   pracLastSettings = { mode, from, to, levels: [...selectedLevels] };
   return true;
 }
@@ -3018,16 +3178,36 @@ function showPracticeCard(dir) {
   $('pracStarBtn').textContent = starred ? '⭐ 登録中' : '☆ 復習リストに追加';
   $('pracStarBtn').classList.toggle('starred', starred);
 
-  // 隠す状態を反映
-  $('enPanel').classList.toggle('hidden', pracHideEn);
-  $('jaPanel').classList.toggle('hidden', pracHideJa);
+  // 隠す状態を反映（学習スタイルに応じて）
+  if (pracStudyMode === 'en2ja') {
+    $('enPanel').classList.remove('hidden');
+    $('jaPanel').classList.toggle('hidden', !pracRevealed);
+    const hint = $('pracFlipHint');
+    hint.style.display = 'block';
+    hint.textContent = pracRevealed ? '次へ → をタップ' : '日本語パネルをタップして答えを確認';
+  } else if (pracStudyMode === 'ja2en') {
+    $('enPanel').classList.toggle('hidden', !pracRevealed);
+    $('jaPanel').classList.remove('hidden');
+    const hint = $('pracFlipHint');
+    hint.style.display = 'block';
+    hint.textContent = pracRevealed ? '次へ → をタップ' : '英語パネルをタップして答えを確認';
+  } else {
+    $('enPanel').classList.toggle('hidden', pracHideEn);
+    $('jaPanel').classList.toggle('hidden', pracHideJa);
+    $('pracFlipHint').style.display = 'none';
+  }
 }
 
 $('btnPractice').addEventListener('click', () => {
   if (!buildPracticeWords()) return;
-  pracIdx = 0; pracHideEn = false; pracHideJa = false;
+  pracStudyMode = document.querySelector('input[name=studyStyle]:checked').value;
+  pracAutoFlip  = document.getElementById('pracAutoFlipToggle').checked;
+  pracIdx = 0; pracRevealed = false; pracAutoFlipPaused = false;
+  pracHideEn = false; pracHideJa = false;
+  clearAutoFlip();
   showScreen('practiceScreen');
   showPracticeCard('next');
+  if (pracAutoFlip) setTimeout(() => startAutoFlip(), 400);
 });
 
 // パネルタップで個別トグル（両方非表示は禁止）
@@ -3043,21 +3223,29 @@ $('pracSpeakBtnLg').addEventListener('click', () => {
 });
 
 $('enPanel').addEventListener('click', () => {
+  if (pracStudyMode === 'ja2en') {
+    if (!pracRevealed) { pracRevealed = true; showPracticeCard(null); if (pracAutoFlip) startAutoFlip(); }
+    return;
+  }
+  if (pracStudyMode === 'en2ja') return; // 表面パネルはトグル無効
   const next = !pracHideEn;
-  if (next && pracHideJa) return; // 両方非表示になるので無視
-  pracHideEn = next;
-  showPracticeCard(null);
+  if (next && pracHideJa) return;
+  pracHideEn = next; showPracticeCard(null);
 });
 $('jaPanel').addEventListener('click', () => {
+  if (pracStudyMode === 'en2ja') {
+    if (!pracRevealed) { pracRevealed = true; showPracticeCard(null); if (pracAutoFlip) startAutoFlip(); }
+    return;
+  }
+  if (pracStudyMode === 'ja2en') return; // 表面パネルはトグル無効
   const next = !pracHideJa;
-  if (next && pracHideEn) return; // 両方非表示になるので無視
-  pracHideJa = next;
-  showPracticeCard(null);
+  if (next && pracHideEn) return;
+  pracHideJa = next; showPracticeCard(null);
 });
 
 // 前後ナビ
-$('btnPracPrev').addEventListener('click', () => { if (pracIdx > 0) { pracIdx--; showPracticeCard('prev'); } });
-$('btnPracNext').addEventListener('click', () => { if (pracIdx < pracWords.length - 1) { pracIdx++; showPracticeCard('next'); } });
+$('btnPracPrev').addEventListener('click', () => { if (pracIdx > 0) { pracIdx--; pracRevealed = false; clearAutoFlip(); showPracticeCard('prev'); if (pracAutoFlip) setTimeout(startAutoFlip, 300); } });
+$('btnPracNext').addEventListener('click', () => { if (pracIdx < pracWords.length - 1) { pracIdx++; pracRevealed = false; clearAutoFlip(); showPracticeCard('next'); if (pracAutoFlip) setTimeout(startAutoFlip, 300); } });
 
 // スワイプ対応
 let touchStartX = 0;
@@ -3065,15 +3253,15 @@ $('practiceScreen').addEventListener('touchstart', e => { touchStartX = e.touche
 $('practiceScreen').addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - touchStartX;
   if (Math.abs(dx) < 50) return;
-  if (dx < 0 && pracIdx < pracWords.length - 1) { pracIdx++; showPracticeCard('next'); }
-  if (dx > 0 && pracIdx > 0) { pracIdx--; showPracticeCard('prev'); }
+  if (dx < 0 && pracIdx < pracWords.length - 1) { pracIdx++; pracRevealed = false; clearAutoFlip(); showPracticeCard('next'); if (pracAutoFlip) setTimeout(startAutoFlip, 300); }
+  if (dx > 0 && pracIdx > 0) { pracIdx--; pracRevealed = false; clearAutoFlip(); showPracticeCard('prev'); if (pracAutoFlip) setTimeout(startAutoFlip, 300); }
 }, {passive:true});
 
 // キーボード対応
 document.addEventListener('keydown', e => {
   if (!$('practiceScreen').classList.contains('active')) return;
-  if (e.key === 'ArrowRight' && pracIdx < pracWords.length - 1) { pracIdx++; showPracticeCard('next'); }
-  if (e.key === 'ArrowLeft'  && pracIdx > 0)                    { pracIdx--; showPracticeCard('prev'); }
+  if (e.key === 'ArrowRight' && pracIdx < pracWords.length - 1) { pracIdx++; pracRevealed = false; clearAutoFlip(); showPracticeCard('next'); if (pracAutoFlip) setTimeout(startAutoFlip, 300); }
+  if (e.key === 'ArrowLeft'  && pracIdx > 0)                    { pracIdx--; pracRevealed = false; clearAutoFlip(); showPracticeCard('prev'); if (pracAutoFlip) setTimeout(startAutoFlip, 300); }
   if (e.key === 'e' || e.key === 'E') { const n = !pracHideEn; if (!(n && pracHideJa)) { pracHideEn = n; showPracticeCard(null); } }
   if (e.key === 'j' || e.key === 'J') { const n = !pracHideJa; if (!(n && pracHideEn)) { pracHideJa = n; showPracticeCard(null); } }
 });
@@ -3092,7 +3280,19 @@ $('btnPracToQuiz').addEventListener('click', () => {
   showQuestion();
 });
 
-$('btnPracHome').addEventListener('click', () => showScreen('startScreen'));
+let pracFromReview = false; // 復習リストから練習モードに来たか
+
+$('btnPracHome').addEventListener('click', () => {
+  clearAutoFlip();
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  if (pracFromReview) {
+    pracFromReview = false;
+    $('btnPracHome').textContent = '🏠 設定に戻る';
+    showScreen('reviewScreen');
+  } else {
+    showScreen('startScreen');
+  }
+});
 
 // ⭐ボタン（単語帳モード）
 $('pracStarBtn').addEventListener('click', (e) => {
@@ -3112,6 +3312,8 @@ function renderReviewScreen() {
   const hasList = ids.length > 0;
   $('btnReviewPractice').disabled = !hasList;
   $('btnReviewTest').disabled     = !hasList;
+  // 設定パネルは単語がある時だけ表示
+  $('rvSettingsPanel').style.display = hasList ? '' : 'none';
   if (!hasList) {
     wrap.innerHTML = '<div class="review-empty">復習リストは空です 📭<br>テストで間違えた単語や<br>単語帳モードで ⭐ した単語が追加されます</div>';
     return;
@@ -3151,10 +3353,28 @@ $('btnReviewPractice').addEventListener('click', () => {
   const ids = rvLoad();
   pracWords = WORDS.filter(w => ids.includes(w.id)).sort((a, b) => a.id - b.id);
   if (!pracWords.length) return;
-  pracIdx = 0; pracHideEn = false; pracHideJa = false;
+
+  // 復習リスト画面の設定を読み込む
+  pracStudyMode     = document.querySelector('input[name=rvStudyStyle]:checked')?.value || 'normal';
+  pracAutoFlip      = $('rvAutoFlipToggle').checked;
+  const activeLang  = document.querySelector('#rvAutoFlipMenu [data-rvlang].active');
+  if (activeLang)  pracAutoFlipLang = activeLang.dataset.rvlang;
+  const activeSec   = document.querySelector('#rvAutoFlipMenu [data-rvsec].active');
+  if (activeSec)   pracAutoFlipSec  = parseInt(activeSec.dataset.rvsec);
+  const activeRate  = document.querySelector('#rvAutoFlipMenu [data-rvrate].active');
+  if (activeRate)  pracSpeakRate    = parseFloat(activeRate.dataset.rvrate);
+
+  pracIdx = 0; pracRevealed = false; pracHideEn = false; pracHideJa = false;
+  pracAutoFlipPaused = false;
   pracLastSettings = null;
+  pracFromReview = true;
+
+  // HUDのボタンラベルを変更
+  $('btnPracHome').textContent = '⭐ 復習リストに戻る';
+
   showScreen('practiceScreen');
   showPracticeCard('next');
+  if (pracAutoFlip) setTimeout(startAutoFlip, 400);
 });
 
 // 復習テスト
@@ -3172,6 +3392,62 @@ $('btnReviewTest').addEventListener('click', () => {
   showScreen('gameScreen');
   showQuestion();
 });
+
+// =============================================
+// 復習リスト 自動めくり設定 イベント
+// =============================================
+
+// 自動めくりトグル
+$('rvAutoFlipToggle').addEventListener('change', function() {
+  $('rvAutoFlipMenu').style.display = this.checked ? 'block' : 'none';
+  if (this.checked) updateRvAutoFlipLangOptions();
+});
+
+// 読み上げボタン（data-rvlang）
+document.querySelectorAll('#rvAutoFlipMenu [data-rvlang]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#rvAutoFlipMenu [data-rvlang]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// 読み上げ後ボタン（data-rvsec）
+document.querySelectorAll('#rvAutoFlipMenu [data-rvsec]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#rvAutoFlipMenu [data-rvsec]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// 読み上げ速度ボタン（data-rvrate）
+document.querySelectorAll('#rvAutoFlipMenu [data-rvrate]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#rvAutoFlipMenu [data-rvrate]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// 学習スタイル変更 → 読み上げ選択肢を絞り込む
+function updateRvAutoFlipLangOptions() {
+  const style = document.querySelector('input[name=rvStudyStyle]:checked')?.value || 'normal';
+  const show = {
+    'normal': ['en', 'ja', 'en2ja', 'ja2en'],
+    'en2ja':  ['en', 'en2ja'],
+    'ja2en':  ['ja', 'ja2en'],
+  }[style] || ['en', 'ja', 'en2ja', 'ja2en'];
+  document.querySelectorAll('#rvAutoFlipMenu [data-rvlang]').forEach(btn => {
+    const visible = show.includes(btn.dataset.rvlang);
+    btn.style.display = visible ? '' : 'none';
+    if (!visible && btn.classList.contains('active')) {
+      btn.classList.remove('active');
+      const first = document.querySelector('#rvAutoFlipMenu [data-rvlang="' + show[0] + '"]');
+      if (first) first.classList.add('active');
+    }
+  });
+}
+document.querySelectorAll('input[name=rvStudyStyle]').forEach(r =>
+  r.addEventListener('change', () => { if ($('rvAutoFlipToggle').checked) updateRvAutoFlipLangOptions(); })
+);
 
 // ホーム画面表示時に件数を更新
 const _origShowScreen = showScreen;
@@ -3203,6 +3479,146 @@ let fbBonusPts    = 0;   // ログインボーナス累積
 let fbChallengePts = 0;  // チャレンジ累積
 let fbTestPts      = 0;  // テストハイスコア
 const INVITE_CODE = 'NJ2026';
+
+// ===== 自動めくりロジック =====
+function clearAutoFlip() {
+  if (pracAutoFlipTimer) { clearTimeout(pracAutoFlipTimer); pracAutoFlipTimer = null; }
+  const fill = document.getElementById('autoFlipFill');
+  if (fill) { fill.style.transition = 'none'; fill.style.width = '100%'; }
+  document.getElementById('autoFlipBar').style.display = 'none';
+}
+
+function startAutoFlip() {
+  clearAutoFlip();
+  if (!pracAutoFlip || pracAutoFlipPaused) return;
+
+  const w  = pracWords[pracIdx];
+  const ms = pracAutoFlipSec * 1000;
+
+  // 読み上げ終了後にタイマーをスタートする関数
+  function startTimer() {
+    if (!pracAutoFlip || pracAutoFlipPaused) return;
+    const fill = document.getElementById('autoFlipFill');
+    const bar  = document.getElementById('autoFlipBar');
+    if (ms > 0) {
+      bar.style.display = 'flex';
+      fill.style.transition = 'none'; fill.style.width = '100%';
+      void fill.offsetWidth;
+      fill.style.transition = `width ${ms}ms linear`;
+      fill.style.width = '0%';
+    } else {
+      bar.style.display = 'none'; // 0秒はバー非表示
+    }
+    pracAutoFlipTimer = setTimeout(() => {
+      if (pracIdx < pracWords.length - 1) {
+        pracIdx++; pracRevealed = false;
+        showPracticeCard('next');
+        startAutoFlip();
+      } else {
+        clearAutoFlip();
+      }
+    }, ms);
+  }
+
+  if (!window.speechSynthesis) { startTimer(); return; }
+
+  window.speechSynthesis.cancel();
+  if (pracAutoFlipLang === 'en') {
+    const u = new SpeechSynthesisUtterance(w.en);
+    u.lang = 'en-US'; u.rate = pracSpeakRate;
+    u.onend = startTimer;
+    window.speechSynthesis.speak(u);
+  } else if (pracAutoFlipLang === 'ja') {
+    const u = new SpeechSynthesisUtterance(w.ja);
+    u.lang = 'ja-JP'; u.rate = pracSpeakRate;
+    u.onend = startTimer;
+    window.speechSynthesis.speak(u);
+  } else if (pracAutoFlipLang === 'en2ja') {
+    const uEn = new SpeechSynthesisUtterance(w.en);
+    uEn.lang = 'en-US'; uEn.rate = pracSpeakRate;
+    const uJa = new SpeechSynthesisUtterance(w.ja);
+    uJa.lang = 'ja-JP'; uJa.rate = pracSpeakRate;
+    uJa.onend = startTimer; // 日本語読み上げ終了後にタイマー開始
+    uEn.onend = () => setTimeout(() => window.speechSynthesis.speak(uJa), 350);
+    window.speechSynthesis.speak(uEn);
+  } else if (pracAutoFlipLang === 'ja2en') {
+    const uJa = new SpeechSynthesisUtterance(w.ja);
+    uJa.lang = 'ja-JP'; uJa.rate = pracSpeakRate;
+    const uEn = new SpeechSynthesisUtterance(w.en);
+    uEn.lang = 'en-US'; uEn.rate = pracSpeakRate;
+    uEn.onend = startTimer; // 英語読み上げ終了後にタイマー開始
+    uJa.onend = () => setTimeout(() => window.speechSynthesis.speak(uEn), 350);
+    window.speechSynthesis.speak(uJa);
+  }
+}
+
+// 学習スタイル変更 → 読み上げ選択肢を絞り込む
+function updateAutoFlipLangOptions() {
+  const style = document.querySelector('input[name=studyStyle]:checked')?.value || 'normal';
+  const show = {
+    'normal': ['en', 'ja', 'en2ja', 'ja2en'],
+    'en2ja':  ['en', 'en2ja'],
+    'ja2en':  ['ja', 'ja2en'],
+  }[style] || ['en', 'ja', 'en2ja', 'ja2en'];
+
+  document.querySelectorAll('#autoFlipMenu [data-lang]').forEach(btn => {
+    const visible = show.includes(btn.dataset.lang);
+    btn.style.display = visible ? '' : 'none';
+    // 非表示になったボタンがactiveなら、先頭の表示ボタンをactiveに
+    if (!visible && btn.classList.contains('active')) {
+      btn.classList.remove('active');
+      const first = document.querySelector('#autoFlipMenu [data-lang][style=""]') ||
+                    document.querySelector(`#autoFlipMenu [data-lang="${show[show.length - 1]}"]`);
+      if (first) { first.classList.add('active'); pracAutoFlipLang = first.dataset.lang; }
+    }
+  });
+}
+document.querySelectorAll('input[name=studyStyle]').forEach(r =>
+  r.addEventListener('change', updateAutoFlipLangOptions)
+);
+
+// 自動めくりメニュー各ボタン
+document.querySelectorAll('#autoFlipMenu [data-lang]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#autoFlipMenu [data-lang]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    pracAutoFlipLang = btn.dataset.lang;
+  });
+});
+document.querySelectorAll('#autoFlipMenu [data-sec]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#autoFlipMenu [data-sec]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    pracAutoFlipSec = parseInt(btn.dataset.sec);
+  });
+});
+document.querySelectorAll('#autoFlipMenu [data-rate]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#autoFlipMenu [data-rate]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    pracSpeakRate = parseFloat(btn.dataset.rate);
+  });
+});
+
+// 自動めくり ON/OFF トグル
+document.getElementById('pracAutoFlipToggle').addEventListener('change', e => {
+  pracAutoFlip = e.target.checked;
+  document.getElementById('autoFlipMenu').style.display = pracAutoFlip ? 'block' : 'none';
+});
+
+// 一時停止 / 再開ボタン
+document.getElementById('btnAutoFlipPause').addEventListener('click', () => {
+  if (pracAutoFlipPaused) {
+    pracAutoFlipPaused = false;
+    document.getElementById('btnAutoFlipPause').textContent = '⏸';
+    startAutoFlip();
+  } else {
+    pracAutoFlipPaused = true;
+    document.getElementById('btnAutoFlipPause').textContent = '▶';
+    clearAutoFlip();
+    document.getElementById('autoFlipBar').style.display = 'flex'; // バー維持
+  }
+});
 
 // ===== 更新履歴 =====
 // 新しい情報は上に追加してください👇
@@ -3403,20 +3819,28 @@ function calcLoginBonus(streak) {
   const table = [50, 70, 100, 120, 140, 160, 200, 220, 240, 300];
   return table[Math.min(streak, 10) - 1];
 }
+let _loginBonusRunning = false; // 同一セッション内の二重呼び出し防止フラグ
 async function checkLoginBonus(user) {
   const today = getTodayJST();
-  // 同端末での二重付与をローカルで即ブロック
-  const localKey = 'habitanLastBonus_' + user.uid;
+  const localKey      = 'habitanLastBonus_' + user.uid;
+  const localStreakKey = 'habitanStreak_'    + user.uid;
+
+  // ① 同端末・同日のブロック（同期チェック）
   if (localStorage.getItem(localKey) === today) return;
+  // ② onAuthStateChanged が複数回発火しても 1 回だけ処理
+  if (_loginBonusRunning) return;
+  _loginBonusRunning = true;
+  // ③ async 処理に入る前に即 localStorage を仮セット（競合防止）
+  localStorage.setItem(localKey, today);
+
   try {
     const ref  = fbDb.collection('users').doc(user.uid);
     const doc  = await ref.get();
     const data = doc.data() || {};
-    // Firestoreでも確認（別端末対策）
-    if (data.lastLoginDate === today) {
-      localStorage.setItem(localKey, today);
-      return;
-    }
+
+    // Firestoreでも今日ログイン済みなら終了
+    if (data.lastLoginDate === today) return;
+
     // 前日の日付を YYYY-MM-DD で計算
     const d = new Date();
     const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9 * 60) * 60 * 1000);
@@ -3424,10 +3848,23 @@ async function checkLoginBonus(user) {
     const prevStr = jst.getFullYear() + '-'
       + String(jst.getMonth() + 1).padStart(2, '0') + '-'
       + String(jst.getDate()).padStart(2, '0');
-    const streak = (data.lastLoginDate === prevStr) ? (data.loginStreak || 0) + 1 : 1;
+
+    // Firestore または localStorage のストリークで補完
+    const localStreakDate = localStorage.getItem('habitanStreakDate_' + user.uid);
+    let baseStreak = 0;
+    if (data.lastLoginDate === prevStr) {
+      // Firestore に昨日の記録あり → 正常ルート
+      baseStreak = data.loginStreak || 0;
+    } else if (localStreakDate === prevStr) {
+      // Firestore に記録がなくてもローカルに昨日の記録あり → 救済ルート
+      baseStreak = parseInt(localStorage.getItem(localStreakKey) || '0');
+    }
+    const streak = baseStreak + 1;
     const bonus  = calcLoginBonus(streak);
     fbStreak = streak;
     updateAuthUI();
+
+    // Firestore に書き込み（失敗してもローカルでは記録済み）
     await ref.set({
       displayName: user.displayName,
       photoURL: user.photoURL || '',
@@ -3435,11 +3872,21 @@ async function checkLoginBonus(user) {
       loginStreak: streak,
       totalBonusPoints: firebase.firestore.FieldValue.increment(bonus)
     }, {merge: true});
-    localStorage.setItem(localKey, today); // ローカルにも保存
+
+    // ローカルにストリーク情報も保存（Firestore 書き込み失敗時の翌日補完用）
+    localStorage.setItem(localStreakKey, String(streak));
+    localStorage.setItem('habitanStreakDate_' + user.uid, today);
+
     fbBonusPts += bonus;
     updateAuthUI();
     showLoginBonusModal(bonus, streak);
-  } catch(e) { console.error('Bonus:', e); }
+  } catch(e) {
+    console.error('Bonus:', e);
+    // エラー時は仮セットした localStorage を削除して次回再試行できるようにする
+    localStorage.removeItem(localKey);
+  } finally {
+    _loginBonusRunning = false;
+  }
 }
 function showLoginBonusModal(bonus, streak) {
   const isMax = bonus >= 300;
