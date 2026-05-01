@@ -168,6 +168,11 @@
   }
   .miss-item .en { color: #fc8181; font-weight: 700; }
   .miss-item .ja { color: #a0aec0; }
+  .miss-speak-btn {
+    background: none; border: none; font-size: 1rem; cursor: pointer;
+    opacity: 0.5; padding: 0 4px; flex-shrink: 0;
+  }
+  .miss-speak-btn:hover { opacity: 1; }
 
   .btn-retry {
     width: 100%; padding: 14px;
@@ -2507,7 +2512,14 @@ function showResult() {
     missWords.forEach(w => {
       const d = document.createElement('div');
       d.className = 'miss-item';
-      d.innerHTML = '<span class="en">' + w.en + '</span><span class="ja">' + w.ja + '</span>';
+      d.innerHTML =
+        '<span class="en">' + w.en + '</span>' +
+        '<button class="miss-speak-btn" title="発音を聞く">🔊</button>' +
+        '<span class="ja">' + w.ja + '</span>';
+      d.querySelector('.miss-speak-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        speak(w.en);
+      });
       missEl.appendChild(d);
     });
     soundOtsukare();
@@ -3347,6 +3359,7 @@ $('btnPracToQuiz').addEventListener('click', () => {
 let pracFromReview = false; // 復習リストから練習モードに来たか
 
 $('btnPracHome').addEventListener('click', () => {
+  pracAutoFlip = false; // onend 経由の再起動を防ぐ
   clearAutoFlip();
   window.speechSynthesis && window.speechSynthesis.cancel();
   if (pracFromReview) {
