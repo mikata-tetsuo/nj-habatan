@@ -1,0 +1,12 @@
+# Pythonスクリプト（開発用）
+*.py
+*.json
+*.zip
+
+# Excelファイル（容量大・非公開）
+*.xlsx
+~$*.xlsx
+
+# システム
+.DS_Store
+Thumbs.db
