@@ -1682,14 +1682,15 @@
       <div class="ranking-title">🥇 ランキング</div>
     </div>
     <div class="rank-mode-tabs">
+      <button class="rank-mode-tab" data-mode="overall">🌟 総合</button>
       <button class="rank-mode-tab active" data-mode="challenge">🏆 チャレンジ</button>
       <button class="rank-mode-tab" data-mode="test">⚡ テスト</button>
     </div>
-    <div class="rank-tabs" id="rankDiffTabs">
-      <button class="rank-tab active" data-diff="all">🏆 総合</button>
-      <button class="rank-tab" data-diff="expert">🔥 エキスパート</button>
-      <button class="rank-tab" data-diff="normal">⚡ ノーマル</button>
-      <button class="rank-tab" data-diff="beginner">🌱 ビギナー</button>
+    <div class="rank-tabs" id="rankPeriodTabs">
+      <button class="rank-tab active" data-period="daily">デイリー</button>
+      <button class="rank-tab" data-period="weekly">ウィークリー</button>
+      <button class="rank-tab" data-period="monthly">マンスリー</button>
+      <button class="rank-tab" data-period="yearly">年間</button>
     </div>
     <div class="card" style="padding:16px 12px;">
       <div class="ranking-list" id="rankingList">
@@ -3970,6 +3971,7 @@ async function checkLoginBonus(user) {
     fbBonusPts += bonus;
     updateAuthUI();
     showLoginBonusModal(bonus, streak);
+    updateOverallRanking(); // 追加
   } catch(e) {
     console.error('Bonus:', e);
     // エラー時は仮セットした localStorage を削除して次回再試行できるようにする
@@ -3999,24 +4001,26 @@ async function submitScoreToRanking(scoreVal, difficulty, correct, total) {
   try {
     const ref = fbDb.collection('rankings_test').doc(fbUser.uid);
     const doc = await ref.get();
-    const ex  = doc.data();
-    if (!ex || scoreVal > (ex.score || 0)) {
-      await ref.set({
-        displayName: name,
-        photoURL: fbUser.photoURL || '',
-        score: scoreVal,
-        difficulty: difficulty,
-        correctRate: Math.round(correct / total * 100),
-        questionCount: total,
-        isStudent: fbIsStudent,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      fbTestPts = scoreVal;
-      updateTestCardScore();
-      updateAuthUI();
-      const badge = document.getElementById('scoreSubmittedBadge');
-      if (badge) { badge.classList.add('show'); setTimeout(() => badge.classList.remove('show'), 3000); }
+    const ex  = doc.data() || {};
+    const isNewBest = scoreVal > (ex.score || 0);
+    const updateData = {
+      displayName: name, photoURL: fbUser.photoURL||'',
+      isStudent: fbIsStudent,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      ...calcPeriodUpdates(ex, scoreVal)
+    };
+    if (isNewBest) {
+      updateData.score = scoreVal; updateData.difficulty = difficulty;
+      updateData.correctRate = Math.round(correct/total*100);
+      updateData.questionCount = total;
     }
+    await ref.set(updateData, {merge: true});
+    if (isNewBest) {
+      fbTestPts = scoreVal; updateTestCardScore(); updateAuthUI();
+      const badge = document.getElementById('scoreSubmittedBadge');
+      if (badge) { badge.classList.add('show'); setTimeout(()=>badge.classList.remove('show'),3000); }
+    }
+    await updateOverallRanking();
   } catch(e) { console.error('Score:', e); }
 }
 
@@ -4029,16 +4033,17 @@ async function submitChallengeScore() {
   try {
     const ref = fbDb.collection('rankings_challenge').doc(fbUser.uid);
     const doc = await ref.get();
-    const ex  = doc.data();
-    if (!ex || total > (ex.score || 0)) {
-      await ref.set({
-        displayName: name,
-        photoURL: fbUser.photoURL || '',
-        score: total,
-        isStudent: fbIsStudent,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
+    const ex  = doc.data() || {};
+    const isNewBest = total > (ex.score || 0);
+    const updateData = {
+      displayName: name, photoURL: fbUser.photoURL||'',
+      isStudent: fbIsStudent,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      ...calcPeriodUpdates(ex, total)
+    };
+    if (isNewBest) updateData.score = total;
+    await ref.set(updateData, {merge: true});
+    await updateOverallRanking();
   } catch(e) { console.error('Challenge score:', e); }
 }
 
@@ -4066,12 +4071,64 @@ showChallengeResult = function() {
 };
 
 // ===== ランキング表示 =====
-let rankingMode       = 'challenge';
-let rankingDiffFilter = 'all';
+let rankingMode   = 'challenge';
+let rankingPeriod = 'daily'; // 'daily'|'weekly'|'monthly'|'yearly'
 
-function updateDiffTabVisibility() {
-  const el = document.getElementById('rankDiffTabs');
-  if (el) el.style.display = rankingMode === 'test' ? 'flex' : 'none';
+function getPeriodKey(type) {
+  const d = new Date();
+  const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9*60)*60*1000);
+  const y  = jst.getFullYear();
+  const m  = String(jst.getMonth()+1).padStart(2,'0');
+  const dy = String(jst.getDate()).padStart(2,'0');
+  const dow = jst.getDay() || 7;
+  const monday = new Date(jst); monday.setDate(jst.getDate() - dow + 1);
+  const jan4 = new Date(monday.getFullYear(), 0, 4);
+  const startW1 = new Date(jan4); startW1.setDate(jan4.getDate() - (jan4.getDay()||7) + 1);
+  const weekNum = Math.floor((monday - startW1) / (7*86400000)) + 1;
+  if (type === 'daily')   return `${y}-${m}-${dy}`;
+  if (type === 'weekly')  return `${y}-W${String(weekNum).padStart(2,'0')}`;
+  if (type === 'monthly') return `${y}-${m}`;
+  if (type === 'yearly')  return `${String(y)}`;
+}
+
+function calcPeriodUpdates(ex, newScore) {
+  const periods = [
+    {type:'daily',   sf:'d_score', kf:'d_key'},
+    {type:'weekly',  sf:'w_score', kf:'w_key'},
+    {type:'monthly', sf:'m_score', kf:'m_key'},
+    {type:'yearly',  sf:'y_score', kf:'y_key'},
+  ];
+  const updates = {};
+  for (const {type, sf, kf} of periods) {
+    const key = getPeriodKey(type);
+    if (ex[kf] === key) {
+      updates[sf] = Math.max(ex[sf] || 0, newScore);
+    } else {
+      updates[sf] = newScore;
+    }
+    updates[kf] = key;
+  }
+  return updates;
+}
+
+async function updateOverallRanking() {
+  if (!fbUser) return;
+  const totalPts = (fbBonusPts||0) + (fbChallengePts||0) + (fbTestPts||0);
+  if (totalPts <= 0) return;
+  const name = fbNickname || fbUser.displayName || '名無し';
+  try {
+    const ref = fbDb.collection('rankings_overall').doc(fbUser.uid);
+    const doc = await ref.get();
+    const ex  = doc.data() || {};
+    await ref.set({
+      displayName: name,
+      photoURL: fbUser.photoURL || '',
+      score: totalPts,
+      isStudent: fbIsStudent,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      ...calcPeriodUpdates(ex, totalPts)
+    }, {merge: true});
+  } catch(e) { console.error('Overall ranking:', e); }
 }
 
 async function renderRankingScreen() {
@@ -4079,43 +4136,58 @@ async function renderRankingScreen() {
   const hintEl = document.getElementById('rankingLoginHint');
   listEl.innerHTML = '<div class="ranking-loading">読み込み中... ⏳</div>';
   if (hintEl) hintEl.style.display = fbUser ? 'none' : 'block';
+
+  const periodMap = {
+    daily:   {kf:'d_key', sf:'d_score'},
+    weekly:  {kf:'w_key', sf:'w_score'},
+    monthly: {kf:'m_key', sf:'m_score'},
+    yearly:  {kf:'y_key', sf:'y_score'},
+  };
+  const pInfo = periodMap[rankingPeriod];
+  const curKey = getPeriodKey(rankingPeriod);
+
   try {
-    const col  = rankingMode === 'challenge' ? 'rankings_challenge' : 'rankings_test';
-    const snap = await fbDb.collection(col).orderBy('score', 'desc').limit(50).get();
-    let docs = snap.docs;
-    if (rankingMode === 'test' && rankingDiffFilter !== 'all') {
-      docs = docs.filter(d => d.data().difficulty === rankingDiffFilter);
+    const colName = rankingMode === 'overall' ? 'rankings_overall'
+                  : rankingMode === 'challenge' ? 'rankings_challenge'
+                  : 'rankings_test';
+    const snap = await fbDb.collection(colName).orderBy('score','desc').limit(200).get();
+    let items = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+
+    if (rankingMode === 'overall') {
+      items = items.filter(d => d[pInfo.kf] === curKey);
+      items.sort((a,b) => (b.score||0)-(a.score||0));
+    } else {
+      items = items
+        .filter(d => d[pInfo.kf] === curKey && (d[pInfo.sf]||0) > 0)
+        .sort((a,b) => (b[pInfo.sf]||0)-(a[pInfo.sf]||0));
     }
-    docs = docs.slice(0, 30);
-    if (!docs.length) {
-      const msg = rankingMode === 'challenge'
-        ? 'チャレンジをプレイしてランキングに載ろう！'
-        : 'テストを受けてランキングに載ろう！';
-      listEl.innerHTML = '<div class="ranking-empty">まだ記録がありません 🤔<br>' + msg + '</div>';
+    items = items.slice(0,30);
+
+    if (!items.length) {
+      listEl.innerHTML = '<div class="ranking-empty">まだ記録がありません 🤔<br>プレイしてランキングに載ろう！</div>';
       return;
     }
-    const DL = {expert:'🔥エキスパート', normal:'⚡ノーマル', beginner:'🌱ビギナー', nolimit:'∞無制限'};
-    listEl.innerHTML = docs.map((doc, i) => {
-      const d = doc.data(), isMe = fbUser && doc.id === fbUser.uid;
-      const medal = ['🥇','🥈','🥉'][i] || (i + 1) + '';
+    const DL = {expert:'🔥エキスパート',normal:'⚡ノーマル',beginner:'🌱ビギナー',nolimit:'∞無制限'};
+    listEl.innerHTML = items.map((d,i) => {
+      const isMe = fbUser && d.id === fbUser.uid;
+      const medal = ['🥇','🥈','🥉'][i] || (i+1)+'';
       const nc    = ['top1','top2','top3'][i] || '';
       const avatarHtml = d.photoURL
-        ? '<img class="rank-avatar" src="' + d.photoURL + '" alt="">'
+        ? '<img class="rank-avatar" src="'+d.photoURL+'" alt="">'
         : '<span class="rank-avatar"></span>';
-      const diffBadge = rankingMode === 'test'
-        ? '<span class="rank-diff-badge">' + (DL[d.difficulty] || '') + '</span>'
-        : '';
-      return '<div class="rank-row' + (isMe ? ' rank-me' : '') + '">' +
-        '<span class="rank-num ' + nc + '">' + medal + '</span>' +
+      const scoreVal = rankingMode==='overall' ? (d.score||0) : (d[pInfo.sf]||0);
+      const diffBadge = rankingMode==='test'
+        ? '<span class="rank-diff-badge">'+(DL[d.difficulty]||'')+'</span>' : '';
+      return '<div class="rank-row'+(isMe?' rank-me':'')+'">' +
+        '<span class="rank-num '+nc+'">'+medal+'</span>' +
         avatarHtml +
-        '<span class="rank-name">' + (d.isStudent ? '<span class="rank-student-star">★</span>' : '') + (d.displayName || '名無し') + (isMe ? ' 👈' : '') + '</span>' +
-        '<span class="rank-score">' + (d.score || 0).toLocaleString() + 'pt</span>' +
-        diffBadge +
-        '</div>';
+        '<span class="rank-name">'+(d.isStudent?'<span class="rank-student-star">★</span>':'')+
+        (d.displayName||'名無し')+(isMe?' 👈':'')+
+        '</span><span class="rank-score">'+scoreVal.toLocaleString()+'pt</span>'+diffBadge+'</div>';
     }).join('');
   } catch(e) {
     listEl.innerHTML = '<div class="ranking-empty">読み込みに失敗しました 😢</div>';
-    console.error('Ranking:', e);
+    console.error('Ranking:',e);
   }
 }
 
@@ -4131,25 +4203,21 @@ document.getElementById('cardRanking').addEventListener('click', () => {
     return;
   }
   showScreen('rankingScreen');
-  updateDiffTabVisibility();
   renderRankingScreen();
 });
 document.querySelectorAll('.rank-mode-tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.rank-mode-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.rank-mode-tab').forEach(t=>t.classList.remove('active'));
     tab.classList.add('active');
     rankingMode = tab.dataset.mode;
-    rankingDiffFilter = 'all';
-    document.querySelectorAll('.rank-tab').forEach(t => t.classList.toggle('active', t.dataset.diff === 'all'));
-    updateDiffTabVisibility();
     renderRankingScreen();
   });
 });
-document.querySelectorAll('.rank-tab').forEach(tab => {
+document.querySelectorAll('#rankPeriodTabs .rank-tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.rank-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#rankPeriodTabs .rank-tab').forEach(t=>t.classList.remove('active'));
     tab.classList.add('active');
-    rankingDiffFilter = tab.dataset.diff;
+    rankingPeriod = tab.dataset.period;
     renderRankingScreen();
   });
 });
