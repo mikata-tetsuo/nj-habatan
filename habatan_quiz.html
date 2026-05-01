@@ -181,6 +181,14 @@
     color: #1a1a2e; cursor: pointer; margin-top: 12px; transition: transform 0.1s;
   }
   .btn-retry:hover { transform: translateY(-2px); }
+  .btn-review-go {
+    width: 100%; padding: 12px;
+    background: linear-gradient(135deg, rgba(104,211,145,0.15), rgba(72,187,120,0.1));
+    border: 1px solid rgba(104,211,145,0.5);
+    border-radius: 14px; font-size: 1rem; font-weight: 700;
+    color: #68d391; cursor: pointer; margin-top: 8px; transition: all 0.2s;
+  }
+  .btn-review-go:hover { background: linear-gradient(135deg, rgba(104,211,145,0.28), rgba(72,187,120,0.2)); transform: translateY(-1px); }
   .btn-home {
     width: 100%; padding: 12px;
     background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.2);
@@ -1670,6 +1678,7 @@
       <div id="missSectionTitle" style="color:#fc8181;font-weight:700;font-size:0.9rem;margin-top:4px;"></div>
       <div class="miss-list" id="missList"></div>
       <button class="btn-retry" id="btnRetry">🔄 もう一度（同じ設定）</button>
+      <button class="btn-review-go" id="btnResultToReview">📚 復習リストへ</button>
       <button class="btn-home" id="btnHome">🏠 設定に戻る</button>
       <div class="score-submitted-badge" id="scoreSubmittedBadge">✅ ランキングに登録しました！（ベストスコア更新）</div>
     </div>
@@ -1923,6 +1932,7 @@
       <button class="btn-ch-next" id="btnChNext">次のステージへ →</button>
       <button class="btn-ch-retry" id="btnChRetry" style="display:none;">🔁 もう一度！</button>
       <button class="btn-ch-map"  id="btnChToMap">📊 マップを見る</button>
+      <button class="btn-review-go" id="btnChToReview">📚 復習リストへ</button>
       <button class="btn-home" id="btnChHome" style="margin-top:6px;">🏠 ホームに戻る</button>
     </div>
   </div>
@@ -2596,6 +2606,10 @@ function launchFireworks() {
   });
 }
 
+$('btnResultToReview').addEventListener('click', () => {
+  renderReviewScreen();
+  showScreen('reviewScreen');
+});
 $('btnRetry').addEventListener('click', () => {
   if (!buildQuestions(lastSettings)) return;
   resetState();
@@ -3153,6 +3167,7 @@ function showChallengeResult() {
 // ===== ボタンイベント =====
 // challenge via cardChallenge click (see toggleModeCard)
 $('btnChLvBack').addEventListener('click', () => { updateChHomeScore(); showScreen('startScreen'); });
+$('btnChToReview').addEventListener('click', () => { renderReviewScreen(); showScreen('reviewScreen'); });
 $('btnChHome').addEventListener('click', () => { updateChHomeScore(); showScreen('startScreen'); });
 $('btnMapBack').addEventListener('click', () => {
   renderChallengeLevelScreen();
