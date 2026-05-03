@@ -3843,6 +3843,12 @@ async function loadNickname(user) {
     const testData = testDoc.exists ? testDoc.data() : {};
     fbNickname     = data.nickname || null;
     fbStreak       = data.loginStreak || 0;
+    // checkLoginBonus が今日すでに実行済みなら localStorage の値を使う（Firestoreキャッシュ上書き問題の回避）
+    const _lsDate   = localStorage.getItem('habitanStreakDate_' + user.uid);
+    const _lsStreak = parseInt(localStorage.getItem('habitanStreak_' + user.uid) || '0');
+    if (_lsDate === getTodayJST() && _lsStreak > 0) {
+      fbStreak = _lsStreak;
+    }
     fbIsStudent    = data.isStudent === true;
     fbInviteAsked  = Object.prototype.hasOwnProperty.call(data, 'isStudent');
     fbBonusPts     = data.totalBonusPoints || 0;
