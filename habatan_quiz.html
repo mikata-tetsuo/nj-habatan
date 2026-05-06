@@ -2315,42 +2315,42 @@ function buildPrintSheet() {
            + '<span class="q-blank"></span></div>';
   });
 
-  // 解答HTML（4列）
+  // 解答HTML（問題と同じ2列レイアウト・___の上に解答表示）
   let aRows = '';
   questions.forEach((w, i) => {
+    const q = direction === 'en2ja' ? w.en : w.ja;
     const a = direction === 'en2ja' ? w.ja : w.en;
-    aRows += '<div class="a-row"><span class="a-num">' + (i+1) + '.</span>'
-           + '<span class="a-word">' + a + '</span></div>';
+    aRows += '<div class="q-row"><span class="q-num">' + (i+1) + '.</span>'
+           + '<span class="q-word">' + q + '</span>'
+           + '<span class="q-blank q-ans">' + a + '</span></div>';
   });
 
   const html = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">'
     + '<title>はばトレ プリント</title><style>'
     + '* { box-sizing:border-box; margin:0; padding:0; }'
     + 'body { font-family:"Hiragino Sans","Meiryo",sans-serif; font-size:11pt; color:#000; background:#fff; }'
-    + '.page { width:210mm; min-height:297mm; padding:14mm 12mm; }'
+    + '.page { width:210mm; min-height:297mm; padding:12mm 8mm; }'
     + '.header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2.5px solid #222; padding-bottom:7px; margin-bottom:10px; }'
     + '.header-title { font-size:14pt; font-weight:bold; }'
     + '.header-sub { font-size:9pt; color:#555; margin-top:3px; }'
     + '.header-info { text-align:right; font-size:9pt; color:#555; line-height:1.6; }'
-    + '.name-row { display:flex; gap:24px; margin-bottom:12px; font-size:10pt; align-items:center; }'
-    + '.name-line { display:inline-block; width:120px; border-bottom:1px solid #333; margin-left:4px; }'
-    + '.score-line { display:inline-block; width:50px; border-bottom:1px solid #333; margin-left:4px; }'
-    + '.q-grid { display:grid; grid-template-columns:1fr 1fr; gap:1px 14px; }'
-    + '.q-row { display:flex; align-items:flex-end; gap:4px; padding:4px 2px; border-bottom:1px dotted #ccc; font-size:10.5pt; min-height:22px; }'
-    + '.q-num { min-width:20px; color:#888; font-size:9pt; padding-bottom:1px; }'
-    + '.q-word { flex:0 0 auto; min-width:100px; max-width:145px; font-weight:600; }'
-    + '.q-blank { flex:1; border-bottom:1.5px solid #333; margin-left:2px; min-width:60px; display:inline-block; }'
+    + '.name-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; font-size:10pt; white-space:nowrap; }'
+    + '.name-line { flex:1; border-bottom:1px solid #333; min-width:200px; }'
+    + '.score-area { display:flex; align-items:center; gap:6px; white-space:nowrap; }'
+    + '.score-line { display:inline-block; width:80px; border-bottom:1px solid #333; }'
+    + '.q-grid { display:grid; grid-template-columns:1fr 1fr; gap:0px 10px; }'
+    + '.q-row { display:flex; align-items:flex-end; gap:3px; padding:3px 2px; border-bottom:1px dotted #ccc; font-size:10pt; min-height:20px; overflow:hidden; }'
+    + '.q-num { flex-shrink:0; min-width:22px; color:#888; font-size:9pt; padding-bottom:1px; }'
+    + '.q-word { flex-shrink:0; width:120px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10pt; }'
+    + '.q-blank { flex:1; border-bottom:1.5px solid #333; min-width:40px; display:inline-block; overflow:hidden; }'
+    + '.q-ans { color:#1a56d6; font-weight:700; font-size:9pt; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.4; padding-bottom:1px; }'
     + '.page-break { page-break-before:always; }'
-    + '.ans-header { border-bottom:2px solid #333; padding-bottom:6px; margin-bottom:12px; font-size:13pt; font-weight:bold; }'
+    + '.ans-header { border-bottom:2px solid #333; padding-bottom:6px; margin-bottom:10px; font-size:13pt; font-weight:bold; }'
     + '.ans-header span { font-size:10pt; color:#666; margin-left:8px; font-weight:normal; }'
-    + '.a-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px 8px; }'
-    + '.a-row { display:flex; gap:4px; padding:3px 2px; border-bottom:1px dotted #eee; font-size:10pt; }'
-    + '.a-num { min-width:20px; color:#aaa; font-size:9pt; }'
-    + '.a-word { font-weight:600; }'
     + '.no-print { text-align:center; padding:14px 0 8px; }'
     + '.btn-p { padding:10px 28px; background:#3B82F6; color:#fff; border:none; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer; margin-right:10px; }'
     + '.btn-p:hover { background:#2563EB; }'
-    + '@media print { .no-print { display:none; } .page { padding:10mm 9mm; } }'
+    + '@media print { .no-print { display:none; } .page { padding:8mm 6mm; } }'
     + '</style></head><body>'
     + '<div class="no-print"><button class="btn-p" onclick="window.print()">🖨️ 印刷する</button>'
     + '<button class="btn-p" style="background:#6B7280" onclick="window.close()">✕ 閉じる</button></div>'
@@ -2358,11 +2358,12 @@ function buildPrintSheet() {
     + '<div class="header"><div><div class="header-title">はばトレ 単語テスト【' + dirLabel + '】</div>'
     + '<div class="header-sub">' + lvLabel + '　全' + questions.length + '問</div></div>'
     + '<div class="header-info">' + dateStr + '<br>はばトレ by 中谷塾</div></div>'
-    + '<div class="name-row">名前：<span class="name-line"></span>&nbsp;&nbsp;&nbsp;得点：<span class="score-line"></span> ／ ' + questions.length + '点</div>'
+    + '<div class="name-row">名前：<span class="name-line"></span>'
+    + '<span class="score-area">得点：<span class="score-line"></span>／' + questions.length + '点</span></div>'
     + '<div class="q-grid">' + qRows + '</div></div>'
     + '<div class="page page-break">'
     + '<div class="ans-header">解答 <span>【' + dirLabel + '】' + lvLabel + '</span></div>'
-    + '<div class="a-grid">' + aRows + '</div></div>'
+    + '<div class="q-grid">' + aRows + '</div></div>'
     + '</body></html>';
 
   const win = window.open('', '_blank');
