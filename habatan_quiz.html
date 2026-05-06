@@ -422,11 +422,11 @@
   .level-btn .lv-count { font-size: 0.62rem; color: #718096; display: block; }
   .level-btn:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
   .level-btn.selected { color: #1a1a2e; border-color: transparent; }
-  .level-btn[data-lv="1"].selected,    .level-btn[data-testlv="1"].selected { background: #68d391; }
-  .level-btn[data-lv="2"].selected,    .level-btn[data-testlv="2"].selected { background: #63b3ed; }
-  .level-btn[data-lv="3"].selected,    .level-btn[data-testlv="3"].selected { background: #f6ad55; }
-  .level-btn[data-lv="4"].selected,    .level-btn[data-testlv="4"].selected { background: #fc8181; }
-  .level-btn[data-lv="5"].selected,    .level-btn[data-testlv="5"].selected { background: #b794f4; }
+  .level-btn[data-lv="1"].selected,    .level-btn[data-testlv="1"].selected,  .level-btn[data-testsetlv="1"].selected,  .level-btn[data-pracsetlv="1"].selected,  .level-btn[data-printsetlv="1"].selected { background: #68d391; }
+  .level-btn[data-lv="2"].selected,    .level-btn[data-testlv="2"].selected,  .level-btn[data-testsetlv="2"].selected,  .level-btn[data-pracsetlv="2"].selected,  .level-btn[data-printsetlv="2"].selected { background: #63b3ed; }
+  .level-btn[data-lv="3"].selected,    .level-btn[data-testlv="3"].selected,  .level-btn[data-testsetlv="3"].selected,  .level-btn[data-pracsetlv="3"].selected,  .level-btn[data-printsetlv="3"].selected { background: #f6ad55; }
+  .level-btn[data-lv="4"].selected,    .level-btn[data-testlv="4"].selected,  .level-btn[data-testsetlv="4"].selected,  .level-btn[data-pracsetlv="4"].selected,  .level-btn[data-printsetlv="4"].selected { background: #fc8181; }
+  .level-btn[data-lv="5"].selected,    .level-btn[data-testlv="5"].selected,  .level-btn[data-testsetlv="5"].selected,  .level-btn[data-pracsetlv="5"].selected,  .level-btn[data-printsetlv="5"].selected { background: #b794f4; }
   .level-btn-all {
     grid-column: span 5; padding: 7px;
     border-radius: 8px; font-size: 0.82rem; font-weight: 700;
@@ -1204,11 +1204,11 @@
   .level-btn .lv-count { color: var(--text3); }
   .level-btn:hover { border-color: rgba(0,0,0,0.28); color: var(--text); }
   .level-btn.selected { color: #fff; }
-  .level-btn[data-lv="1"].selected,    .level-btn[data-testlv="1"].selected,  .level-btn[data-printlv="1"].selected { background: #10B981; }
-  .level-btn[data-lv="2"].selected,    .level-btn[data-testlv="2"].selected,  .level-btn[data-printlv="2"].selected { background: #3B82F6; }
-  .level-btn[data-lv="3"].selected,    .level-btn[data-testlv="3"].selected,  .level-btn[data-printlv="3"].selected { background: #F59E0B; }
-  .level-btn[data-lv="4"].selected,    .level-btn[data-testlv="4"].selected,  .level-btn[data-printlv="4"].selected { background: #EF4444; }
-  .level-btn[data-lv="5"].selected,    .level-btn[data-testlv="5"].selected,  .level-btn[data-printlv="5"].selected { background: #8B5CF6; }
+  .level-btn[data-lv="1"].selected,    .level-btn[data-testlv="1"].selected,  .level-btn[data-printlv="1"].selected,  .level-btn[data-testsetlv="1"].selected,  .level-btn[data-pracsetlv="1"].selected,  .level-btn[data-printsetlv="1"].selected { background: #10B981; }
+  .level-btn[data-lv="2"].selected,    .level-btn[data-testlv="2"].selected,  .level-btn[data-printlv="2"].selected,  .level-btn[data-testsetlv="2"].selected,  .level-btn[data-pracsetlv="2"].selected,  .level-btn[data-printsetlv="2"].selected { background: #3B82F6; }
+  .level-btn[data-lv="3"].selected,    .level-btn[data-testlv="3"].selected,  .level-btn[data-printlv="3"].selected,  .level-btn[data-testsetlv="3"].selected,  .level-btn[data-pracsetlv="3"].selected,  .level-btn[data-printsetlv="3"].selected { background: #F59E0B; }
+  .level-btn[data-lv="4"].selected,    .level-btn[data-testlv="4"].selected,  .level-btn[data-printlv="4"].selected,  .level-btn[data-testsetlv="4"].selected,  .level-btn[data-pracsetlv="4"].selected,  .level-btn[data-printsetlv="4"].selected { background: #EF4444; }
+  .level-btn[data-lv="5"].selected,    .level-btn[data-testlv="5"].selected,  .level-btn[data-printlv="5"].selected,  .level-btn[data-testsetlv="5"].selected,  .level-btn[data-pracsetlv="5"].selected,  .level-btn[data-printsetlv="5"].selected { background: #8B5CF6; }
   .level-btn-all { background: var(--surface2); border-color: var(--borderMd); color: var(--text2); }
   .level-btn-all:hover { background: var(--surface); color: var(--text); }
   #levelCountMsg { color: var(--text2) !important; }
@@ -1444,12 +1444,24 @@
                 <label><input type="radio" name="testMode" value="range"><span>番号指定</span></label>
                 <label><input type="radio" name="testMode" value="level" checked><span>レベル指定</span></label>
                 <label><input type="radio" name="testMode" value="random"><span>全て</span></label>
+                <label><input type="radio" name="testMode" value="set"><span>セット指定</span></label>
               </div>
               <div id="testRangeInputs" class="range-row" style="display:none;">
                 <label>番号</label>
                 <input type="number" id="testRangeFrom" value="1" min="1" max="2500"> 〜
                 <input type="number" id="testRangeTo" value="100" min="1" max="2500">
                 <span style="color:#718096;font-size:0.82rem;">（全2,500語）</span>
+              </div>
+              <div id="testSetInputs" style="display:none;">
+                <div class="level-grid" style="margin-bottom:10px;">
+                  <button class="level-btn selected" data-testsetlv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span></button>
+                  <button class="level-btn" data-testsetlv="2"><span class="lv-num">②</span><span class="lv-name">中1</span></button>
+                  <button class="level-btn" data-testsetlv="3"><span class="lv-num">③</span><span class="lv-name">中2</span></button>
+                  <button class="level-btn" data-testsetlv="4"><span class="lv-num">④</span><span class="lv-name">中3</span></button>
+                  <button class="level-btn" data-testsetlv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span></button>
+                </div>
+                <div class="count-row-compact" id="testSetBtns" style="margin-bottom:8px;flex-wrap:wrap;"></div>
+                <div style="color:#718096;font-size:0.78rem;" id="testSetCountMsg">50語</div>
               </div>
               <div id="testLevelInputs">
                 <div class="level-grid">
@@ -1511,12 +1523,24 @@
                 <label><input type="radio" name="printMode" value="range"><span>番号指定</span></label>
                 <label><input type="radio" name="printMode" value="level" checked><span>レベル指定</span></label>
                 <label><input type="radio" name="printMode" value="random"><span>全て</span></label>
+                <label><input type="radio" name="printMode" value="set"><span>セット指定</span></label>
               </div>
               <div id="printRangeInputs" class="range-row" style="display:none;">
                 <label>番号</label>
                 <input type="number" id="printRangeFrom" value="1" min="1" max="2500"> 〜
                 <input type="number" id="printRangeTo" value="100" min="1" max="2500">
                 <span style="color:#718096;font-size:0.82rem;">（全2,500語）</span>
+              </div>
+              <div id="printSetInputs" style="display:none;">
+                <div class="level-grid" style="margin-bottom:10px;">
+                  <button class="level-btn selected" data-printsetlv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span></button>
+                  <button class="level-btn" data-printsetlv="2"><span class="lv-num">②</span><span class="lv-name">中1</span></button>
+                  <button class="level-btn" data-printsetlv="3"><span class="lv-num">③</span><span class="lv-name">中2</span></button>
+                  <button class="level-btn" data-printsetlv="4"><span class="lv-num">④</span><span class="lv-name">中3</span></button>
+                  <button class="level-btn" data-printsetlv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span></button>
+                </div>
+                <div class="count-row-compact" id="printSetBtns" style="margin-bottom:8px;flex-wrap:wrap;"></div>
+                <div style="color:#718096;font-size:0.78rem;" id="printSetCountMsg">50語</div>
               </div>
               <div id="printLevelInputs">
                 <div class="level-grid">
@@ -1569,12 +1593,24 @@
                 <label><input type="radio" name="mode" value="range"><span>番号指定</span></label>
                 <label><input type="radio" name="mode" value="level" checked><span>レベル指定</span></label>
                 <label><input type="radio" name="mode" value="random"><span>全て</span></label>
+                <label><input type="radio" name="mode" value="set"><span>セット指定</span></label>
               </div>
               <div id="rangeInputs" class="range-row" style="display:none;">
                 <label>番号</label>
                 <input type="number" id="rangeFrom" value="1" min="1" max="2500"> 〜
                 <input type="number" id="rangeTo" value="100" min="1" max="2500">
                 <span style="color:#718096;font-size:0.82rem;">（全2,500語）</span>
+              </div>
+              <div id="pracSetInputs" style="display:none;">
+                <div class="level-grid" style="margin-bottom:10px;">
+                  <button class="level-btn selected" data-pracsetlv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span></button>
+                  <button class="level-btn" data-pracsetlv="2"><span class="lv-num">②</span><span class="lv-name">中1</span></button>
+                  <button class="level-btn" data-pracsetlv="3"><span class="lv-num">③</span><span class="lv-name">中2</span></button>
+                  <button class="level-btn" data-pracsetlv="4"><span class="lv-num">④</span><span class="lv-name">中3</span></button>
+                  <button class="level-btn" data-pracsetlv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span></button>
+                </div>
+                <div class="count-row-compact" id="pracSetBtns" style="margin-bottom:8px;flex-wrap:wrap;"></div>
+                <div style="color:#718096;font-size:0.78rem;" id="pracSetCountMsg">50語</div>
               </div>
               <div id="levelInputs">
                 <div class="level-grid">
@@ -2175,6 +2211,7 @@ document.querySelectorAll('input[name=mode]').forEach(r => {
   r.addEventListener('change', () => {
     $('rangeInputs').style.display  = r.value === 'range' ? 'flex' : 'none';
     $('levelInputs').style.display  = r.value === 'level' ? 'block' : 'none';
+    $('pracSetInputs').style.display = r.value === 'set'  ? 'block' : 'none';
   });
 });
 
@@ -2209,8 +2246,144 @@ document.querySelectorAll('input[name=testMode]').forEach(r => {
   r.addEventListener('change', () => {
     $('testRangeInputs').style.display = r.value === 'range' ? 'flex' : 'none';
     $('testLevelInputs').style.display = r.value === 'level' ? 'block' : 'none';
+    $('testSetInputs').style.display   = r.value === 'set'   ? 'block' : 'none';
   });
 });
+
+// ===== セット指定 共通ヘルパー =====
+function getLevelWords(level) {
+  return WORDS.filter(w => w.level === level).sort((a, b) => a.lnum - b.lnum);
+}
+function getSetPool(level, setIdx) {
+  const lw = getLevelWords(level);
+  return lw.slice(setIdx * 50, (setIdx + 1) * 50);
+}
+function getSetCount(level) {
+  return Math.ceil(getLevelWords(level).length / 50);
+}
+
+// テストモード セット指定
+let testSetLevel = 2;
+let testSetIdx   = 0;
+
+function buildTestSetBtns() {
+  const count = getSetCount(testSetLevel);
+  const container = $('testSetBtns');
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const start = i * 50 + 1;
+    const end   = Math.min((i + 1) * 50, getLevelWords(testSetLevel).length);
+    const btn   = document.createElement('button');
+    btn.className = 'count-btn-sm' + (i === testSetIdx ? ' active' : '');
+    btn.textContent = '第' + (i + 1) + 'セット（' + start + '-' + end + '）';
+    btn.addEventListener('click', () => {
+      testSetIdx = i;
+      container.querySelectorAll('.count-btn-sm').forEach((b, j) => b.classList.toggle('active', j === i));
+      updateTestSetCountMsg();
+    });
+    container.appendChild(btn);
+  }
+  updateTestSetCountMsg();
+}
+
+function updateTestSetCountMsg() {
+  const pool = getSetPool(testSetLevel, testSetIdx);
+  $('testSetCountMsg').textContent = '選択中: ' + pool.length + '語（第' + (testSetIdx + 1) + 'セット）';
+}
+
+document.querySelectorAll('.level-btn[data-testsetlv]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    testSetLevel = parseInt(btn.dataset.testsetlv);
+    testSetIdx   = 0;
+    document.querySelectorAll('.level-btn[data-testsetlv]').forEach(b => {
+      b.classList.toggle('selected', parseInt(b.dataset.testsetlv) === testSetLevel);
+    });
+    buildTestSetBtns();
+  });
+});
+buildTestSetBtns();
+
+// 単語帳モード セット指定
+let pracSetLevel = 2;
+let pracSetIdx   = 0;
+
+function buildPracSetBtns() {
+  const count = getSetCount(pracSetLevel);
+  const container = $('pracSetBtns');
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const start = i * 50 + 1;
+    const end   = Math.min((i + 1) * 50, getLevelWords(pracSetLevel).length);
+    const btn   = document.createElement('button');
+    btn.className = 'count-btn-sm' + (i === pracSetIdx ? ' active' : '');
+    btn.textContent = '第' + (i + 1) + 'セット（' + start + '-' + end + '）';
+    btn.addEventListener('click', () => {
+      pracSetIdx = i;
+      container.querySelectorAll('.count-btn-sm').forEach((b, j) => b.classList.toggle('active', j === i));
+      updatePracSetCountMsg();
+    });
+    container.appendChild(btn);
+  }
+  updatePracSetCountMsg();
+}
+
+function updatePracSetCountMsg() {
+  const pool = getSetPool(pracSetLevel, pracSetIdx);
+  $('pracSetCountMsg').textContent = '選択中: ' + pool.length + '語（第' + (pracSetIdx + 1) + 'セット）';
+}
+
+document.querySelectorAll('.level-btn[data-pracsetlv]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    pracSetLevel = parseInt(btn.dataset.pracsetlv);
+    pracSetIdx   = 0;
+    document.querySelectorAll('.level-btn[data-pracsetlv]').forEach(b => {
+      b.classList.toggle('selected', parseInt(b.dataset.pracsetlv) === pracSetLevel);
+    });
+    buildPracSetBtns();
+  });
+});
+buildPracSetBtns();
+
+// プリント作成モード セット指定
+let printSetLevel = 2;
+let printSetIdx   = 0;
+
+function buildPrintSetBtns() {
+  const count = getSetCount(printSetLevel);
+  const container = $('printSetBtns');
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const start = i * 50 + 1;
+    const end   = Math.min((i + 1) * 50, getLevelWords(printSetLevel).length);
+    const btn   = document.createElement('button');
+    btn.className = 'count-btn-sm' + (i === printSetIdx ? ' active' : '');
+    btn.textContent = '第' + (i + 1) + 'セット（' + start + '-' + end + '）';
+    btn.addEventListener('click', () => {
+      printSetIdx = i;
+      container.querySelectorAll('.count-btn-sm').forEach((b, j) => b.classList.toggle('active', j === i));
+      updatePrintSetCountMsg();
+    });
+    container.appendChild(btn);
+  }
+  updatePrintSetCountMsg();
+}
+
+function updatePrintSetCountMsg() {
+  const pool = getSetPool(printSetLevel, printSetIdx);
+  $('printSetCountMsg').textContent = '選択中: ' + pool.length + '語（第' + (printSetIdx + 1) + 'セット）';
+}
+
+document.querySelectorAll('.level-btn[data-printsetlv]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    printSetLevel = parseInt(btn.dataset.printsetlv);
+    printSetIdx   = 0;
+    document.querySelectorAll('.level-btn[data-printsetlv]').forEach(b => {
+      b.classList.toggle('selected', parseInt(b.dataset.printsetlv) === printSetLevel);
+    });
+    buildPrintSetBtns();
+  });
+});
+buildPrintSetBtns();
 
 // モードカード アコーディオン
 function toggleModeCard(cardId) {
@@ -2267,6 +2440,7 @@ document.querySelectorAll('input[name=printMode]').forEach(r => {
   r.addEventListener('change', () => {
     $('printRangeInputs').style.display = r.value === 'range' ? 'flex' : 'none';
     $('printLevelInputs').style.display = r.value === 'level' ? 'block' : 'none';
+    $('printSetInputs').style.display   = r.value === 'set'   ? 'block' : 'none';
   });
 });
 document.querySelectorAll('.count-btn-sm[data-pn]').forEach(btn => {
@@ -2291,6 +2465,8 @@ function buildPrintSheet() {
     pool = WORDS.filter(w => w.id >= from && w.id <= to);
   } else if (mode === 'level') {
     pool = WORDS.filter(w => printSelectedLevels.has(w.level));
+  } else if (mode === 'set') {
+    pool = getSetPool(printSetLevel, printSetIdx);
   } else {
     pool = [...WORDS];
   }
@@ -2302,7 +2478,9 @@ function buildPrintSheet() {
   const LEVEL_NAMES = {1:'小学生', 2:'中1', 3:'中2', 4:'中3', 5:'高校受験'};
   const dirLabel  = direction === 'en2ja' ? '英語→日本語' : '日本語→英語';
   const lvLabel   = mode === 'level' ? [...printSelectedLevels].sort().map(l => LEVEL_NAMES[l]).join('・')
-                  : mode === 'range' ? '番号指定' : '全範囲';
+                  : mode === 'range' ? '番号指定'
+                  : mode === 'set'   ? (LEVEL_NAMES[printSetLevel] + ' 第' + (printSetIdx + 1) + 'セット')
+                  : '全範囲';
   const today     = new Date();
   const dateStr   = today.getFullYear() + '年' + (today.getMonth()+1) + '月' + today.getDate() + '日';
 
@@ -2458,6 +2636,10 @@ function buildQuestions(settings) {
   } else if (mode === 'level') {
     const lvs = settings ? settings.levels : [...testSelectedLevels];
     pool = WORDS.filter(w => lvs.includes(w.level));
+  } else if (mode === 'set') {
+    const lv  = settings ? settings.setLevel : testSetLevel;
+    const idx = settings ? settings.setIdx   : testSetIdx;
+    pool = getSetPool(lv, idx);
   } else {
     pool = [...WORDS];
   }
@@ -2472,7 +2654,7 @@ function buildQuestions(settings) {
     return { word: q, choices: [q, ...wrongs].sort(() => Math.random() - 0.5) };
   });
 
-  const levels = [...testSelectedLevels]; lastSettings = { mode, from, to, qn, direction, levels }; window._direction = direction;
+  const levels = [...testSelectedLevels]; lastSettings = { mode, from, to, qn, direction, levels, setLevel: testSetLevel, setIdx: testSetIdx }; window._direction = direction;
   return true;
 }
 
@@ -3415,6 +3597,7 @@ function buildPracticeWords() {
   let pool;
   if (mode === 'range') pool = WORDS.filter(w => w.id >= from && w.id <= to);
   else if (mode === 'level') pool = WORDS.filter(w => [...selectedLevels].includes(w.level));
+  else if (mode === 'set') pool = getSetPool(pracSetLevel, pracSetIdx);
   else pool = [...WORDS];
   if (pool.length === 0) { alert('出題範囲に単語がありません'); return false; }
   // 表示順
@@ -3424,7 +3607,7 @@ function buildPracticeWords() {
     pool = pool.sort((a, b) => a.id - b.id);
   }
   pracWords = pool;
-  pracLastSettings = { mode, from, to, levels: [...selectedLevels] };
+  pracLastSettings = { mode, from, to, levels: [...selectedLevels], setLevel: pracSetLevel, setIdx: pracSetIdx };
   return true;
 }
 
