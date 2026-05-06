@@ -2306,6 +2306,9 @@ function buildPrintSheet() {
   const today     = new Date();
   const dateStr   = today.getFullYear() + '年' + (today.getMonth()+1) + '月' + today.getDate() + '日';
 
+  // 行数計算（2列なので ceil(問題数/2)）
+  const rowCount = Math.ceil(questions.length / 2);
+
   // 問題HTML
   let qRows = '';
   questions.forEach((w, i) => {
@@ -2329,39 +2332,46 @@ function buildPrintSheet() {
     + '<title>はばトレ プリント</title><style>'
     + '* { box-sizing:border-box; margin:0; padding:0; }'
     + 'body { font-family:"Hiragino Sans","Meiryo",sans-serif; font-size:11pt; color:#000; background:#fff; }'
-    + '.page { width:210mm; min-height:297mm; padding:12mm 8mm; }'
-    + '.header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2.5px solid #222; padding-bottom:7px; margin-bottom:10px; }'
-    + '.header-title { font-size:14pt; font-weight:bold; }'
-    + '.header-sub { font-size:9pt; color:#555; margin-top:3px; }'
-    + '.header-info { text-align:right; font-size:9pt; color:#555; line-height:1.6; }'
-    + '.name-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; font-size:10pt; white-space:nowrap; }'
-    + '.name-line { flex:1; border-bottom:1px solid #333; min-width:200px; }'
-    + '.score-area { display:flex; align-items:center; gap:6px; white-space:nowrap; }'
-    + '.score-line { display:inline-block; width:80px; border-bottom:1px solid #333; }'
-    + '.q-grid { display:grid; grid-template-columns:1fr 1fr; gap:0px 10px; }'
-    + '.q-row { display:flex; align-items:flex-end; gap:3px; padding:3px 2px; border-bottom:1px dotted #ccc; font-size:10pt; min-height:20px; overflow:hidden; }'
-    + '.q-num { flex-shrink:0; min-width:22px; color:#888; font-size:9pt; padding-bottom:1px; }'
-    + '.q-word { flex-shrink:0; width:120px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10pt; }'
-    + '.q-blank { flex:1; border-bottom:1.5px solid #333; min-width:40px; display:inline-block; overflow:hidden; }'
-    + '.q-ans { color:#1a56d6; font-weight:700; font-size:9pt; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.4; padding-bottom:1px; }'
+    // ページ：flexで縦全体を使う
+    + '.page { width:210mm; height:297mm; padding:8mm 7mm; display:flex; flex-direction:column; }'
+    // ヘッダー：細い1行（日付・クレジット）
+    + '.top-bar { font-size:8pt; color:#666; text-align:right; border-bottom:1px solid #bbb; padding-bottom:3px; margin-bottom:6px; flex-shrink:0; }'
+    // タイトル行：左にタイトル、右に名前・得点
+    + '.title-row { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:6px; flex-shrink:0; border-bottom:2.5px solid #222; padding-bottom:6px; }'
+    + '.title-left .main-title { font-size:13pt; font-weight:bold; }'
+    + '.title-left .sub-title { font-size:8.5pt; color:#555; margin-top:2px; }'
+    + '.title-right { display:flex; align-items:flex-end; gap:10px; white-space:nowrap; font-size:9.5pt; flex-shrink:0; }'
+    + '.name-line { display:inline-block; width:130px; border-bottom:1px solid #333; margin-left:3px; }'
+    + '.score-line { display:inline-block; width:50px; border-bottom:1px solid #333; margin-left:3px; }'
+    // 問題グリッド：残り全スペースをflex:1で使い切る
+    + '.q-grid { flex:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(' + rowCount + ',1fr); gap:0 10px; }'
+    + '.q-row { display:flex; align-items:flex-end; gap:3px; padding:2px 2px; border-bottom:1px dotted #ccc; font-size:10pt; overflow:hidden; }'
+    + '.q-num { flex-shrink:0; min-width:22px; color:#888; font-size:8.5pt; padding-bottom:1px; }'
+    + '.q-word { flex-shrink:0; width:118px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }'
+    + '.q-blank { flex:1; border-bottom:1.5px solid #333; min-width:30px; }'
+    + '.q-ans { color:#1a56d6; font-weight:700; font-size:8.5pt; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-bottom:1px; line-height:1.3; }'
     + '.page-break { page-break-before:always; }'
-    + '.ans-header { border-bottom:2px solid #333; padding-bottom:6px; margin-bottom:10px; font-size:13pt; font-weight:bold; }'
-    + '.ans-header span { font-size:10pt; color:#666; margin-left:8px; font-weight:normal; }'
+    + '.ans-header { font-size:12pt; font-weight:bold; border-bottom:2px solid #333; padding-bottom:5px; margin-bottom:8px; flex-shrink:0; }'
+    + '.ans-header span { font-size:9pt; color:#666; margin-left:8px; font-weight:normal; }'
     + '.no-print { text-align:center; padding:14px 0 8px; }'
     + '.btn-p { padding:10px 28px; background:#3B82F6; color:#fff; border:none; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer; margin-right:10px; }'
     + '.btn-p:hover { background:#2563EB; }'
-    + '@media print { .no-print { display:none; } .page { padding:8mm 6mm; } }'
+    + '@media print { .no-print { display:none; } }'
     + '</style></head><body>'
     + '<div class="no-print"><button class="btn-p" onclick="window.print()">🖨️ 印刷する</button>'
     + '<button class="btn-p" style="background:#6B7280" onclick="window.close()">✕ 閉じる</button></div>'
+    // ── 問題ページ ──
     + '<div class="page">'
-    + '<div class="header"><div><div class="header-title">はばトレ 単語テスト【' + dirLabel + '】</div>'
-    + '<div class="header-sub">' + lvLabel + '　全' + questions.length + '問</div></div>'
-    + '<div class="header-info">' + dateStr + '<br>はばトレ by 中谷塾</div></div>'
-    + '<div class="name-row">名前：<span class="name-line"></span>'
-    + '<span class="score-area">得点：<span class="score-line"></span>／' + questions.length + '点</span></div>'
+    + '<div class="top-bar">' + dateStr + '　はばトレ by 中谷塾</div>'
+    + '<div class="title-row">'
+    +   '<div class="title-left"><div class="main-title">はばトレ 単語テスト【' + dirLabel + '】</div>'
+    +   '<div class="sub-title">' + lvLabel + '　全' + questions.length + '問</div></div>'
+    +   '<div class="title-right">名前：<span class="name-line"></span>&nbsp;&nbsp;得点：<span class="score-line"></span>／' + questions.length + '点</div>'
+    + '</div>'
     + '<div class="q-grid">' + qRows + '</div></div>'
+    // ── 解答ページ ──
     + '<div class="page page-break">'
+    + '<div class="top-bar">' + dateStr + '　はばトレ by 中谷塾</div>'
     + '<div class="ans-header">解答 <span>【' + dirLabel + '】' + lvLabel + '</span></div>'
     + '<div class="q-grid">' + aRows + '</div></div>'
     + '</body></html>';
