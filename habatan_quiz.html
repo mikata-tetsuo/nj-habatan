@@ -1180,6 +1180,14 @@
   .btn-action-practice { background: linear-gradient(135deg, #059669, #34D399); box-shadow: 0 4px 16px rgba(16,185,129,0.25); }
   .btn-action-test { background: linear-gradient(135deg, #FBBF24, #F97316); color: #fff; box-shadow: 0 4px 16px rgba(251,191,36,0.25); }
   .btn-action-print { background: linear-gradient(135deg, #3B82F6, #8B5CF6); color: #fff; box-shadow: 0 4px 16px rgba(59,130,246,0.25); }
+  .btn-action-ji { background: linear-gradient(135deg, #0284C7, #0EA5E9); color: #fff; box-shadow: 0 4px 16px rgba(14,165,233,0.25); }
+  .btn-dont-know { background: var(--surface2); border-color: var(--borderMd); color: var(--text2); }
+  .btn-dont-know:hover { background: var(--surface); border-color: rgba(0,0,0,0.25); }
+  .level-btn[data-jisetlv="1"].selected { background: #10B981; }
+  .level-btn[data-jisetlv="2"].selected { background: #3B82F6; }
+  .level-btn[data-jisetlv="3"].selected { background: #F59E0B; }
+  .level-btn[data-jisetlv="4"].selected { background: #EF4444; }
+  .level-btn[data-jisetlv="5"].selected { background: #8B5CF6; }
 
   /* 難易度（ホーム） */
   .home-diff-section { background: var(--surface); border-color: var(--border); }
@@ -1353,6 +1361,35 @@
   /* スコア送信バッジ */
   .score-submitted-badge { display:none; background:rgba(104,211,145,0.12); border:1px solid rgba(104,211,145,0.4); border-radius:8px; padding:6px 12px; font-size:0.82rem; color:#059669; text-align:center; margin-top:8px; }
   .score-submitted-badge.show { display:block; }
+  /* ===== じっくりモード ===== */
+  .mode-card.jimode .mode-card-icon { background:linear-gradient(135deg,#0369A1,#0EA5E9); }
+  .mode-card.jimode .mode-card-title { color:#0EA5E9; }
+  .mode-card.jimode:hover, .mode-card.jimode.active { border-color:rgba(14,165,233,0.5); }
+
+  .btn-action-ji {
+    width:100%; padding:14px; border:none; border-radius:12px;
+    font-size:1.05rem; font-weight:800; cursor:pointer;
+    background:linear-gradient(135deg,#0EA5E9,#06B6D4); color:#fff;
+    letter-spacing:1px; transition:transform 0.1s, box-shadow 0.2s;
+    box-shadow:0 4px 16px rgba(14,165,233,0.3); margin-top:4px;
+  }
+  .btn-action-ji:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(14,165,233,0.5); }
+
+  .btn-dont-know {
+    display:none; width:100%; padding:9px 14px; border-radius:10px;
+    background:rgba(160,174,192,0.12); border:1px solid rgba(160,174,192,0.3);
+    color:#718096; font-size:0.85rem; font-weight:700; cursor:pointer;
+    margin-top:8px; transition:all 0.18s; letter-spacing:0.5px;
+  }
+  .btn-dont-know:hover { background:rgba(160,174,192,0.22); border-color:#a0aec0; }
+
+  /* じっくりモード レベルボタン色 */
+  .level-btn[data-jisetlv="1"].selected { background: #68d391; }
+  .level-btn[data-jisetlv="2"].selected { background: #63b3ed; }
+  .level-btn[data-jisetlv="3"].selected { background: #f6ad55; }
+  .level-btn[data-jisetlv="4"].selected { background: #fc8181; }
+  .level-btn[data-jisetlv="5"].selected { background: #b794f4; }
+
   /* ランキング モードタブ */
   .rank-mode-tabs { display:flex; gap:8px; margin-bottom:12px; }
   .rank-mode-tab { flex:1; padding:10px 8px; border-radius:10px; border:1px solid var(--borderMd,rgba(0,0,0,0.14)); background:none; color:var(--text2,#64748B); font-size:0.92rem; font-weight:700; cursor:pointer; transition:all 0.2s; }
@@ -1494,6 +1531,85 @@
               </div>
             </div>
             <button class="btn-action-test" id="btnStart">▶ テストスタート！</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- じっくりモード -->
+      <div class="mode-card jimode" id="cardJi">
+        <div class="mode-card-header">
+          <div class="mode-card-icon">🧠</div>
+          <div class="mode-card-text">
+            <div class="mode-card-title">じっくりモード</div>
+            <div class="mode-card-desc">タイマーなし・4択でじっくり考えよう！正解+50pt</div>
+          </div>
+          <div class="mode-card-arrow">›</div>
+        </div>
+        <div class="settings-panel" id="settingsJi">
+          <div class="settings-inner">
+            <div class="setting-section">
+              <div class="setting-label">出題方向</div>
+              <div class="radio-group" style="margin-bottom:0">
+                <label><input type="radio" name="jiDirection" value="en2ja" checked><span>英語 → 日本語</span></label>
+                <label><input type="radio" name="jiDirection" value="ja2en"><span>日本語 → 英語</span></label>
+              </div>
+            </div>
+            <div class="setting-section">
+              <div class="setting-label">出題範囲</div>
+              <div class="radio-group" style="margin-bottom:10px">
+                <label><input type="radio" name="jiMode" value="range"><span>番号指定</span></label>
+                <label><input type="radio" name="jiMode" value="level" checked><span>レベル指定</span></label>
+                <label><input type="radio" name="jiMode" value="random"><span>全て</span></label>
+                <label><input type="radio" name="jiMode" value="set"><span>セット指定</span></label>
+              </div>
+              <div id="jiRangeInputs" class="range-row" style="display:none;">
+                <label>番号</label>
+                <input type="number" id="jiRangeFrom" value="1" min="1" max="2500"> 〜
+                <input type="number" id="jiRangeTo" value="100" min="1" max="2500">
+                <span style="color:#718096;font-size:0.82rem;">（全2,500語）</span>
+              </div>
+              <div id="jiSetInputs" style="display:none;">
+                <div class="level-grid" style="margin-bottom:10px;">
+                  <button class="level-btn selected" data-jisetlv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span></button>
+                  <button class="level-btn" data-jisetlv="2"><span class="lv-num">②</span><span class="lv-name">中1</span></button>
+                  <button class="level-btn" data-jisetlv="3"><span class="lv-num">③</span><span class="lv-name">中2</span></button>
+                  <button class="level-btn" data-jisetlv="4"><span class="lv-num">④</span><span class="lv-name">中3</span></button>
+                  <button class="level-btn" data-jisetlv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span></button>
+                </div>
+                <div class="count-row-compact" id="jiSetBtns" style="margin-bottom:8px;flex-wrap:wrap;"></div>
+                <div style="color:#718096;font-size:0.78rem;" id="jiSetCountMsg">50語</div>
+              </div>
+              <div id="jiLevelInputs">
+                <div class="level-grid">
+                  <button class="level-btn selected" data-jilv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span><span class="lv-count">464語</span></button>
+                  <button class="level-btn" data-jilv="2"><span class="lv-num">②</span><span class="lv-name">中1</span><span class="lv-count">564語</span></button>
+                  <button class="level-btn" data-jilv="3"><span class="lv-num">③</span><span class="lv-name">中2</span><span class="lv-count">749語</span></button>
+                  <button class="level-btn" data-jilv="4"><span class="lv-num">④</span><span class="lv-name">中3</span><span class="lv-count">406語</span></button>
+                  <button class="level-btn" data-jilv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span><span class="lv-count">317語</span></button>
+                  <button class="level-btn-all" id="btnJiLevelAll">すべて選択 / すべて解除</button>
+                </div>
+                <div style="color:#718096;font-size:0.78rem;margin-top:8px;" id="jiLevelCountMsg">選択中: 464語</div>
+              </div>
+            </div>
+            <div class="setting-section">
+              <div class="setting-label">問題数</div>
+              <div class="count-row-compact" id="jiCountBtns">
+                <button class="count-btn-sm" data-jn="10">10問</button>
+                <button class="count-btn-sm active" data-jn="20">20問</button>
+                <button class="count-btn-sm" data-jn="30">30問</button>
+                <button class="count-btn-sm" data-jn="50">50問</button>
+              </div>
+            </div>
+            <div class="setting-section">
+              <div class="setting-label">ルール</div>
+              <div class="rules-mini">
+                <div class="rule-chip">🧠 タイマーなし<br>じっくり考えよう</div>
+                <div class="rule-chip">✅ 正解 <b>+50pt</b><br>ランキングに加算</div>
+                <div class="rule-chip">❓ わからない<br>復習リストへ追加</div>
+                <div class="rule-chip">🚫 コンボなし<br>落ち着いて解答</div>
+              </div>
+            </div>
+            <button class="btn-action-ji" id="btnJiStart">🧠 じっくりスタート！</button>
           </div>
         </div>
       </div>
@@ -1752,6 +1868,7 @@
       <div class="q-word" id="qWord">word</div>
       <div class="timeout-msg" id="timeoutMsg"></div>
       <div class="choices" id="choices"></div>
+      <button class="btn-dont-know" id="btnDontKnow">❓ わからない（復習リストへ）</button>
     </div>
   </div>
 
@@ -2174,6 +2291,8 @@ let combo = 0, maxCombo = 0, speedBonusTotal = 0, comboBonusTotal = 0;
 let missWords = [], questionCount = 20;
 let timerInterval = null, nextTimer = null, startTime = 0, answered = false;
 let lastSettings = null;
+let jiMode = false;     // じっくりモード中はtrue
+let jiQuestionCount = 20;
 
 const $ = id => document.getElementById(id);
 
@@ -2385,9 +2504,94 @@ document.querySelectorAll('.level-btn[data-printsetlv]').forEach(btn => {
 });
 buildPrintSetBtns();
 
+// ===== じっくりモード セット指定 =====
+let jiSetLevel = 1;
+let jiSetIdx   = 0;
+
+function buildJiSetBtns() {
+  const count = getSetCount(jiSetLevel);
+  const container = $('jiSetBtns');
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const start = i * 50 + 1;
+    const end   = Math.min((i + 1) * 50, getLevelWords(jiSetLevel).length);
+    const btn   = document.createElement('button');
+    btn.className = 'count-btn-sm' + (i === jiSetIdx ? ' active' : '');
+    btn.textContent = '第' + (i + 1) + 'セット（' + start + '-' + end + '）';
+    btn.addEventListener('click', () => {
+      jiSetIdx = i;
+      container.querySelectorAll('.count-btn-sm').forEach((b, j) => b.classList.toggle('active', j === i));
+      updateJiSetCountMsg();
+    });
+    container.appendChild(btn);
+  }
+  updateJiSetCountMsg();
+}
+
+function updateJiSetCountMsg() {
+  const pool = getSetPool(jiSetLevel, jiSetIdx);
+  $('jiSetCountMsg').textContent = '選択中: ' + pool.length + '語（第' + (jiSetIdx + 1) + 'セット）';
+}
+
+document.querySelectorAll('.level-btn[data-jisetlv]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    jiSetLevel = parseInt(btn.dataset.jisetlv);
+    jiSetIdx   = 0;
+    document.querySelectorAll('.level-btn[data-jisetlv]').forEach(b => {
+      b.classList.toggle('selected', parseInt(b.dataset.jisetlv) === jiSetLevel);
+    });
+    buildJiSetBtns();
+  });
+});
+buildJiSetBtns();
+
+// ===== じっくりモード レベル選択 =====
+let jiSelectedLevels = new Set([1]);
+
+function updateJiLevelUI() {
+  document.querySelectorAll('.level-btn[data-jilv]').forEach(btn => {
+    btn.classList.toggle('selected', jiSelectedLevels.has(parseInt(btn.dataset.jilv)));
+  });
+  const total = [...jiSelectedLevels].reduce((s, lv) => s + LEVEL_COUNTS[lv], 0);
+  $('jiLevelCountMsg').textContent = '選択中: ' + total + '語';
+}
+
+document.querySelectorAll('.level-btn[data-jilv]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const lv = parseInt(btn.dataset.jilv);
+    if (jiSelectedLevels.has(lv)) {
+      if (jiSelectedLevels.size > 1) jiSelectedLevels.delete(lv);
+    } else {
+      jiSelectedLevels.add(lv);
+    }
+    updateJiLevelUI();
+  });
+});
+$('btnJiLevelAll').addEventListener('click', () => {
+  jiSelectedLevels = jiSelectedLevels.size === 5 ? new Set([1]) : new Set([1,2,3,4,5]);
+  updateJiLevelUI();
+});
+updateJiLevelUI();
+
+document.querySelectorAll('input[name=jiMode]').forEach(r => {
+  r.addEventListener('change', () => {
+    $('jiRangeInputs').style.display  = r.value === 'range' ? 'flex'  : 'none';
+    $('jiLevelInputs').style.display  = r.value === 'level' ? 'block' : 'none';
+    $('jiSetInputs').style.display    = r.value === 'set'   ? 'block' : 'none';
+  });
+});
+
+document.querySelectorAll('.count-btn-sm[data-jn]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.count-btn-sm[data-jn]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    jiQuestionCount = parseInt(btn.dataset.jn);
+  });
+});
+
 // モードカード アコーディオン
 function toggleModeCard(cardId) {
-  const cards = ['cardChallenge','cardPractice','cardTest','cardPrint'];
+  const cards = ['cardChallenge','cardPractice','cardTest','cardPrint','cardJi'];
   cards.forEach(id => {
     const card = $(id);
     if (!card) return;
@@ -2408,6 +2612,7 @@ $('cardChallenge').addEventListener('click', () => toggleModeCard('cardChallenge
 $('cardPractice').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardPractice'));
 $('cardTest').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardTest'));
 $('cardPrint').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardPrint'));
+$('cardJi').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardJi'));
 
 // ===== プリント作成モード =====
 let printQuestionCount = 20;
@@ -2679,6 +2884,40 @@ function buildQuestions(settings) {
   return true;
 }
 
+// じっくりモード専用 buildQuestions
+function buildJiQuestions(settings) {
+  const mode      = settings.mode;
+  const from      = settings.from;
+  const to        = settings.to;
+  const qn        = settings.qn;
+  const direction = settings.direction;
+
+  let pool;
+  if (mode === 'range') {
+    pool = WORDS.filter(w => w.id >= from && w.id <= to);
+  } else if (mode === 'level') {
+    pool = WORDS.filter(w => settings.levels.includes(w.level));
+  } else if (mode === 'set') {
+    pool = getSetPool(settings.setLevel, settings.setIdx);
+  } else {
+    pool = [...WORDS];
+  }
+
+  if (pool.length < 4) { alert('出題範囲が少なすぎます（4語以上必要）'); return false; }
+
+  pool = pool.sort(() => Math.random() - 0.5).slice(0, Math.min(qn, pool.length));
+
+  questions = pool.map(q => {
+    const wrongs = WORDS.filter(w => w.id !== q.id)
+      .sort(() => Math.random() - 0.5).slice(0, 3);
+    return { word: q, choices: [q, ...wrongs].sort(() => Math.random() - 0.5) };
+  });
+
+  lastSettings = { ...settings };
+  window._direction = direction;
+  return true;
+}
+
 function resetState() {
   score = 0; correctCount = 0; combo = 0; maxCombo = 0;
   speedBonusTotal = 0; comboBonusTotal = 0; missWords = [];
@@ -2714,6 +2953,24 @@ $('btnStart').addEventListener('click', () => {
   showQuestion();
 });
 
+$('btnJiStart').addEventListener('click', () => {
+  const jMode     = document.querySelector('input[name=jiMode]:checked').value;
+  const jFrom     = parseInt($('jiRangeFrom').value) || 1;
+  const jTo       = parseInt($('jiRangeTo').value)   || 100;
+  const jDir      = document.querySelector('input[name=jiDirection]:checked').value;
+  const jSettings = {
+    mode: jMode, from: jFrom, to: jTo, qn: jiQuestionCount,
+    direction: jDir, levels: [...jiSelectedLevels],
+    setLevel: jiSetLevel, setIdx: jiSetIdx,
+    isJi: true
+  };
+  if (!buildJiQuestions(jSettings)) return;
+  jiMode = true;
+  resetState();
+  showScreen('gameScreen');
+  showQuestion();
+});
+
 function showQuestion() {
   const q = questions[current];
   answered = false;
@@ -2721,7 +2978,7 @@ function showQuestion() {
   $('hudQ').textContent = (current + 1) + '/' + questions.length;
   $('hudScore').textContent = score;
   $('hudCorrect').textContent = correctCount;
-  $('hudCombo').textContent = combo > 0 ? combo + '🔥' : '-';
+  $('hudCombo').textContent = jiMode ? '-' : (combo > 0 ? combo + '🔥' : '-');
   const lv = q.word.level || 1;
   const lvNames = {1:'①小学生',2:'②中1',3:'③中2',4:'④中3',5:'⑤高校受験'};
   $('qNum').innerHTML = 'No.' + q.word.id + ' <span class="level-badge lv-badge-' + lv + '">' + lvNames[lv] + '</span>';
@@ -2729,7 +2986,7 @@ function showQuestion() {
   $('qWord').textContent = dir === 'en2ja' ? q.word.en : q.word.ja;
 
   const badge = $('comboBadge');
-  if (combo >= 3) { badge.textContent = '🔥 ' + combo + '連コンボ中！'; badge.classList.add('show'); }
+  if (!jiMode && combo >= 3) { badge.textContent = '🔥 ' + combo + '連コンボ中！'; badge.classList.add('show'); }
   else { badge.classList.remove('show'); }
 
   const choicesEl = $('choices');
@@ -2742,12 +2999,21 @@ function showQuestion() {
     choicesEl.appendChild(btn);
   });
 
+  // わからないボタンの表示制御
+  const dontKnowBtn = $('btnDontKnow');
+  if (dontKnowBtn) dontKnowBtn.style.display = jiMode ? 'block' : 'none';
+
   clearInterval(timerInterval);
-  if (DIFFICULTIES[currentDifficulty].noTimer) {
+  if (jiMode || DIFFICULTIES[currentDifficulty].noTimer) {
+    // じっくりモード: タイマーバーを非表示
+    const timerWrap = document.querySelector('#gameScreen .timer-wrap');
+    if (timerWrap) timerWrap.style.display = jiMode ? 'none' : 'block';
     $('timerBar').style.width = '100%';
     $('timerBar').className = 'timer-bar';
     $('timerText').textContent = '∞';
   } else {
+    const timerWrap = document.querySelector('#gameScreen .timer-wrap');
+    if (timerWrap) timerWrap.style.display = 'block';
     startTime = performance.now();
     updateTimer();
     timerInterval = setInterval(updateTimer, 50);
@@ -2767,7 +3033,7 @@ function updateTimer() {
 }
 
 function onTimeout() {
-  if (answered) return;
+  if (answered || jiMode) return;
   answered = true;
   clearInterval(timerInterval);
   combo = 0;
@@ -2799,34 +3065,46 @@ function onAnswer(choice, btn, q) {
     soundCorrect();
     setTimeout(() => speak(q.word.en), 350); // 正解後に英単語を発音
     correctCount++;
-    combo++;
-    maxCombo = Math.max(maxCombo, combo);
-    let gained = SCORE_CORRECT;
+    if (jiMode) {
+      // じっくりモード: +50pt・コンボなし
+      const jiGained = 50;
+      score += jiGained;
+      $('hudScore').textContent = score;
+      $('hudCorrect').textContent = correctCount;
+      $('hudCombo').textContent = '-';
+      showBonusFlash('✅ +50pt');
+    } else {
+      combo++;
+      maxCombo = Math.max(maxCombo, combo);
+      let gained = SCORE_CORRECT;
 
-    if (elapsed <= SPEED_THRESHOLD) {
-      gained += SCORE_SPEED;
-      speedBonusTotal += SCORE_SPEED;
-      showBonusFlash('⚡ スピード！ +' + SCORE_SPEED, true); soundSpeed();
-    }
-    for (const ct of COMBO_STEPS) {
-      if (combo === ct.n) {
-        gained += ct.bonus;
-        comboBonusTotal += ct.bonus;
-        const delay = elapsed <= SPEED_THRESHOLD ? 700 : 0;
-        setTimeout(() => { showBonusFlash(ct.label); soundCombo(combo); }, delay);
-        break;
+      if (elapsed <= SPEED_THRESHOLD) {
+        gained += SCORE_SPEED;
+        speedBonusTotal += SCORE_SPEED;
+        showBonusFlash('⚡ スピード！ +' + SCORE_SPEED, true); soundSpeed();
       }
+      for (const ct of COMBO_STEPS) {
+        if (combo === ct.n) {
+          gained += ct.bonus;
+          comboBonusTotal += ct.bonus;
+          const delay = elapsed <= SPEED_THRESHOLD ? 700 : 0;
+          setTimeout(() => { showBonusFlash(ct.label); soundCombo(combo); }, delay);
+          break;
+        }
+      }
+      score += gained;
+      $('hudScore').textContent = score;
+      $('hudCorrect').textContent = correctCount;
+      $('hudCombo').textContent = combo + '🔥';
     }
-    score += gained;
-    $('hudScore').textContent = score;
-    $('hudCorrect').textContent = correctCount;
-    $('hudCombo').textContent = combo + '🔥';
     showFeedback('⭕', '#68d391');
   } else {
     btn.classList.add('wrong');
     soundWrong();
-    combo = 0;
-    $('hudCombo').textContent = '-';
+    if (!jiMode) {
+      combo = 0;
+      $('hudCombo').textContent = '-';
+    }
     document.querySelectorAll('.choice-btn').forEach(b => {
       const _dir2 = window._direction || 'en2ja';
       if (b.textContent === (_dir2 === 'en2ja' ? q.word.ja : q.word.en)) b.classList.add('reveal');
@@ -2835,8 +3113,28 @@ function onAnswer(choice, btn, q) {
     rvAdd(q.word.id);
     showFeedback('❌', '#fc8181');
   }
-  nextTimer = setTimeout(nextOrResult, 900);
+  // わからないボタンを非表示（回答後）
+  const dontKnowBtn2 = $('btnDontKnow');
+  if (dontKnowBtn2) dontKnowBtn2.style.display = 'none';
+  nextTimer = setTimeout(nextOrResult, jiMode ? 1200 : 900);
 }
+
+$('btnDontKnow').addEventListener('click', () => {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  // 選択肢を無効化・正解を表示
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    const _dir = window._direction || 'en2ja';
+    if (b.textContent === (_dir === 'en2ja' ? q.word.ja : q.word.en)) b.classList.add('reveal');
+  });
+  missWords.push(q.word);
+  rvAdd(q.word.id);
+  showFeedback('❌', '#fc8181');
+  $('btnDontKnow').style.display = 'none';
+  nextTimer = setTimeout(nextOrResult, 1200);
+});
 
 function nextOrResult() {
   hideFeedback();
@@ -2906,7 +3204,11 @@ function showBonusFlash(text, isSpeed) {
 
 function showResult() {
   showScreen('resultScreen');
-  submitScoreToRanking(score, currentDifficulty, correctCount, questions.length);
+  if (jiMode) {
+    submitScoreToRanking(score, 'ji', correctCount, questions.length);
+  } else {
+    submitScoreToRanking(score, currentDifficulty, correctCount, questions.length);
+  }
   const total = questions.length;
   const pct = Math.round((correctCount / total) * 100);
   const titles = [[90,'🏆 パーフェクト！'],[70,'🌟 よくできました！'],[50,'👍 まあまあ！'],[0,'💪 もっと頑張ろう！']];
@@ -2914,15 +3216,26 @@ function showResult() {
   // 難易度バッジ
   const diffBadge = document.getElementById('resultDiffBadge');
   if (diffBadge) {
-    const d = DIFFICULTIES[currentDifficulty];
-    diffBadge.textContent = d.emoji + ' ' + d.name;
-    diffBadge.className = currentDifficulty;
+    if (jiMode) {
+      diffBadge.textContent = '🧠 じっくりモード';
+      diffBadge.className = '';
+      diffBadge.style.background = 'rgba(14,165,233,0.15)';
+      diffBadge.style.borderColor = 'rgba(14,165,233,0.4)';
+      diffBadge.style.color = '#0EA5E9';
+    } else {
+      const d = DIFFICULTIES[currentDifficulty];
+      diffBadge.textContent = d.emoji + ' ' + d.name;
+      diffBadge.className = currentDifficulty;
+      diffBadge.style.background = '';
+      diffBadge.style.borderColor = '';
+      diffBadge.style.color = '';
+    }
   }
   $('resultScore').textContent = score.toLocaleString();
   $('rCorrect').textContent = correctCount + '/' + total;
   $('rWrong').textContent = total - correctCount;
-  $('rSpeed').textContent = '+' + speedBonusTotal;
-  $('rCombo').textContent = '+' + comboBonusTotal;
+  $('rSpeed').textContent = jiMode ? '-' : '+' + speedBonusTotal;
+  $('rCombo').textContent = jiMode ? '-' : '+' + comboBonusTotal;
 
   const missEl = $('missList');
   missEl.innerHTML = '';
@@ -3019,7 +3332,13 @@ $('btnResultToReview').addEventListener('click', () => {
   showScreen('reviewScreen');
 });
 $('btnRetry').addEventListener('click', () => {
-  if (!buildQuestions(lastSettings)) return;
+  if (lastSettings && lastSettings.isJi) {
+    if (!buildJiQuestions(lastSettings)) return;
+    jiMode = true;
+  } else {
+    if (!buildQuestions(lastSettings)) return;
+    jiMode = false;
+  }
   resetState();
   showScreen('gameScreen');
   showQuestion();
@@ -3028,6 +3347,10 @@ $('btnHome').addEventListener('click', () => {
   clearInterval(timerInterval);
   clearTimeout(nextTimer);
   answered = true;
+  jiMode = false;
+  // タイマーバーを再表示に戻す
+  const timerWrap = document.querySelector('#gameScreen .timer-wrap');
+  if (timerWrap) timerWrap.style.display = 'block';
   showScreen('startScreen');
 });
 
@@ -3040,6 +3363,7 @@ $('btnQuitGame').addEventListener('click', () => {
     chMode = null;
   } else {
     showResult();
+    if (jiMode) jiMode = false;
   }
 });
 
