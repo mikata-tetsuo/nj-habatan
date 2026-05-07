@@ -542,6 +542,12 @@
   .summary-dot.available:hover{ background: rgba(246,173,85,0.2); transform: translateY(-2px); }
   .summary-dot.medal    { border-color: #e2b96f; color: #e2b96f; background: rgba(226,185,111,0.1); }
   .summary-dot.trophy   { border-color: #f9ca24; color: #f9ca24; background: rgba(249,202,36,0.12); animation: pulse 2s ease-in-out infinite; }
+  .summary-dot.review-ready { animation: reviewGlow 1.4s ease-in-out infinite; border-color: #68d391; color: #68d391; background: rgba(104,211,145,0.12); }
+  @keyframes reviewGlow {
+    0%,100% { box-shadow: 0 0 0px rgba(104,211,145,0); border-color: #68d391; }
+    50%      { box-shadow: 0 0 10px 3px rgba(104,211,145,0.55); border-color: #9ae6b4; }
+  }
+  .review-badge { font-size: 0.58rem; background: #276749; color: #9ae6b4; border-radius: 4px; padding: 1px 4px; margin-top: 2px; letter-spacing: 0; }
   .summary-dot .dot-icon { font-size: 1.1rem; }
 
   /* チャレンジ結果 */
@@ -1294,6 +1300,8 @@
   .summary-dot.locked   { border-color: rgba(0,0,0,0.1); color: var(--text3); }
   .summary-dot.available{ border-color: #F59E0B; color: #D97706; background: rgba(245,158,11,0.08); }
   .summary-dot.medal    { border-color: #D97706; color: #D97706; background: rgba(217,119,6,0.08); }
+  .summary-dot.review-ready { border-color: #059669; color: #059669; background: rgba(5,150,105,0.08); }
+  .review-badge { background: #d1fae5; color: #065f46; }
 
   /* チャレンジ結果 */
   .ch-result-sub { color: var(--text2); }
@@ -3502,8 +3510,26 @@ function chMarkSummary(lv, summIdx, score, total, pts) {
     bestPts: Math.max(prevPts, pts || 0),
     medal: newScore / total >= 0.8,
     trophy: newScore === total,
+    lastClearedAt: getTodayJST(),
   };
   chSaveProg(p);
+}
+
+// 復習ボーナス判定: 前回クリアからの日数を返す（未クリアは-1）
+function chGetDaysSinceLastClear(lv, summIdx) {
+  const s = chGetSummary(lv, summIdx);
+  if (!s || !s.lastClearedAt) return -1;
+  const last = new Date(s.lastClearedAt);
+  const today = new Date(getTodayJST());
+  return Math.floor((today - last) / (1000 * 60 * 60 * 24));
+}
+// 復習ボーナスのpt計算
+function chGetReviewBonus(lv, summIdx) {
+  const days = chGetDaysSinceLastClear(lv, summIdx);
+  if (days >= 30) return { pt: 150, label: '🏅 月次復習ボーナス', days };
+  if (days >= 7)  return { pt: 70,  label: '📅 週次復習ボーナス', days };
+  if (days >= 3)  return { pt: 30,  label: '🔄 復習ボーナス',     days };
+  return null;
 }
 
 // 総進捗（ステージのみ）
@@ -3684,17 +3710,21 @@ function showChallengeMap() {
     // まとめテストドット
     const summDot = document.createElement('button');
     let summClass = 'summary-dot ';
+    const reviewBonus = (allCleared || summData) ? chGetReviewBonus(chLevel, ci) : null;
     if (summData && summData.trophy) {
-      summClass += 'trophy';
+      summClass += reviewBonus ? 'review-ready' : 'trophy';
       const tPts = summData.bestPts ? '<div class="dot-pts">' + summData.bestPts.toLocaleString() + 'pt</div>' : '';
-      summDot.innerHTML = '<span class="dot-icon">🏆</span><span>満点</span>' + tPts;
+      const rbadge = reviewBonus ? '<div class="review-badge">🔄 +' + reviewBonus.pt + 'pt</div>' : '';
+      summDot.innerHTML = '<span class="dot-icon">🏆</span><span>満点</span>' + tPts + rbadge;
     } else if (summData && summData.medal) {
-      summClass += 'medal';
+      summClass += reviewBonus ? 'review-ready' : 'medal';
       const mPts = summData.bestPts ? '<div class="dot-pts">' + summData.bestPts.toLocaleString() + 'pt</div>' : '';
-      summDot.innerHTML = '<span class="dot-icon">🥈</span><span>' + summData.score + '/' + summData.total + '</span>' + mPts;
+      const rbadge = reviewBonus ? '<div class="review-badge">🔄 +' + reviewBonus.pt + 'pt</div>' : '';
+      summDot.innerHTML = '<span class="dot-icon">🥈</span><span>' + summData.score + '/' + summData.total + '</span>' + mPts + rbadge;
     } else if (allCleared) {
-      summClass += 'available';
-      summDot.innerHTML = '<span class="dot-icon">📝</span><span>テスト</span>';
+      summClass += reviewBonus ? 'review-ready' : 'available';
+      const rbadge = reviewBonus ? '<div class="review-badge">🔄 +' + reviewBonus.pt + 'pt</div>' : '';
+      summDot.innerHTML = '<span class="dot-icon">📝</span><span>テスト</span>' + rbadge;
     } else {
       summClass += 'locked';
       summDot.innerHTML = '<span class="dot-icon">🔒</span><span>テスト</span>';
@@ -3863,6 +3893,13 @@ function showChallengeResult() {
     if (summBonus > 0) {
       score += summBonus;
       setTimeout(() => showBonusFlash('📝 まとめボーナス +' + summBonus + 'pt'), 600);
+    }
+    // 復習ボーナス（前回クリアから3日以上経過）
+    const reviewBonusInfo = chGetReviewBonus(chLevel, chChapterIdx);
+    if (reviewBonusInfo) {
+      score += reviewBonusInfo.pt;
+      const rbDelay = summBonus > 0 ? 1300 : 700;
+      setTimeout(() => showBonusFlash(reviewBonusInfo.label + ' +' + reviewBonusInfo.pt + 'pt'), rbDelay);
     }
     chMarkSummary(chLevel, chChapterIdx, correctCount, total, score);
 
