@@ -1463,20 +1463,6 @@
           </div>
           <div class="mode-card-arrow">›</div>
         </div>
-        <div class="settings-panel" id="settingsChallenge">
-          <div class="settings-inner">
-            <div class="setting-section">
-              <div class="setting-label">難易度</div>
-              <div class="home-diff-row">
-                <button class="home-diff-btn beginner" data-chdiff="beginner"><span class="hd-emoji">🌱</span><span class="hd-name">ビギナー</span></button>
-                <button class="home-diff-btn normal active" data-chdiff="normal"><span class="hd-emoji">⚡</span><span class="hd-name">ノーマル</span></button>
-                <button class="home-diff-btn expert" data-chdiff="expert"><span class="hd-emoji">🔥</span><span class="hd-name">エキスパート</span></button>
-              </div>
-              <div class="home-diff-desc" id="chDiffDesc">⚡ ノーマル：4秒以内・正解+100pt</div>
-            </div>
-            <button class="btn-action-challenge" id="btnChallengeStart">🏆 チャレンジスタート！</button>
-          </div>
-        </div>
       </div>
 
       <!-- じっくりモード -->
@@ -1485,76 +1471,10 @@
           <div class="mode-card-icon">🧠</div>
           <div class="mode-card-text">
             <div class="mode-card-title">じっくりモード</div>
-            <div class="mode-card-desc">タイマーなし・4択でじっくり考えよう！正解+50pt</div>
+            <div class="mode-card-desc">タイマーなしでじっくり攻略！同じトロフィーを獲得</div>
+            <div class="ch-card-score" id="jiCardScore"></div>
           </div>
           <div class="mode-card-arrow">›</div>
-        </div>
-        <div class="settings-panel" id="settingsJi">
-          <div class="settings-inner">
-            <div class="setting-section">
-              <div class="setting-label">出題方向</div>
-              <div class="radio-group" style="margin-bottom:0">
-                <label><input type="radio" name="jiDirection" value="en2ja" checked><span>英語 → 日本語</span></label>
-                <label><input type="radio" name="jiDirection" value="ja2en"><span>日本語 → 英語</span></label>
-              </div>
-            </div>
-            <div class="setting-section">
-              <div class="setting-label">出題範囲</div>
-              <div class="radio-group" style="margin-bottom:10px">
-                <label><input type="radio" name="jiMode" value="range"><span>番号指定</span></label>
-                <label><input type="radio" name="jiMode" value="level" checked><span>レベル指定</span></label>
-                <label><input type="radio" name="jiMode" value="random"><span>全て</span></label>
-                <label><input type="radio" name="jiMode" value="set"><span>セット指定</span></label>
-              </div>
-              <div id="jiRangeInputs" class="range-row" style="display:none;">
-                <label>番号</label>
-                <input type="number" id="jiRangeFrom" value="1" min="1" max="2500"> 〜
-                <input type="number" id="jiRangeTo" value="100" min="1" max="2500">
-                <span style="color:#718096;font-size:0.82rem;">（全2,500語）</span>
-              </div>
-              <div id="jiSetInputs" style="display:none;">
-                <div class="level-grid" style="margin-bottom:10px;">
-                  <button class="level-btn selected" data-jisetlv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span></button>
-                  <button class="level-btn" data-jisetlv="2"><span class="lv-num">②</span><span class="lv-name">中1</span></button>
-                  <button class="level-btn" data-jisetlv="3"><span class="lv-num">③</span><span class="lv-name">中2</span></button>
-                  <button class="level-btn" data-jisetlv="4"><span class="lv-num">④</span><span class="lv-name">中3</span></button>
-                  <button class="level-btn" data-jisetlv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span></button>
-                </div>
-                <div class="count-row-compact" id="jiSetBtns" style="margin-bottom:8px;flex-wrap:wrap;"></div>
-                <div style="color:#718096;font-size:0.78rem;" id="jiSetCountMsg">50語</div>
-              </div>
-              <div id="jiLevelInputs">
-                <div class="level-grid">
-                  <button class="level-btn selected" data-jilv="1"><span class="lv-num">①</span><span class="lv-name">小学生</span><span class="lv-count">464語</span></button>
-                  <button class="level-btn" data-jilv="2"><span class="lv-num">②</span><span class="lv-name">中1</span><span class="lv-count">564語</span></button>
-                  <button class="level-btn" data-jilv="3"><span class="lv-num">③</span><span class="lv-name">中2</span><span class="lv-count">749語</span></button>
-                  <button class="level-btn" data-jilv="4"><span class="lv-num">④</span><span class="lv-name">中3</span><span class="lv-count">406語</span></button>
-                  <button class="level-btn" data-jilv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span><span class="lv-count">317語</span></button>
-                  <button class="level-btn-all" id="btnJiLevelAll">すべて選択 / すべて解除</button>
-                </div>
-                <div style="color:#718096;font-size:0.78rem;margin-top:8px;" id="jiLevelCountMsg">選択中: 464語</div>
-              </div>
-            </div>
-            <div class="setting-section">
-              <div class="setting-label">問題数</div>
-              <div class="count-row-compact" id="jiCountBtns">
-                <button class="count-btn-sm" data-jn="10">10問</button>
-                <button class="count-btn-sm active" data-jn="20">20問</button>
-                <button class="count-btn-sm" data-jn="30">30問</button>
-                <button class="count-btn-sm" data-jn="50">50問</button>
-              </div>
-            </div>
-            <div class="setting-section">
-              <div class="setting-label">ルール</div>
-              <div class="rules-mini">
-                <div class="rule-chip">🧠 タイマーなし<br>じっくり考えよう</div>
-                <div class="rule-chip">✅ 正解 <b>+50pt</b><br>ランキングに加算</div>
-                <div class="rule-chip">❓ わからない<br>復習リストへ追加</div>
-                <div class="rule-chip">🚫 コンボなし<br>落ち着いて解答</div>
-              </div>
-            </div>
-            <button class="btn-action-ji" id="btnJiStart">🧠 じっくりスタート！</button>
-          </div>
         </div>
       </div>
 
@@ -2119,9 +2039,23 @@
 
   <!-- CHALLENGE LEVEL SELECT -->
   <div id="challengeLevelScreen" class="screen">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
       <button class="map-back" id="btnChLvBack">← 戻る</button>
-      <h2 style="font-size:1.3rem;font-weight:800;">🏆 チャレンジモード</h2>
+      <h2 id="chLvScreenTitle" style="font-size:1.3rem;font-weight:800;">🏆 チャレンジモード</h2>
+    </div>
+    <!-- 難易度セレクタ（じっくりモードのときは非表示） -->
+    <div id="chDiffSection" class="card" style="padding:16px;margin-bottom:12px;">
+      <div style="color:#a0aec0;font-size:0.78rem;margin-bottom:10px;">難易度を選択</div>
+      <div class="home-diff-row" style="justify-content:center;">
+        <button class="home-diff-btn beginner" data-chlvdiff="beginner"><span class="hd-emoji">🌱</span><span class="hd-name">ビギナー</span></button>
+        <button class="home-diff-btn normal active" data-chlvdiff="normal"><span class="hd-emoji">⚡</span><span class="hd-name">ノーマル</span></button>
+        <button class="home-diff-btn expert" data-chlvdiff="expert"><span class="hd-emoji">🔥</span><span class="hd-name">エキスパート</span></button>
+      </div>
+      <div class="home-diff-desc" id="chLvDiffDesc" style="text-align:center;margin-top:8px;">⚡ ノーマル：4秒以内・正解+100pt</div>
+    </div>
+    <!-- じっくりモード表示（チャレンジのときは非表示） -->
+    <div id="chJiSection" style="display:none;" class="card">
+      <div style="padding:12px;text-align:center;color:#0EA5E9;font-weight:700;">∞ タイマーなし・正解+50pt</div>
     </div>
     <div class="card" style="padding:20px;">
       <p style="color:#a0aec0;font-size:0.85rem;margin-bottom:16px;">
@@ -2306,6 +2240,7 @@ let missWords = [], questionCount = 20;
 let timerInterval = null, nextTimer = null, startTime = 0, answered = false;
 let lastSettings = null;
 let jiMode = false;     // じっくりモード中はtrue
+let chJiMode = false;  // じっくりモードでチャレンジ画面を使う場合true
 let jiQuestionCount = 20;
 
 const $ = id => document.getElementById(id);
@@ -2523,8 +2458,9 @@ let jiSetLevel = 1;
 let jiSetIdx   = 0;
 
 function buildJiSetBtns() {
-  const count = getSetCount(jiSetLevel);
   const container = $('jiSetBtns');
+  if (!container) return;
+  const count = getSetCount(jiSetLevel);
   container.innerHTML = '';
   for (let i = 0; i < count; i++) {
     const start = i * 50 + 1;
@@ -2543,8 +2479,10 @@ function buildJiSetBtns() {
 }
 
 function updateJiSetCountMsg() {
+  const el = $('jiSetCountMsg');
+  if (!el) return;
   const pool = getSetPool(jiSetLevel, jiSetIdx);
-  $('jiSetCountMsg').textContent = '選択中: ' + pool.length + '語（第' + (jiSetIdx + 1) + 'セット）';
+  el.textContent = '選択中: ' + pool.length + '語（第' + (jiSetIdx + 1) + 'セット）';
 }
 
 document.querySelectorAll('.level-btn[data-jisetlv]').forEach(btn => {
@@ -2566,8 +2504,11 @@ function updateJiLevelUI() {
   document.querySelectorAll('.level-btn[data-jilv]').forEach(btn => {
     btn.classList.toggle('selected', jiSelectedLevels.has(parseInt(btn.dataset.jilv)));
   });
-  const total = [...jiSelectedLevels].reduce((s, lv) => s + LEVEL_COUNTS[lv], 0);
-  $('jiLevelCountMsg').textContent = '選択中: ' + total + '語';
+  const el = $('jiLevelCountMsg');
+  if (el) {
+    const total = [...jiSelectedLevels].reduce((s, lv) => s + LEVEL_COUNTS[lv], 0);
+    el.textContent = '選択中: ' + total + '語';
+  }
 }
 
 document.querySelectorAll('.level-btn[data-jilv]').forEach(btn => {
@@ -2581,17 +2522,20 @@ document.querySelectorAll('.level-btn[data-jilv]').forEach(btn => {
     updateJiLevelUI();
   });
 });
-$('btnJiLevelAll').addEventListener('click', () => {
-  jiSelectedLevels = jiSelectedLevels.size === 5 ? new Set([1]) : new Set([1,2,3,4,5]);
-  updateJiLevelUI();
-});
+const btnJiLevelAll = $('btnJiLevelAll');
+if (btnJiLevelAll) {
+  btnJiLevelAll.addEventListener('click', () => {
+    jiSelectedLevels = jiSelectedLevels.size === 5 ? new Set([1]) : new Set([1,2,3,4,5]);
+    updateJiLevelUI();
+  });
+}
 updateJiLevelUI();
 
 document.querySelectorAll('input[name=jiMode]').forEach(r => {
   r.addEventListener('change', () => {
-    $('jiRangeInputs').style.display  = r.value === 'range' ? 'flex'  : 'none';
-    $('jiLevelInputs').style.display  = r.value === 'level' ? 'block' : 'none';
-    $('jiSetInputs').style.display    = r.value === 'set'   ? 'block' : 'none';
+    const ri = $('jiRangeInputs'); if (ri) ri.style.display = r.value === 'range' ? 'flex'  : 'none';
+    const li = $('jiLevelInputs'); if (li) li.style.display = r.value === 'level' ? 'block' : 'none';
+    const si = $('jiSetInputs');   if (si) si.style.display = r.value === 'set'   ? 'block' : 'none';
   });
 });
 
@@ -2605,9 +2549,9 @@ document.querySelectorAll('.count-btn-sm[data-jn]').forEach(btn => {
 
 // モードカード アコーディオン
 function toggleModeCard(cardId) {
-  const cards = ['cardChallenge','cardPractice','cardTest','cardPrint','cardJi'];
+  const cards = ['cardPractice','cardTest','cardPrint'];
   cards.forEach(id => {
-    const card = $(id);
+    const card = document.getElementById(id);
     if (!card) return;
     if (id === cardId) {
       card.classList.toggle('active');
@@ -2616,17 +2560,28 @@ function toggleModeCard(cardId) {
     }
   });
 }
-$('cardChallenge').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardChallenge'));
-$('cardPractice').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardPractice'));
-$('cardTest').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardTest'));
-$('cardPrint').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardPrint'));
-$('cardJi').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardJi'));
 
-// チャレンジスタートボタン
-$('btnChallengeStart').addEventListener('click', () => {
+// チャレンジカード → challengeLevelScreen（難易度選択あり）
+$('cardChallenge').addEventListener('click', () => {
+  chJiMode = false;
+  currentDifficulty = localStorage.getItem('habatan_difficulty') || 'normal';
+  if (currentDifficulty === 'nolimit') currentDifficulty = 'normal';
   renderChallengeLevelScreen();
   showScreen('challengeLevelScreen');
 });
+
+// じっくりカード → challengeLevelScreen（∞固定）
+$('cardJi').addEventListener('click', () => {
+  chJiMode = true;
+  currentDifficulty = 'nolimit';
+  renderChallengeLevelScreen();
+  showScreen('challengeLevelScreen');
+});
+
+// その他のカード
+$('cardPractice').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardPractice'));
+$('cardTest').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardTest'));
+$('cardPrint').querySelector('.mode-card-header').addEventListener('click', () => toggleModeCard('cardPrint'));
 
 // ===== プリント作成モード =====
 let printQuestionCount = 20;
@@ -2841,21 +2796,21 @@ document.querySelectorAll('.home-diff-btn[data-diff]').forEach(btn => {
   });
 });
 
-// チャレンジ難易度ボタン（チャレンジカード内）
-const CH_DIFF_DESCS = {
+// チャレンジ難易度ボタン（challengeLevelScreen内）
+const DIFF_DESCS_CH = {
   beginner: '🌱 ビギナー：6秒以内・正解+80pt',
   normal:   '⚡ ノーマル：4秒以内・正解+100pt',
   expert:   '🔥 エキスパート：3秒以内・正解+150pt'
 };
-document.querySelectorAll('.home-diff-btn[data-chdiff]').forEach(btn => {
+document.querySelectorAll('.home-diff-btn[data-chlvdiff]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.home-diff-btn[data-chdiff]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.home-diff-btn[data-chlvdiff]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    currentDifficulty = btn.dataset.chdiff;
-    const chDesc = document.getElementById('chDiffDesc');
-    if (chDesc) chDesc.textContent = CH_DIFF_DESCS[currentDifficulty] || '';
+    currentDifficulty = btn.dataset.chlvdiff;
     localStorage.setItem('habatan_difficulty', currentDifficulty);
     updateDifficultyDisplay();
+    const descEl = document.getElementById('chLvDiffDesc');
+    if (descEl) descEl.textContent = DIFF_DESCS_CH[currentDifficulty] || '';
   });
 });
 
@@ -2864,7 +2819,7 @@ document.querySelectorAll('.home-diff-btn[data-chdiff]').forEach(btn => {
   const saved = localStorage.getItem('habatan_difficulty');
   // チャレンジには nolimit がないので normal にフォールバック
   const savedForTest = (saved && DIFFICULTIES[saved]) ? saved : null;
-  const savedForCh   = (saved && CH_DIFF_DESCS[saved]) ? saved : 'normal';
+  const savedForCh   = (saved && DIFF_DESCS_CH[saved]) ? saved : 'normal';
   if (savedForTest) {
     currentDifficulty = savedForTest;
     document.querySelectorAll('.home-diff-btn[data-diff]').forEach(b => {
@@ -2872,12 +2827,12 @@ document.querySelectorAll('.home-diff-btn[data-chdiff]').forEach(btn => {
     });
     updateHomeDiffDesc();
   }
-  // チャレンジボタンの active を設定
-  document.querySelectorAll('.home-diff-btn[data-chdiff]').forEach(b => {
-    b.classList.toggle('active', b.dataset.chdiff === savedForCh);
+  // チャレンジ難易度ボタンの active を設定
+  document.querySelectorAll('.home-diff-btn[data-chlvdiff]').forEach(b => {
+    b.classList.toggle('active', b.dataset.chlvdiff === savedForCh);
   });
-  const chDesc = document.getElementById('chDiffDesc');
-  if (chDesc) chDesc.textContent = CH_DIFF_DESCS[savedForCh] || '';
+  const chLvDesc = document.getElementById('chLvDiffDesc');
+  if (chLvDesc) chLvDesc.textContent = DIFF_DESCS_CH[savedForCh] || '';
 })();
 updateDifficultyDisplay();
 updateChHomeScore(); // ページ読み込み時にチャレンジ累積スコアを表示
@@ -2995,23 +2950,26 @@ $('btnStart').addEventListener('click', () => {
   showQuestion();
 });
 
-$('btnJiStart').addEventListener('click', () => {
-  const jMode     = document.querySelector('input[name=jiMode]:checked').value;
-  const jFrom     = parseInt($('jiRangeFrom').value) || 1;
-  const jTo       = parseInt($('jiRangeTo').value)   || 100;
-  const jDir      = document.querySelector('input[name=jiDirection]:checked').value;
-  const jSettings = {
-    mode: jMode, from: jFrom, to: jTo, qn: jiQuestionCount,
-    direction: jDir, levels: [...jiSelectedLevels],
-    setLevel: jiSetLevel, setIdx: jiSetIdx,
-    isJi: true
-  };
-  if (!buildJiQuestions(jSettings)) return;
-  jiMode = true;
-  resetState();
-  showScreen('gameScreen');
-  showQuestion();
-});
+const _btnJiStart = $('btnJiStart');
+if (_btnJiStart) {
+  _btnJiStart.addEventListener('click', () => {
+    const jMode     = document.querySelector('input[name=jiMode]:checked').value;
+    const jFrom     = parseInt($('jiRangeFrom').value) || 1;
+    const jTo       = parseInt($('jiRangeTo').value)   || 100;
+    const jDir      = document.querySelector('input[name=jiDirection]:checked').value;
+    const jSettings = {
+      mode: jMode, from: jFrom, to: jTo, qn: jiQuestionCount,
+      direction: jDir, levels: [...jiSelectedLevels],
+      setLevel: jiSetLevel, setIdx: jiSetIdx,
+      isJi: true
+    };
+    if (!buildJiQuestions(jSettings)) return;
+    jiMode = true;
+    resetState();
+    showScreen('gameScreen');
+    showQuestion();
+  });
+}
 
 function showQuestion() {
   const q = questions[current];
@@ -3390,6 +3348,7 @@ $('btnHome').addEventListener('click', () => {
   clearTimeout(nextTimer);
   answered = true;
   jiMode = false;
+  chJiMode = false;
   // タイマーバーを再表示に戻す
   const timerWrap = document.querySelector('#gameScreen .timer-wrap');
   if (timerWrap) timerWrap.style.display = 'block';
@@ -3406,6 +3365,7 @@ $('btnQuitGame').addEventListener('click', () => {
   } else {
     showResult();
     if (jiMode) jiMode = false;
+    chJiMode = false;
   }
 });
 
@@ -3564,14 +3524,42 @@ function updateTestCardScore() {
 
 // ホームのチャレンジカードに総合スコア表示
 function updateChHomeScore() {
-  const el = document.getElementById('chCardTotalScore');
-  if (!el) return;
   const total = chGetTotalScore();
-  el.textContent = total > 0 ? '累計 ' + total.toLocaleString() + ' pt' : '';
+  const text = total > 0 ? '累計 ' + total.toLocaleString() + ' pt' : '';
+  const el = document.getElementById('chCardTotalScore');
+  if (el) el.textContent = text;
+  const jiEl = document.getElementById('jiCardScore');
+  if (jiEl) jiEl.textContent = text;
 }
 
 // ===== レベル選択画面 =====
 function renderChallengeLevelScreen() {
+  // タイトルと難易度セクション切り替え
+  const titleEl = document.getElementById('chLvScreenTitle');
+  const diffSection = document.getElementById('chDiffSection');
+  const jiSection = document.getElementById('chJiSection');
+  if (chJiMode) {
+    if (titleEl) titleEl.textContent = '🧠 じっくりモード';
+    if (diffSection) diffSection.style.display = 'none';
+    if (jiSection) jiSection.style.display = 'block';
+  } else {
+    if (titleEl) titleEl.textContent = '🏆 チャレンジモード';
+    if (diffSection) diffSection.style.display = 'block';
+    if (jiSection) jiSection.style.display = 'none';
+    // 難易度ボタンの active 状態を currentDifficulty に合わせる
+    document.querySelectorAll('.home-diff-btn[data-chlvdiff]').forEach(b => {
+      b.classList.toggle('active', b.dataset.chlvdiff === currentDifficulty);
+    });
+    // 説明文更新
+    const DIFF_DESCS2 = {
+      beginner: '🌱 ビギナー：6秒以内・正解+80pt',
+      normal:   '⚡ ノーマル：4秒以内・正解+100pt',
+      expert:   '🔥 エキスパート：3秒以内・正解+150pt'
+    };
+    const descEl = document.getElementById('chLvDiffDesc');
+    if (descEl) descEl.textContent = DIFF_DESCS2[currentDifficulty] || '';
+  }
+  // 以下は既存のgrid描画処理
   updateChHomeScore();
   const grid = $('challengeLevelGrid');
   grid.innerHTML = '';
@@ -3715,6 +3703,7 @@ function startChallengeStage(lv, chapterIdx, stageIdxInChapter) {
   chMode  = 'stage';
   chChapterIdx = chapterIdx;
   chStageIdx   = stageIdxInChapter;
+  if (chJiMode) currentDifficulty = 'nolimit';
   applyDifficulty();
 
   const words  = chGetWords(lv);
@@ -3740,6 +3729,7 @@ function startChallengeSummary(lv, chapterIdx) {
   chLevel      = lv;
   chMode       = 'summary';
   chChapterIdx = chapterIdx;
+  if (chJiMode) currentDifficulty = 'nolimit';
   applyDifficulty();
 
   const words      = chGetWords(lv);
@@ -3945,9 +3935,9 @@ function showChallengeResult() {
 
 // ===== ボタンイベント =====
 // challenge via cardChallenge click (see toggleModeCard)
-$('btnChLvBack').addEventListener('click', () => { updateChHomeScore(); showScreen('startScreen'); });
+$('btnChLvBack').addEventListener('click', () => { chJiMode = false; updateChHomeScore(); showScreen('startScreen'); });
 $('btnChToReview').addEventListener('click', () => { renderReviewScreen(); showScreen('reviewScreen'); });
-$('btnChHome').addEventListener('click', () => { updateChHomeScore(); showScreen('startScreen'); });
+$('btnChHome').addEventListener('click', () => { chJiMode = false; updateChHomeScore(); showScreen('startScreen'); });
 $('btnMapBack').addEventListener('click', () => {
   renderChallengeLevelScreen();
   showScreen('challengeLevelScreen');
