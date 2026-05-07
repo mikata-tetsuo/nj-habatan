@@ -2172,7 +2172,7 @@ const COMBO_STEPS = [
 let questions = [], current = 0, score = 0, correctCount = 0;
 let combo = 0, maxCombo = 0, speedBonusTotal = 0, comboBonusTotal = 0;
 let missWords = [], questionCount = 20;
-let timerInterval = null, startTime = 0, answered = false;
+let timerInterval = null, nextTimer = null, startTime = 0, answered = false;
 let lastSettings = null;
 
 const $ = id => document.getElementById(id);
@@ -2783,7 +2783,7 @@ function onTimeout() {
     if (btn.textContent === (_dir === 'en2ja' ? q.word.ja : q.word.en)) btn.classList.add('reveal');
   });
   showFeedback('❌', '#fc8181');
-  setTimeout(nextOrResult, 1200);
+  nextTimer = setTimeout(nextOrResult, 1200);
 }
 
 function onAnswer(choice, btn, q) {
@@ -2835,7 +2835,7 @@ function onAnswer(choice, btn, q) {
     rvAdd(q.word.id);
     showFeedback('❌', '#fc8181');
   }
-  setTimeout(nextOrResult, 900);
+  nextTimer = setTimeout(nextOrResult, 900);
 }
 
 function nextOrResult() {
@@ -3024,7 +3024,12 @@ $('btnRetry').addEventListener('click', () => {
   showScreen('gameScreen');
   showQuestion();
 });
-$('btnHome').addEventListener('click', () => showScreen('startScreen'));
+$('btnHome').addEventListener('click', () => {
+  clearInterval(timerInterval);
+  clearTimeout(nextTimer);
+  answered = true;
+  showScreen('startScreen');
+});
 
 $('btnQuitGame').addEventListener('click', () => {
   clearInterval(timerInterval);
