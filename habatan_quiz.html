@@ -2986,7 +2986,7 @@ function showQuestion() {
   $('qWord').textContent = dir === 'en2ja' ? q.word.en : q.word.ja;
 
   const badge = $('comboBadge');
-  if (!jiMode && combo >= 3) { badge.textContent = '🔥 ' + combo + '連コンボ中！'; badge.classList.add('show'); }
+  if (!jiMode && combo >= 3) { badge.textContent = (currentDifficulty === 'nolimit' ? '🧠 ' : '🔥 ') + combo + '連コンボ中！'; badge.classList.add('show'); }
   else { badge.classList.remove('show'); }
 
   const choicesEl = $('choices');
@@ -3066,7 +3066,7 @@ function onAnswer(choice, btn, q) {
     setTimeout(() => speak(q.word.en), 350); // 正解後に英単語を発音
     correctCount++;
     if (jiMode) {
-      // じっくりモード: +50pt・コンボなし
+      // 旧じっくりモード: +50pt・コンボなし
       const jiGained = 50;
       score += jiGained;
       $('hudScore').textContent = score;
@@ -3077,21 +3077,33 @@ function onAnswer(choice, btn, q) {
       combo++;
       maxCombo = Math.max(maxCombo, combo);
       let gained = SCORE_CORRECT;
+      const isNolimit = currentDifficulty === 'nolimit'; // chJiMode判定
 
-      if (elapsed <= SPEED_THRESHOLD) {
+      // スピードボーナス（nolimitはSCORE_SPEED=0なのでスキップ）
+      if (elapsed <= SPEED_THRESHOLD && SCORE_SPEED > 0) {
         gained += SCORE_SPEED;
         speedBonusTotal += SCORE_SPEED;
         showBonusFlash('⚡ スピード！ +' + SCORE_SPEED, true); soundSpeed();
       }
+
+      // コンボボーナス
+      let comboFlashed = false;
       for (const ct of COMBO_STEPS) {
         if (combo === ct.n) {
           gained += ct.bonus;
           comboBonusTotal += ct.bonus;
-          const delay = elapsed <= SPEED_THRESHOLD ? 700 : 0;
+          const delay = (!isNolimit && elapsed <= SPEED_THRESHOLD) ? 700 : 0;
           setTimeout(() => { showBonusFlash(ct.label); soundCombo(combo); }, delay);
+          comboFlashed = true;
           break;
         }
       }
+
+      // nolimitはコンボフラッシュがない問題は正解フラッシュを派手に
+      if (isNolimit && !comboFlashed) {
+        showBonusFlash('🎉 正解！ +' + SCORE_CORRECT + 'pt');
+      }
+
       score += gained;
       $('hudScore').textContent = score;
       $('hudCorrect').textContent = correctCount;
