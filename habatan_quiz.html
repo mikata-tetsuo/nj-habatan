@@ -3470,9 +3470,10 @@ function chGetLevelScore(lv) {
   }
   return total;
 }
-// 全レベルの累積スコア合計
+// 全レベルの累積スコア合計（ステージ/まとめベストPt + 🔄復習ボーナス別枠）
 function chGetTotalScore() {
-  return [1,2,3,4,5].reduce((sum, lv) => sum + chGetLevelScore(lv), 0);
+  const stagePts = [1,2,3,4,5].reduce((sum, lv) => sum + chGetLevelScore(lv), 0);
+  return stagePts + chGetReviewPts();
 }
 function chGetSummary(lv, summIdx) {
   const p = chGetProg()[chProgKey(lv)];
@@ -3523,13 +3524,23 @@ function chGetDaysSinceLastClear(lv, summIdx) {
   const today = new Date(getTodayJST());
   return Math.floor((today - last) / (1000 * 60 * 60 * 24));
 }
-// 復習ボーナスのpt計算
+// 復習ボーナスのpt計算（難易度連動：1問分×倍率）
 function chGetReviewBonus(lv, summIdx) {
   const days = chGetDaysSinceLastClear(lv, summIdx);
-  if (days >= 30) return { pt: 150, label: '🏅 月次復習ボーナス', days };
-  if (days >= 7)  return { pt: 70,  label: '📅 週次復習ボーナス', days };
-  if (days >= 3)  return { pt: 30,  label: '🔄 復習ボーナス',     days };
+  const base = SCORE_CORRECT; // 難易度に連動した1問分
+  if (days >= 30) return { pt: base * 3, label: '🏅 月次復習ボーナス', days };
+  if (days >= 7)  return { pt: base * 2, label: '📅 週次復習ボーナス', days };
+  if (days >= 3)  return { pt: base * 1, label: '🔄 復習ボーナス',     days };
   return null;
+}
+// 復習ボーナスの別枠累積（localStorage）
+function chGetReviewPts() {
+  return chGetProg().reviewPts || 0;
+}
+function chAddReviewPts(pts) {
+  const p = chGetProg();
+  p.reviewPts = (p.reviewPts || 0) + pts;
+  chSaveProg(p);
 }
 
 // 総進捗（ステージのみ）
@@ -3894,14 +3905,14 @@ function showChallengeResult() {
       score += summBonus;
       setTimeout(() => showBonusFlash('📝 まとめボーナス +' + summBonus + 'pt'), 600);
     }
-    // 復習ボーナス（前回クリアから3日以上経過）
+    chMarkSummary(chLevel, chChapterIdx, correctCount, total, score);
+    // 復習ボーナス（前回クリアから3日以上経過）→ 別枠で累積
     const reviewBonusInfo = chGetReviewBonus(chLevel, chChapterIdx);
     if (reviewBonusInfo) {
-      score += reviewBonusInfo.pt;
+      chAddReviewPts(reviewBonusInfo.pt);
       const rbDelay = summBonus > 0 ? 1300 : 700;
       setTimeout(() => showBonusFlash(reviewBonusInfo.label + ' +' + reviewBonusInfo.pt + 'pt'), rbDelay);
     }
-    chMarkSummary(chLevel, chChapterIdx, correctCount, total, score);
 
     if (isTrophy) {
       $('chResultIcon').textContent = '🏆';
