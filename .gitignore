@@ -1,6 +1,7 @@
 # Pythonスクリプト（開発用）
 *.py
 *.json
+!manifest.json
 *.zip
 
 # Excelファイル（容量大・非公開）

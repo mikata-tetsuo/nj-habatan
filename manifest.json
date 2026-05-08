@@ -1,0 +1,17 @@
+{
+  "name": "はば単トレーナー",
+  "short_name": "はばトレ",
+  "description": "はば単2,500語 英単語トレーニングアプリ",
+  "start_url": "./habatan_quiz.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "habatore.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
