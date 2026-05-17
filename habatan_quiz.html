@@ -2072,6 +2072,14 @@
       <button class="map-back" id="btnChLvBack">← 戻る</button>
       <h2 id="chLvScreenTitle" style="font-size:1.3rem;font-weight:800;">🏆 チャレンジモード</h2>
     </div>
+    <!-- 方向セレクタ -->
+    <div id="chDirSection" class="card" style="padding:16px;margin-bottom:12px;">
+      <div style="color:#a0aec0;font-size:0.78rem;margin-bottom:10px;">問題の方向</div>
+      <div class="radio-group">
+        <label><input type="radio" name="chDirection" value="en2ja" checked><span>英語 → 日本語</span></label>
+        <label><input type="radio" name="chDirection" value="ja2en"><span>日本語 → 英語</span></label>
+      </div>
+    </div>
     <!-- 難易度セレクタ（じっくりモードのときは非表示） -->
     <div id="chDiffSection" class="card" style="padding:16px;margin-bottom:12px;">
       <div style="color:#a0aec0;font-size:0.78rem;margin-bottom:10px;">難易度を選択</div>
@@ -2864,6 +2872,7 @@ document.querySelectorAll('.home-diff-btn[data-chlvdiff]').forEach(btn => {
   if (chLvDesc) chLvDesc.textContent = DIFF_DESCS_CH[savedForCh] || '';
 })();
 updateDifficultyDisplay();
+chMigrateOldProg();
 updateChHomeScore(); // ページ読み込み時にチャレンジ累積スコアを表示
 
 document.addEventListener('click', resumeAC, {once:true});
@@ -3078,6 +3087,7 @@ function onTimeout() {
     if (btn.textContent === (_dir === 'en2ja' ? q.word.ja : q.word.en)) btn.classList.add('reveal');
   });
   showFeedback('❌', '#fc8181');
+  setTimeout(() => speak(q.word.en), 350);
   nextTimer = setTimeout(nextOrResult, 1200);
 }
 
@@ -3153,6 +3163,7 @@ function onAnswer(choice, btn, q) {
     missWords.push(q.word);
     rvAdd(q.word.id);
     showFeedback('❌', '#fc8181');
+    setTimeout(() => speak(q.word.en), 350);
   }
   // わからないボタンを非表示（回答後）
   const dontKnowBtn2 = $('btnDontKnow');
@@ -3173,6 +3184,7 @@ $('btnDontKnow').addEventListener('click', () => {
   missWords.push(q.word);
   rvAdd(q.word.id);
   showFeedback('❌', '#fc8181');
+  setTimeout(() => speak(q.word.en), 350);
   $('btnDontKnow').style.display = 'none';
   nextTimer = setTimeout(nextOrResult, 1200);
 });
@@ -3454,7 +3466,21 @@ function chGetProg() {
   catch { return {}; }
 }
 function chSaveProg(p) { localStorage.setItem('habitanChallenge', JSON.stringify(p)); }
-function chProgKey(lv) { return 'lv' + lv; }
+function chCurrentDir() {
+  const r = document.querySelector('input[name="chDirection"]:checked');
+  return r ? r.value : (window._direction || 'en2ja');
+}
+function chProgKey(lv, dir) { return 'lv' + lv + '_' + (dir || chCurrentDir()); }
+function chMigrateOldProg() {
+  const p = chGetProg();
+  let changed = false;
+  [1,2,3,4,5].forEach(lv => {
+    const oldKey = 'lv' + lv;
+    const newKey = 'lv' + lv + '_en2ja';
+    if (p[oldKey] && !p[newKey]) { p[newKey] = p[oldKey]; delete p[oldKey]; changed = true; }
+  });
+  if (changed) chSaveProg(p);
+}
 
 function chIsStageCleared(lv, globalStageIdx) {
   const p = chGetProg()[chProgKey(lv)];
@@ -3475,8 +3501,8 @@ function chIsStagePerfect(lv, globalStageIdx) {
   return s && s.perfect;
 }
 // レベルの累積スコア（全ステージ+まとめテスト合計）
-function chGetLevelScore(lv) {
-  const p = chGetProg()[chProgKey(lv)];
+function chGetLevelScore(lv, dir) {
+  const p = chGetProg()[chProgKey(lv, dir)];
   if (!p) return 0;
   let total = 0;
   if (p.stages) {
@@ -3491,9 +3517,10 @@ function chGetLevelScore(lv) {
   }
   return total;
 }
-// 全レベルの累積スコア合計（ステージ/まとめベストPt + 🔄復習ボーナス別枠）
+// 全レベルの累積スコア合計（両方向 + 🔄復習ボーナス別枠）
 function chGetTotalScore() {
-  const stagePts = [1,2,3,4,5].reduce((sum, lv) => sum + chGetLevelScore(lv), 0);
+  const stagePts = [1,2,3,4,5].reduce((sum, lv) =>
+    sum + chGetLevelScore(lv, 'en2ja') + chGetLevelScore(lv, 'ja2en'), 0);
   return stagePts + chGetReviewPts();
 }
 function chGetSummary(lv, summIdx) {
@@ -3608,14 +3635,17 @@ function renderChallengeLevelScreen() {
   const titleEl = document.getElementById('chLvScreenTitle');
   const diffSection = document.getElementById('chDiffSection');
   const jiSection = document.getElementById('chJiSection');
+  const dirSection = document.getElementById('chDirSection');
   if (chJiMode) {
     if (titleEl) titleEl.textContent = '🧠 じっくりモード';
     if (diffSection) diffSection.style.display = 'none';
     if (jiSection) jiSection.style.display = 'block';
+    if (dirSection) dirSection.style.display = 'none';
   } else {
     if (titleEl) titleEl.textContent = '🏆 チャレンジモード';
     if (diffSection) diffSection.style.display = 'block';
     if (jiSection) jiSection.style.display = 'none';
+    if (dirSection) dirSection.style.display = 'block';
     // 難易度ボタンの active 状態を currentDifficulty に合わせる
     document.querySelectorAll('.home-diff-btn[data-chlvdiff]').forEach(b => {
       b.classList.toggle('active', b.dataset.chlvdiff === currentDifficulty);
@@ -3793,7 +3823,7 @@ function startChallengeStage(lv, chapterIdx, stageIdxInChapter) {
   score = 0; correctCount = 0; combo = 0; maxCombo = 0;
   speedBonusTotal = 0; comboBonusTotal = 0; missWords = [];
   current = 0;
-  window._direction = 'en2ja';
+  window._direction = (document.querySelector('input[name="chDirection"]:checked')?.value) || 'en2ja';
   showScreen('gameScreen');
   showQuestion();
 }
@@ -3818,7 +3848,7 @@ function startChallengeSummary(lv, chapterIdx) {
   score = 0; correctCount = 0; combo = 0; maxCombo = 0;
   speedBonusTotal = 0; comboBonusTotal = 0; missWords = [];
   current = 0;
-  window._direction = 'en2ja';
+  window._direction = (document.querySelector('input[name="chDirection"]:checked')?.value) || 'en2ja';
   showScreen('gameScreen');
   showQuestion();
 }
@@ -4570,6 +4600,15 @@ const CHANGELOG = [
   // =============================================
   // ↓↓↓ 新しい更新情報はここに追加してください ↓↓↓
   // =============================================
+  {
+    date: '2026.05.17',
+    label: 'アップデート vol.8 🔀',
+    items: [
+      '【新機能】チャレンジモードに「日本語 → 英語」方向を追加',
+      '英日・日英でクリア状況が独立して管理されます（既存の英日データはそのまま引き継がれます）',
+      '間違えたとき・わからないボタン押下時・タイムオーバー時にも英単語を読み上げるよう改善',
+    ]
+  },
   {
     date: '2026.05.08',
     label: 'アップデート vol.7 🪶',
