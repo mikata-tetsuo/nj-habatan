@@ -1650,8 +1650,8 @@
           <div class="boss-icon">👹</div>
           <div>
             <div class="boss-label">⚔️ 週間ボス討伐イベント</div>
-            <div class="boss-name">中2 Chapter 1 を倒せ！</div>
-            <div class="boss-period">残り 5日 | 目標：500問正解</div>
+            <div class="boss-name">忽那先生を倒せ！</div>
+            <div class="boss-period">5/26（月）スタート | 目標：トロフィー200個</div>
           </div>
         </div>
         <div class="boss-progress-wrap">
@@ -3200,7 +3200,8 @@ function renderBossEventScreen() {
   document.getElementById('bossCharaPanel').style.backgroundPosition = getBossPanelPos(current, BOSS_GOAL);
 
   const grade   = loadGrade();
-  const unlocked = fbUser ? (GRADE_DIFF_UNLOCK[grade] || []) : [];
+  const loggedIn = typeof fbUser !== 'undefined' && fbUser;
+  const unlocked = loggedIn ? (GRADE_DIFF_UNLOCK[grade] || []) : [];
   document.querySelectorAll('.boss-diff-btn').forEach(btn => {
     const d = btn.dataset.bossdiff;
     if (unlocked.includes(d)) {
@@ -3222,7 +3223,7 @@ function renderBossEventScreen() {
     goBtn.onclick = null;
     document.getElementById('bossSerif').textContent = '5月26日から始まるぞ。それまでに覚悟しておけ！😤';
     document.getElementById('bossCharaPanel').style.backgroundPosition = '0% 0%';
-  } else if (!fbUser) {
+  } else if (!loggedIn) {
     goBtn.textContent = '🔒 Googleログインで討伐に参加できます';
     goBtn.style.background = 'rgba(255,255,255,0.08)';
     goBtn.style.color = '#a0aec0';
@@ -3338,12 +3339,14 @@ async function grantEventBadges() {
 
 function renderBossHomeBtn() {
   const wrap = document.getElementById('bossBtnWrap');
+  if (!wrap) return;
   const mode = getBossMode();
+  const loggedIn = typeof fbUser !== 'undefined' && fbUser;
   if (mode === 'pre') {
     wrap.innerHTML = '<div style="text-align:center;padding:10px;background:rgba(249,202,36,0.12);border:1px solid rgba(249,202,36,0.4);border-radius:12px;color:#f9ca24;font-weight:800;font-size:0.9rem;">📣 5月26日（月）スタート！ タップして予告を見る</div>';
   } else if (mode === 'end') {
     wrap.innerHTML = '<div style="text-align:center;padding:10px;color:#a0aec0;font-size:0.85rem;">🏁 イベント終了</div>';
-  } else if (!fbUser) {
+  } else if (!loggedIn) {
     wrap.innerHTML = '<div class="boss-btn-login">🔒 Googleログインで討伐に参加できます</div>';
   } else {
     wrap.innerHTML = '<button class="boss-btn">⚔️ 討伐に参加する！</button>';
@@ -3351,8 +3354,8 @@ function renderBossHomeBtn() {
 }
 
 function openBossEvent() {
-  if (!fbUser) {
-    // 未ログインでも画面は見せる（参加ボタンはロック）
+  const loggedIn = typeof fbUser !== 'undefined' && fbUser;
+  if (!loggedIn) {
     renderBossEventScreen();
     showScreen('bossEventScreen');
     return;
@@ -3366,7 +3369,7 @@ function openBossEvent() {
   showScreen('bossEventScreen');
 }
 
-// ページロード時にホームボタン初期化
+// ページロード時にホームボタン初期化（Firebase初期化前なので未ログイン扱いで表示）
 renderBossHomeBtn();
 
 // ホームカード全体クリックでボス画面へ
