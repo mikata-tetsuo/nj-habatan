@@ -971,7 +971,8 @@
     pointer-events: none;
   }
   .boss-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-  .boss-icon { font-size: 2rem; }
+  .boss-icon { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: rgba(255,255,255,0.1); }
+  .boss-icon img { width: 100%; height: 100%; object-fit: cover; object-position: 15% 0%; }
   .boss-label { font-size: 0.7rem; color: #fc8181; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
   .boss-name { font-size: 1.15rem; font-weight: 800; color: #fff; margin-top: 2px; }
   .boss-period { font-size: 0.75rem; color: #a0aec0; margin-top: 2px; }
@@ -1647,7 +1648,7 @@
       <!-- ボス討伐イベント -->
       <div class="boss-card" id="bossCard">
         <div class="boss-card-header">
-          <div class="boss-icon">👹</div>
+          <div class="boss-icon"><img src="kutsuna1.png" alt="忽那先生"></div>
           <div>
             <div class="boss-label">⚔️ 週間ボス討伐イベント</div>
             <div class="boss-name">忽那先生を倒せ！</div>
@@ -2281,7 +2282,7 @@
         <div style="font-size:0.8rem;color:#fc8181;font-weight:800;">⚔️ 忽那先生討伐イベント</div>
       </div>
 
-      <div class="boss-event-label">👹 TODAY'S BOSS</div>
+      <div class="boss-event-label">⚔️ TODAY'S BOSS</div>
       <div class="boss-chara-wrap">
         <div class="boss-chara-panel" id="bossCharaPanel"></div>
       </div>
