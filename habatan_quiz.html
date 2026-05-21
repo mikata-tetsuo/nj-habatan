@@ -1088,6 +1088,36 @@
   }
   .boss-go-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(252,129,129,0.7); }
   .boss-go-btn:active { transform: translateY(0); }
+  .boss-contrib-card {
+    background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 16px; margin-bottom: 16px;
+  }
+  .boss-contrib-label { font-size: 0.75rem; color: #a0aec0; font-weight: 800; letter-spacing: 1px; margin-bottom: 12px; }
+  .boss-contrib-me {
+    background: rgba(252,129,129,0.15); border: 1px solid rgba(252,129,129,0.3);
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.85rem;
+  }
+  .boss-contrib-me-label { color: #fc8181; font-weight: 800; }
+  .boss-contrib-me-count { color: #fff; font-weight: 800; font-size: 1rem; }
+  .boss-contrib-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.85rem;
+  }
+  .boss-contrib-row:last-child { border-bottom: none; }
+  .boss-contrib-rank { font-size: 1rem; width: 28px; text-align: center; font-weight: 800; }
+  .boss-contrib-avatar { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.1); }
+  .boss-contrib-name { flex: 1; color: #e2e8f0; font-weight: 600; }
+  .boss-contrib-count { color: #fc8181; font-weight: 800; }
+  /* ⚔️ 討伐者バッジ（週間ランキング用） */
+  .rank-event-badge {
+    display: inline-block; font-size: 0.65rem; font-weight: 800;
+    background: linear-gradient(135deg, #fc8181, #f6ad55);
+    color: #1a1a2e; border-radius: 6px; padding: 1px 6px; margin-left: 4px;
+    vertical-align: middle; letter-spacing: 0.5px;
+  }
 
   /* ===== 音声ボタン ===== */
   .speak-btn {
@@ -2271,6 +2301,16 @@
         </div>
       </div>
 
+      <!-- 貢献度ランキング -->
+      <div class="boss-contrib-card">
+        <div class="boss-contrib-label">⚔️ 今週の討伐ランキング</div>
+        <div class="boss-contrib-me" id="bossContribMe" style="display:none">
+          <span class="boss-contrib-me-label">あなたの貢献</span>
+          <span class="boss-contrib-me-count">🏆 <span id="bossMyContrib">0</span> 個</span>
+        </div>
+        <div id="bossContribList"><div style="color:#718096;font-size:0.8rem;text-align:center;padding:8px;">読み込み中...</div></div>
+      </div>
+
       <div class="boss-diff-card" id="bossDiffCard">
         <div class="boss-diff-label">🎮 難易度を選択</div>
         <div class="boss-diff-row">
@@ -3194,6 +3234,9 @@ function renderBossEventScreen() {
     goBtn.style = '';
   }
 
+  // 貢献ランキング読み込み
+  loadBossContribRanking();
+
   // 難易度選択
   document.querySelectorAll('.boss-diff-btn:not(.locked)').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -3201,6 +3244,96 @@ function renderBossEventScreen() {
       btn.classList.add('active');
     });
   });
+}
+
+// ===== 貢献度ランキング =====
+const BOSS_EVENT_ID = 'kutsuna_week1'; // イベントIDで管理
+const MOCK_CONTRIB = [
+  { name: 'たろう',   photoURL: '', count: 12 },
+  { name: 'はなこ',   photoURL: '', count: 9  },
+  { name: 'けんじ',   photoURL: '', count: 7  },
+  { name: 'みさき',   photoURL: '', count: 5  },
+  { name: 'りょうた', photoURL: '', count: 3  },
+];
+
+async function loadBossContribRanking() {
+  const listEl = document.getElementById('bossContribList');
+  const meEl   = document.getElementById('bossContribMe');
+  if (!listEl) return;
+
+  // --- Firestore実装後はここをコメント解除 ---
+  // try {
+  //   const snap = await fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
+  //     .collection('contributions').orderBy('count','desc').limit(20).get();
+  //   const items = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  //   renderContribList(items, meEl, listEl);
+  // } catch(e) { console.error(e); }
+
+  // --- モック表示（月曜に差し替え） ---
+  renderContribList(MOCK_CONTRIB, meEl, listEl);
+}
+
+function renderContribList(items, meEl, listEl) {
+  const medals = ['🥇','🥈','🥉'];
+  listEl.innerHTML = items.slice(0, 10).map((d, i) => {
+    const isMe = fbUser && d.id === fbUser.uid;
+    const medal = medals[i] || (i + 1) + '位';
+    const avatar = d.photoURL
+      ? `<img class="boss-contrib-avatar" src="${d.photoURL}">`
+      : `<span class="boss-contrib-avatar"></span>`;
+    return `<div class="boss-contrib-row${isMe ? '" style="background:rgba(252,129,129,0.08)' : ''}">
+      <span class="boss-contrib-rank">${medal}</span>
+      ${avatar}
+      <span class="boss-contrib-name">${d.name}${isMe ? ' 👈' : ''}</span>
+      <span class="boss-contrib-count">🏆 ${d.count}個</span>
+    </div>`;
+  }).join('');
+
+  if (!items.length) {
+    listEl.innerHTML = '<div style="color:#718096;font-size:0.8rem;text-align:center;padding:8px;">まだ討伐者がいません。最初の一撃を！⚔️</div>';
+  }
+
+  // 自分の貢献表示
+  if (fbUser) {
+    const me = items.find(d => d.id === fbUser.uid);
+    if (me) {
+      document.getElementById('bossMyContrib').textContent = me.count;
+      meEl.style.display = 'flex';
+    }
+  }
+}
+
+// トロフィー取得時にFirestoreへ記録（月曜に chMarkStageCleared から呼ぶ）
+async function addBossContrib() {
+  if (!fbUser || getBossMode() !== 'active') return;
+  try {
+    const ref = fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
+      .collection('contributions').doc(fbUser.uid);
+    const doc = await ref.get();
+    const prev = doc.exists ? (doc.data().count || 0) : 0;
+    await ref.set({
+      name: fbNickname || fbUser.displayName || '名無し',
+      photoURL: fbUser.photoURL || '',
+      count: prev + 1,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    // HP合計も更新
+    const eventRef = fbDb.collection('boss_events').doc(BOSS_EVENT_ID);
+    await eventRef.set({ total: firebase.firestore.FieldValue.increment(1) }, { merge: true });
+  } catch(e) { console.error('Boss contrib:', e); }
+}
+
+// イベント終了後、上位5名にバッジを付与（管理者が手動実行 or Cloud Functions）
+async function grantEventBadges() {
+  if (!fbDb) return;
+  const snap = await fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
+    .collection('contributions').orderBy('count','desc').limit(5).get();
+  const expiry = new Date('2026-06-08T23:59:59+09:00').toISOString();
+  for (const doc of snap.docs) {
+    await fbDb.collection('users').doc(doc.id).set({
+      eventBadge: { label: '⚔️ 討伐者', expiry }
+    }, { merge: true });
+  }
 }
 
 function renderBossHomeBtn() {
@@ -5581,6 +5714,7 @@ async function renderRankingScreen() {
         avatarHtml +
         '<span class="rank-name">'+(d.isStudent?'<span class="rank-student-star">★</span>':'')+
         (d.displayName||'名無し')+(isMe?' 👈':'')+
+        (d.eventBadge && new Date(d.eventBadge.expiry) > new Date() ? '<span class="rank-event-badge">'+d.eventBadge.label+'</span>' : '')+
         '</span><span class="rank-score">'+scoreVal.toLocaleString()+'pt</span>'+diffBadge+'</div>';
     }).join('');
   } catch(e) {
