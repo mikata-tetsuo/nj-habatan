@@ -2088,7 +2088,12 @@
         <button class="grade-btn" data-grade="中1">⚡ 中1</button>
         <button class="grade-btn" data-grade="中2">🔥 中2</button>
         <button class="grade-btn" data-grade="中3">💪 中3</button>
-        <button class="grade-btn" data-grade="高校生" style="grid-column:1/-1;">👑 高校生</button>
+        <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <button class="grade-btn" data-grade="高1">📚 高1</button>
+          <button class="grade-btn" data-grade="高2">📚 高2</button>
+          <button class="grade-btn" data-grade="高3">📚 高3</button>
+        </div>
+        <button class="grade-btn" data-grade="その他" style="grid-column:1/-1;">👤 その他</button>
       </div>
     </div>
   </div>
@@ -3111,7 +3116,10 @@ const GRADE_DIFF_UNLOCK = {
   '中1':    ['ji','beginner'],
   '中2':    ['ji','beginner','normal'],
   '中3':    ['ji','beginner','normal','expert'],
-  '高校生': ['ji','beginner','normal','expert'],
+  '高1':    ['ji','beginner','normal','expert'],
+  '高2':    ['ji','beginner','normal','expert'],
+  '高3':    ['ji','beginner','normal','expert'],
+  'その他': ['ji','beginner','normal','expert'],
 };
 const BOSS_SERIF = {
   normal:  '小学生レベルごときで、俺に勝てると思うなよ？😤',
