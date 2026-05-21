@@ -956,6 +956,139 @@
     margin-top:2px;
   }
 
+  /* ===== ボス討伐カード ===== */
+  .boss-card {
+    background: linear-gradient(135deg, rgba(127,0,0,0.35), rgba(220,38,38,0.2));
+    border: 1px solid rgba(220,38,38,0.5);
+    border-radius: 20px; padding: 20px; margin-bottom: 12px;
+    position: relative; overflow: hidden; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .boss-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(220,38,38,0.3); }
+  .boss-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at top right, rgba(255,100,0,0.15), transparent 70%);
+    pointer-events: none;
+  }
+  .boss-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .boss-icon { font-size: 2rem; }
+  .boss-label { font-size: 0.7rem; color: #fc8181; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+  .boss-name { font-size: 1.15rem; font-weight: 800; color: #fff; margin-top: 2px; }
+  .boss-period { font-size: 0.75rem; color: #a0aec0; margin-top: 2px; }
+  .boss-progress-wrap { margin-bottom: 10px; }
+  .boss-progress-bar-bg {
+    background: rgba(255,255,255,0.1); border-radius: 99px; height: 14px;
+    overflow: hidden; margin-bottom: 6px;
+  }
+  .boss-progress-bar {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, #fc8181, #f6ad55);
+    transition: width 0.6s ease;
+  }
+  .boss-progress-text { display: flex; justify-content: space-between; font-size: 0.8rem; }
+  .boss-progress-count { font-weight: 800; color: #fc8181; }
+  .boss-progress-goal { color: #a0aec0; }
+  .boss-btn {
+    width: 100%; padding: 12px; border: none; border-radius: 12px;
+    font-size: 1rem; font-weight: 800; cursor: pointer; letter-spacing: 1px;
+    background: linear-gradient(135deg, #fc8181, #f6ad55);
+    color: #1a1a2e; transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(252,129,129,0.4);
+  }
+  .boss-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(252,129,129,0.6); }
+  .boss-btn:active { transform: translateY(0); }
+  .boss-btn-login {
+    width: 100%; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 700;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+    color: #a0aec0; cursor: default; letter-spacing: 0.5px;
+  }
+
+  /* ===== 学年選択モーダル ===== */
+  .grade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+  .grade-btn {
+    padding: 12px 8px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06); color: #fff; font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .grade-btn:hover { border-color: #fc8181; background: rgba(252,129,129,0.15); color: #fc8181; }
+
+  /* ===== ボス討伐詳細画面 ===== */
+  .boss-screen-bg {
+    background: linear-gradient(180deg, #3b0000 0%, #1a0a0a 60%, #1a1a2e 100%);
+    min-height: 100vh; padding: 16px;
+  }
+  .boss-screen-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .boss-screen-back {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px; color: #fff; padding: 6px 14px; font-size: 0.85rem; cursor: pointer;
+  }
+  .boss-event-label {
+    font-size: 0.7rem; color: #fc8181; font-weight: 800; letter-spacing: 2px; text-align: center;
+    margin-bottom: 4px;
+  }
+  .boss-chara-wrap {
+    text-align: center; margin: 8px 0 20px;
+    filter: drop-shadow(0 0 30px rgba(252,129,129,0.5));
+  }
+  .boss-chara-panel {
+    width: 240px; height: 240px; margin: 0 auto;
+    background-image: url('kutsuna1.png');
+    background-size: 200% 200%;
+    background-position: 0% 0%;
+    background-repeat: no-repeat;
+    border-radius: 16px;
+    transition: background-position 0.5s ease;
+  }
+  .boss-serif {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(252,129,129,0.3);
+    border-radius: 16px; padding: 14px 18px; margin-bottom: 20px;
+    font-size: 0.95rem; color: #fde8e8; line-height: 1.6; text-align: center;
+    position: relative;
+  }
+  .boss-serif::before { content: '💬'; position: absolute; top: -12px; left: 16px; font-size: 1.2rem; }
+  .boss-hp-card {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(252,129,129,0.3);
+    border-radius: 16px; padding: 18px; margin-bottom: 16px;
+  }
+  .boss-hp-label { font-size: 0.75rem; color: #fc8181; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; }
+  .boss-hp-bar-bg {
+    background: rgba(255,255,255,0.08); border-radius: 99px; height: 20px; overflow: hidden; margin-bottom: 8px;
+  }
+  .boss-hp-bar {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, #fc8181, #f6ad55);
+    transition: width 1s ease; position: relative;
+  }
+  .boss-hp-bar::after {
+    content: ''; position: absolute; inset: 0; border-radius: 99px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%);
+  }
+  .boss-hp-nums { display: flex; justify-content: space-between; font-size: 0.85rem; }
+  .boss-hp-current { font-weight: 800; color: #fc8181; font-size: 1.1rem; }
+  .boss-hp-goal { color: #a0aec0; }
+  .boss-diff-card {
+    background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 16px; margin-bottom: 16px;
+  }
+  .boss-diff-label { font-size: 0.75rem; color: #a0aec0; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; }
+  .boss-diff-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .boss-diff-btn {
+    flex: 1; padding: 10px 6px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.06); color: #fff; font-size: 0.82rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .boss-diff-btn.active { border-color: #fc8181; background: rgba(252,129,129,0.2); color: #fc8181; }
+  .boss-diff-btn.locked { opacity: 0.3; cursor: not-allowed; }
+  .boss-go-btn {
+    width: 100%; padding: 16px; border: none; border-radius: 14px;
+    font-size: 1.2rem; font-weight: 800; cursor: pointer; letter-spacing: 2px;
+    background: linear-gradient(135deg, #fc8181, #f6ad55);
+    color: #1a1a2e; box-shadow: 0 4px 20px rgba(252,129,129,0.5);
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+  .boss-go-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(252,129,129,0.7); }
+  .boss-go-btn:active { transform: translateY(0); }
+
   /* ===== 音声ボタン ===== */
   .speak-btn {
     background: none; border: none; cursor: pointer;
@@ -1481,6 +1614,28 @@
 
     <div class="mode-cards">
 
+      <!-- ボス討伐イベント -->
+      <div class="boss-card" id="bossCard">
+        <div class="boss-card-header">
+          <div class="boss-icon">👹</div>
+          <div>
+            <div class="boss-label">⚔️ 週間ボス討伐イベント</div>
+            <div class="boss-name">中2 Chapter 1 を倒せ！</div>
+            <div class="boss-period">残り 5日 | 目標：500問正解</div>
+          </div>
+        </div>
+        <div class="boss-progress-wrap">
+          <div class="boss-progress-bar-bg">
+            <div class="boss-progress-bar" id="bossProgressBar" style="width:65%"></div>
+          </div>
+          <div class="boss-progress-text">
+            <span class="boss-progress-count" id="bossProgressCount">🗡️ 327問 正解済み</span>
+            <span class="boss-progress-goal">目標 500問</span>
+          </div>
+        </div>
+        <div id="bossBtnWrap" style="margin-top:10px;"></div>
+      </div>
+
       <!-- チャレンジ -->
       <div class="mode-card challenge" id="cardChallenge">
         <div class="mode-card-header">
@@ -1922,6 +2077,22 @@
     </div>
   </div>
 
+  <!-- 学年選択モーダル -->
+  <div id="gradeModal" class="modal-overlay" style="display:none">
+    <div class="modal-box" style="background:#1a1a2e;border:1px solid rgba(252,129,129,0.4);">
+      <div class="modal-icon">🎓</div>
+      <div class="modal-title" style="color:#fff;">学年を教えてください</div>
+      <div style="color:#a0aec0;font-size:0.82rem;margin-bottom:4px;">イベントの難易度に使います</div>
+      <div class="grade-grid">
+        <button class="grade-btn" data-grade="小学生">🌱 小学生</button>
+        <button class="grade-btn" data-grade="中1">⚡ 中1</button>
+        <button class="grade-btn" data-grade="中2">🔥 中2</button>
+        <button class="grade-btn" data-grade="中3">💪 中3</button>
+        <button class="grade-btn" data-grade="高校生" style="grid-column:1/-1;">👑 高校生</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LOGIN BONUS MODAL -->
   <div id="loginBonusModal" class="modal-overlay" style="display:none">
     <div class="modal-box">
@@ -2067,6 +2238,51 @@
   </div>
 
   <!-- CHALLENGE LEVEL SELECT -->
+  <!-- ボス討伐詳細画面 -->
+  <div id="bossEventScreen" class="screen">
+    <div class="boss-screen-bg">
+      <div class="boss-screen-header">
+        <button class="boss-screen-back" id="btnBossBack">← 戻る</button>
+        <div style="font-size:0.8rem;color:#fc8181;font-weight:800;">⚔️ 忽那先生討伐イベント</div>
+      </div>
+
+      <div class="boss-event-label">👹 TODAY'S BOSS</div>
+      <div class="boss-chara-wrap">
+        <div class="boss-chara-panel" id="bossCharaPanel"></div>
+      </div>
+
+      <div class="boss-serif" id="bossSerif">
+        小学生レベルごときで、俺に勝てると思うなよ？
+      </div>
+
+      <div class="boss-hp-card">
+        <div class="boss-hp-label">💀 ボスのHP（みんなのトロフィー合計）</div>
+        <div class="boss-hp-bar-bg">
+          <div class="boss-hp-bar" id="bossHpBar" style="width:0%"></div>
+        </div>
+        <div class="boss-hp-nums">
+          <span class="boss-hp-current">🏆 <span id="bossHpCurrent">0</span> 個</span>
+          <span class="boss-hp-goal">目標 200個</span>
+        </div>
+      </div>
+
+      <div class="boss-diff-card" id="bossDiffCard">
+        <div class="boss-diff-label">🎮 難易度を選択</div>
+        <div class="boss-diff-row">
+          <button class="boss-diff-btn locked" data-bossdiff="ji">🧠 じっくり</button>
+          <button class="boss-diff-btn locked" data-bossdiff="beginner">🌱 ビギナー</button>
+          <button class="boss-diff-btn locked" data-bossdiff="normal">⚡ ノーマル</button>
+          <button class="boss-diff-btn locked" data-bossdiff="expert">🔥 エキスパート</button>
+        </div>
+      </div>
+
+      <button class="boss-go-btn" id="bossGoBtn">⚔️ 討伐に行く！（小学生Lv）</button>
+      <div style="text-align:center;color:#a0aec0;font-size:0.75rem;margin-top:10px;">
+        残り <span id="bossRemainDays">5</span>日 | 2026.05.26（月）〜 6.1（日）
+      </div>
+    </div>
+  </div>
+
   <div id="challengeLevelScreen" class="screen">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
       <button class="map-back" id="btnChLvBack">← 戻る</button>
@@ -2874,6 +3090,170 @@ document.querySelectorAll('.home-diff-btn[data-chlvdiff]').forEach(btn => {
 updateDifficultyDisplay();
 chMigrateOldProg();
 updateChHomeScore(); // ページ読み込み時にチャレンジ累積スコアを表示
+
+// ===== ボス討伐イベント =====
+const BOSS_GOAL = 200;
+const BOSS_MOCK_CURRENT = 47; // モック用（後でFirestoreから取得）
+const BOSS_START = new Date('2026-05-26T00:00:00+09:00');
+const BOSS_END   = new Date('2026-06-01T23:59:59+09:00');
+const BOSS_TEST  = new URLSearchParams(location.search).get('bosstest') === '1';
+
+function getBossMode() {
+  if (BOSS_TEST) return 'active';
+  const now = new Date();
+  if (now < BOSS_START) return 'pre';    // 予告
+  if (now > BOSS_END)   return 'end';    // 終了
+  return 'active';                        // 本番
+}
+
+const GRADE_DIFF_UNLOCK = {
+  '小学生': ['ji'],
+  '中1':    ['ji','beginner'],
+  '中2':    ['ji','beginner','normal'],
+  '中3':    ['ji','beginner','normal','expert'],
+  '高校生': ['ji','beginner','normal','expert'],
+};
+const BOSS_SERIF = {
+  normal:  '小学生レベルごときで、俺に勝てると思うなよ？😤',
+  half:    '…まあまあやるじゃないか。でも、ここまでだ！💦',
+  pinch:   'くっ…！み、みんな強くなりすぎだろ…！😱',
+  clear:   'やられた…次は負けんぞ！（次は泰地先生が来るらしい…）💀',
+};
+
+function getBossSerif(current, goal) {
+  const pct = current / goal;
+  if (pct >= 1)   return BOSS_SERIF.clear;
+  if (pct >= 0.7) return BOSS_SERIF.pinch;
+  if (pct >= 0.4) return BOSS_SERIF.half;
+  return BOSS_SERIF.normal;
+}
+
+function getBossPanelPos(current, goal) {
+  const pct = current / goal;
+  if (pct >= 1)   return '100% 100%'; // 右下：KO
+  if (pct >= 0.7) return '0% 100%';   // 左下：ピンチ
+  if (pct >= 0.4) return '100% 0%';   // 右上：まだまだ
+  return '0% 0%';                      // 左上：余裕
+}
+
+function loadGrade() {
+  return localStorage.getItem('habatan_grade') || null;
+}
+function saveGrade(grade) {
+  localStorage.setItem('habatan_grade', grade);
+}
+
+function renderBossEventScreen() {
+  const current = BOSS_MOCK_CURRENT;
+  const pct     = Math.min(current / BOSS_GOAL * 100, 100);
+  document.getElementById('bossHpBar').style.width = pct + '%';
+  document.getElementById('bossHpCurrent').textContent = current;
+  document.getElementById('bossSerif').textContent = getBossSerif(current, BOSS_GOAL);
+  document.getElementById('bossCharaPanel').style.backgroundPosition = getBossPanelPos(current, BOSS_GOAL);
+
+  const grade   = loadGrade();
+  const unlocked = fbUser ? (GRADE_DIFF_UNLOCK[grade] || []) : [];
+  document.querySelectorAll('.boss-diff-btn').forEach(btn => {
+    const d = btn.dataset.bossdiff;
+    if (unlocked.includes(d)) {
+      btn.classList.remove('locked');
+      btn.classList.add('active');
+    } else {
+      btn.classList.add('locked');
+      btn.classList.remove('active');
+    }
+  });
+
+  const goBtn = document.getElementById('bossGoBtn');
+  const mode = getBossMode();
+  if (mode === 'pre') {
+    goBtn.textContent = '📣 5月26日（月）スタート！';
+    goBtn.style.background = 'linear-gradient(135deg,#f9ca24,#f0932b)';
+    goBtn.style.color = '#1a1a2e';
+    goBtn.style.cursor = 'default';
+    goBtn.onclick = null;
+    document.getElementById('bossSerif').textContent = '5月26日から始まるぞ。それまでに覚悟しておけ！😤';
+    document.getElementById('bossCharaPanel').style.backgroundPosition = '0% 0%';
+  } else if (!fbUser) {
+    goBtn.textContent = '🔒 Googleログインで討伐に参加できます';
+    goBtn.style.background = 'rgba(255,255,255,0.08)';
+    goBtn.style.color = '#a0aec0';
+    goBtn.style.boxShadow = 'none';
+    goBtn.style.cursor = 'default';
+    goBtn.onclick = null;
+  } else {
+    goBtn.textContent = '⚔️ 討伐に行く！（小学生Lv）';
+    goBtn.style = '';
+  }
+
+  // 難易度選択
+  document.querySelectorAll('.boss-diff-btn:not(.locked)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.boss-diff-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+}
+
+function renderBossHomeBtn() {
+  const wrap = document.getElementById('bossBtnWrap');
+  const mode = getBossMode();
+  if (mode === 'pre') {
+    wrap.innerHTML = '<div style="text-align:center;padding:10px;background:rgba(249,202,36,0.12);border:1px solid rgba(249,202,36,0.4);border-radius:12px;color:#f9ca24;font-weight:800;font-size:0.9rem;">📣 5月26日（月）スタート！ タップして予告を見る</div>';
+  } else if (mode === 'end') {
+    wrap.innerHTML = '<div style="text-align:center;padding:10px;color:#a0aec0;font-size:0.85rem;">🏁 イベント終了</div>';
+  } else if (!fbUser) {
+    wrap.innerHTML = '<div class="boss-btn-login">🔒 Googleログインで討伐に参加できます</div>';
+  } else {
+    wrap.innerHTML = '<button class="boss-btn">⚔️ 討伐に参加する！</button>';
+  }
+}
+
+function openBossEvent() {
+  if (!fbUser) {
+    // 未ログインでも画面は見せる（参加ボタンはロック）
+    renderBossEventScreen();
+    showScreen('bossEventScreen');
+    return;
+  }
+  const grade = loadGrade();
+  if (!grade) {
+    document.getElementById('gradeModal').style.display = 'flex';
+    return;
+  }
+  renderBossEventScreen();
+  showScreen('bossEventScreen');
+}
+
+// ページロード時にホームボタン初期化
+renderBossHomeBtn();
+
+// ホームカード全体クリックでボス画面へ
+document.getElementById('bossCard').addEventListener('click', () => openBossEvent());
+
+// 学年選択
+document.querySelectorAll('.grade-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    saveGrade(btn.dataset.grade);
+    document.getElementById('gradeModal').style.display = 'none';
+    renderBossEventScreen();
+    showScreen('bossEventScreen');
+  });
+});
+
+// 討伐に行く！→チャレンジLv1へ
+document.getElementById('bossGoBtn').addEventListener('click', () => {
+  const activeBtn = document.querySelector('.boss-diff-btn.active:not(.locked)');
+  if (!activeBtn) return;
+  const d = activeBtn.dataset.bossdiff;
+  if (d === 'ji') { chJiMode = true; } else { chJiMode = false; currentDifficulty = d; }
+  chLevel = 1;
+  renderChallengeLevelScreen();
+  showScreen('challengeMapScreen');
+  showChallengeMap(1);
+});
+
+document.getElementById('btnBossBack').addEventListener('click', () => showScreen('startScreen'));
 
 document.addEventListener('click', resumeAC, {once:true});
 document.querySelectorAll('.count-btn').forEach(btn => {
@@ -4753,6 +5133,8 @@ function updateAuthUI() {
     // ランキングカード：ログイン済み → 通常表示
     document.getElementById('cardRanking').classList.remove('locked');
     document.getElementById('rankingCardDesc').textContent = 'みんなのスコアをチェックしよう！目指せ兵庫県、単語ナンバー1！';
+    // ボス討伐：ログイン済み
+    renderBossHomeBtn();
   } else {
     loginSec.style.display = 'block';
     userSec.style.display  = 'none';
@@ -4766,6 +5148,8 @@ function updateAuthUI() {
     // ランキングカード：未ログイン → ロック表示
     document.getElementById('cardRanking').classList.add('locked');
     document.getElementById('rankingCardDesc').textContent = '🔒 Googleログインすると見られます';
+    // ボス討伐：未ログイン
+    renderBossHomeBtn();
   }
 }
 
