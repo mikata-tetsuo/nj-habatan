@@ -5160,7 +5160,7 @@ async function renderRankingScreen() {
         .filter(d => d[pInfo.kf] === curKey && (d[pInfo.sf]||0) > 0)
         .sort((a,b) => (b[pInfo.sf]||0)-(a[pInfo.sf]||0));
     }
-    items = items.slice(0,30);
+    items = items.slice(0,100);
 
     if (!items.length) {
       listEl.innerHTML = '<div class="ranking-empty">まだ記録がありません 🤔<br>プレイしてランキングに載ろう！</div>';
