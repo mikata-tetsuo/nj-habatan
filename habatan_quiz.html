@@ -3217,12 +3217,16 @@ function renderBossEventScreen() {
   const goBtn = document.getElementById('bossGoBtn');
   const mode = getBossMode();
   if (mode === 'pre') {
-    goBtn.textContent = '📣 5月26日（月）スタート！';
-    goBtn.style.background = 'linear-gradient(135deg,#f9ca24,#f0932b)';
-    goBtn.style.color = '#1a1a2e';
+    const daysLeft = Math.ceil((BOSS_START - new Date()) / (1000 * 60 * 60 * 24));
+    goBtn.textContent = `🗓 イベント開始まで あと ${daysLeft} 日！`;
+    goBtn.style.background = 'rgba(249,202,36,0.12)';
+    goBtn.style.border = '2px solid rgba(249,202,36,0.5)';
+    goBtn.style.color = '#f9ca24';
+    goBtn.style.boxShadow = 'none';
     goBtn.style.cursor = 'default';
+    goBtn.style.fontSize = '1rem';
     goBtn.onclick = null;
-    document.getElementById('bossSerif').textContent = '5月26日から始まるぞ。それまでに覚悟しておけ！😤';
+    document.getElementById('bossSerif').textContent = '5月26日から始まるぞ。それまでに覚悟しておけよ！😤';
     document.getElementById('bossCharaPanel').style.backgroundPosition = '0% 0%';
   } else if (!loggedIn) {
     goBtn.textContent = '🔒 Googleログインで討伐に参加できます';
@@ -3236,8 +3240,19 @@ function renderBossEventScreen() {
     goBtn.style = '';
   }
 
-  // 貢献ランキング読み込み
-  loadBossContribRanking();
+  const mode = getBossMode();
+
+  // 予告モードは難易度・ランキングを非表示
+  const diffCard    = document.getElementById('bossDiffCard');
+  const contribCard = document.querySelector('.boss-contrib-card');
+  if (mode === 'pre') {
+    if (diffCard)    diffCard.style.display = 'none';
+    if (contribCard) contribCard.style.display = 'none';
+  } else {
+    if (diffCard)    diffCard.style.display = 'block';
+    if (contribCard) contribCard.style.display = 'block';
+    loadBossContribRanking();
+  }
 
   // 難易度選択
   document.querySelectorAll('.boss-diff-btn:not(.locked)').forEach(btn => {
