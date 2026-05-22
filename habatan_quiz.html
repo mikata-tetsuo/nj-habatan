@@ -511,6 +511,12 @@
   .clv-btn-5 { border-color: rgba(183,148,244,0.4); }
   .clv-btn-5 .clv-num { color: #b794f4; }
   .clv-btn-5 .clv-progress-bar { background: #b794f4; }
+  .clv-btn-6 { border-color: rgba(246,135,179,0.4); }
+  .clv-btn-6 .clv-num { color: #f687b3; }
+  .clv-btn-6 .clv-progress-bar { background: #f687b3; }
+  .clv-btn-7 { border-color: rgba(252,129,129,0.5); }
+  .clv-btn-7 .clv-num { color: #fc8181; }
+  .clv-btn-7 .clv-progress-bar { background: #fc8181; }
 
   /* 進捗マップ */
   .map-header {
@@ -1453,6 +1459,8 @@
   .level-btn[data-jisetlv="3"].selected { background: #F59E0B; }
   .level-btn[data-jisetlv="4"].selected { background: #EF4444; }
   .level-btn[data-jisetlv="5"].selected { background: #8B5CF6; }
+  .level-btn[data-jisetlv="6"].selected { background: #EC4899; }
+  .level-btn[data-jisetlv="7"].selected { background: #EF4444; }
 
   /* 難易度（ホーム） */
   .home-diff-section { background: var(--surface); border-color: var(--border); }
@@ -1656,6 +1664,8 @@
   .level-btn[data-jisetlv="3"].selected { background: #f6ad55; }
   .level-btn[data-jisetlv="4"].selected { background: #fc8181; }
   .level-btn[data-jisetlv="5"].selected { background: #b794f4; }
+  .level-btn[data-jisetlv="6"].selected { background: #f687b3; }
+  .level-btn[data-jisetlv="7"].selected { background: #fc8181; }
 
   /* ランキング モードタブ */
   .rank-mode-tabs { display:flex; gap:8px; margin-bottom:12px; }
@@ -1819,6 +1829,8 @@
                   <button class="level-btn" data-testsetlv="3"><span class="lv-num">③</span><span class="lv-name">中2</span></button>
                   <button class="level-btn" data-testsetlv="4"><span class="lv-num">④</span><span class="lv-name">中3</span></button>
                   <button class="level-btn" data-testsetlv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span></button>
+                  <button class="level-btn" data-testsetlv="6"><span class="lv-num">⑥</span><span class="lv-name">英検2級</span></button>
+                  <button class="level-btn" data-testsetlv="7"><span class="lv-num">⑦</span><span class="lv-name">英検準1級</span></button>
                 </div>
                 <div class="count-row-compact" id="testSetBtns" style="margin-bottom:8px;flex-wrap:wrap;"></div>
                 <div style="color:#718096;font-size:0.78rem;" id="testSetCountMsg">50語</div>
@@ -2009,6 +2021,8 @@
                   <button class="level-btn" data-printsetlv="3"><span class="lv-num">③</span><span class="lv-name">中2</span></button>
                   <button class="level-btn" data-printsetlv="4"><span class="lv-num">④</span><span class="lv-name">中3</span></button>
                   <button class="level-btn" data-printsetlv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span></button>
+                  <button class="level-btn" data-printsetlv="6"><span class="lv-num">⑥</span><span class="lv-name">英検2級</span></button>
+                  <button class="level-btn" data-printsetlv="7"><span class="lv-num">⑦</span><span class="lv-name">英検準1級</span></button>
                 </div>
                 <div class="count-row-compact" id="printSetBtns" style="margin-bottom:8px;flex-wrap:wrap;"></div>
                 <div style="color:#718096;font-size:0.78rem;" id="printSetCountMsg">50語</div>
@@ -2020,6 +2034,8 @@
                   <button class="level-btn" data-printlv="3"><span class="lv-num">③</span><span class="lv-name">中2</span><span class="lv-count">749語</span></button>
                   <button class="level-btn" data-printlv="4"><span class="lv-num">④</span><span class="lv-name">中3</span><span class="lv-count">406語</span></button>
                   <button class="level-btn" data-printlv="5"><span class="lv-num">⑤</span><span class="lv-name">高校受験</span><span class="lv-count">317語</span></button>
+                  <button class="level-btn" data-printlv="6"><span class="lv-num">⑥</span><span class="lv-name">英検2級</span><span class="lv-count">読込中</span></button>
+                  <button class="level-btn" data-printlv="7"><span class="lv-num">⑦</span><span class="lv-name">英検準1級</span><span class="lv-count">読込中</span></button>
                   <button class="level-btn-all" id="btnPrintLevelAll">すべて選択 / すべて解除</button>
                 </div>
                 <div style="color:#718096;font-size:0.78rem;margin-top:8px;" id="printLevelCountMsg">選択中: 464語</div>
@@ -2649,7 +2665,7 @@ if (typeof WORDS_EXT !== 'undefined') {
   document.querySelectorAll('[data-lv="6"],[data-testlv="6"],[data-pracsetlv="6"],[data-testsetlv="6"],[data-printlv="6"],[data-printsetlv="6"]').forEach(el => { const s = el.querySelector('.lv-count'); if(s) s.textContent = b1 + '語'; });
   document.querySelectorAll('[data-lv="7"],[data-testlv="7"],[data-pracsetlv="7"],[data-testsetlv="7"],[data-printlv="7"],[data-printsetlv="7"]').forEach(el => { const s = el.querySelector('.lv-count'); if(s) s.textContent = b2 + '語'; });
 }
-const LEVEL_NAMES  = {1:'①小学生', 2:'②中1', 3:'③中2', 4:'④中3', 5:'⑤高校受験'};
+const LEVEL_NAMES  = {1:'①小学生', 2:'②中1', 3:'③中2', 4:'④中3', 5:'⑤高校受験', 6:'⑥英検2級', 7:'⑦英検準1級'};
 let selectedLevels = new Set([1]);
 
 function updateLevelUI() {
@@ -3052,7 +3068,7 @@ function buildPrintSheet() {
 
   const questions = pool.sort(() => Math.random() - 0.5).slice(0, Math.min(printQuestionCount, pool.length));
 
-  const LEVEL_NAMES = {1:'小学生', 2:'中1', 3:'中2', 4:'中3', 5:'高校受験'};
+  const LEVEL_NAMES = {1:'小学生', 2:'中1', 3:'中2', 4:'中3', 5:'高校受験', 6:'英検2級', 7:'英検準1級'};
   const dirLabel  = direction === 'en2ja' ? '英語→日本語' : '日本語→英語';
   const lvLabel   = mode === 'level' ? [...printSelectedLevels].sort().map(l => LEVEL_NAMES[l]).join('・')
                   : mode === 'range' ? '番号指定'
@@ -3760,7 +3776,7 @@ function showQuestion() {
   $('hudCorrect').textContent = correctCount;
   $('hudCombo').textContent = jiMode ? '-' : (combo > 0 ? combo + '🔥' : '-');
   const lv = q.word.level || 1;
-  const lvNames = {1:'①小学生',2:'②中1',3:'③中2',4:'④中3',5:'⑤高校受験'};
+  const lvNames = {1:'①小学生',2:'②中1',3:'③中2',4:'④中3',5:'⑤高校受験',6:'⑥英検2級',7:'⑦英検準1級'};
   $('qNum').innerHTML = 'No.' + q.word.id + ' <span class="level-badge lv-badge-' + lv + '">' + lvNames[lv] + '</span>';
   const dir = window._direction || 'en2ja';
   $('qWord').textContent = dir === 'en2ja' ? q.word.en : q.word.ja;
@@ -4176,6 +4192,8 @@ const LV_INFO = {
   3:{name:'③中2',   cefr:'A2',    color:'#f6ad55'},
   4:{name:'④中3',   cefr:'B1',    color:'#fc8181'},
   5:{name:'⑤高校受験',cefr:'B2',  color:'#b794f4'},
+  6:{name:'⑥英検2級',  cefr:'B1',  color:'#f687b3'},
+  7:{name:'⑦英検準1級',cefr:'B2+', color:'#fc8181'},
 };
 
 let chLevel = 1;         // 現在のチャレンジレベル
@@ -4412,7 +4430,7 @@ function renderChallengeLevelScreen() {
   updateChHomeScore();
   const grid = $('challengeLevelGrid');
   grid.innerHTML = '';
-  const cfInfo = {1:'A1+☆',2:'A1',3:'A2',4:'B1',5:'B2'};
+  const cfInfo = {1:'A1+☆',2:'A1',3:'A2',4:'B1',5:'B2',6:'B1(英検2級)',7:'B2(英検準1級)'};
   Object.entries(LV_INFO).forEach(([lv, info]) => {
     const lvn = parseInt(lv);
     const words = chGetWords(lvn);
@@ -4872,7 +4890,7 @@ function showPracticeCard(dir) {
   $('pracExample').style.display = (w.ex || w.exja) ? '' : 'none';
 
   const plv = w.level || 1;
-  const plvNames = {1:'①小学生',2:'②中1',3:'③中2',4:'④中3',5:'⑤高校受験'};
+  const plvNames = {1:'①小学生',2:'②中1',3:'③中2',4:'④中3',5:'⑤高校受験',6:'⑥英検2級',7:'⑦英検準1級'};
   $('pracLvBadge').className = 'level-badge lv-badge-' + plv;
   $('pracLvBadge').textContent = plvNames[plv];
 
