@@ -3230,10 +3230,10 @@ const GRADE_DIFF_UNLOCK = {
   'その他': ['ji','beginner','normal','expert'],
 };
 const BOSS_SERIF = {
-  normal:  '小学生レベルごときで、俺に勝てると思うなよ？😤',
-  half:    '…まあまあやるじゃないか。でも、ここまでだ！💦',
+  normal:  'ん？ まだまだ余裕だな。これくらいの問題、一瞬で解けないとな〜？😏',
+  half:    '……お、結構削ってくるなぁ。でも、ここからが本番だからね？ここからは簡単にはいかへんよ？💦',
   pinch:   'くっ…！み、みんな強くなりすぎだろ…！😱',
-  clear:   'やられた…次は負けんぞ！（次は泰地先生が来るらしい…）💀',
+  clear:   'あーーやられた！みんな強すぎ！……でも、俺はほんの挨拶代わりにすぎんからな。次に来るあの先生は、ほんまにヤバイ、お、恐ろしいぞ、、、ふふふ、覚悟しとくけよ、、、💀',
 };
 
 function getBossSerif(current, goal) {
@@ -3294,7 +3294,7 @@ function renderBossEventScreen() {
     goBtn.style.fontSize = '1rem';
     goBtn.style.pointerEvents = 'none';
     goBtn.onclick = null;
-    document.getElementById('bossSerif').textContent = '5月26日から始まるぞ。それまでに覚悟しておけよ！😤';
+    document.getElementById('bossSerif').textContent = '5月26日から始まるぞ。言っておくけど、俺はそんなに甘くないからな？しっかり勉強して挑んでこいよ！😤';
     document.getElementById('bossCharaPanel').style.backgroundPosition = '0% 0%';
   } else if (!loggedIn) {
     goBtn.textContent = '🔒 Googleログインで討伐に参加できます';
