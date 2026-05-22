@@ -1709,6 +1709,7 @@
       <button class="btn-news" id="btnNews">🆕 新着情報</button>
     </div>
 
+    <div id="userCountTeaser" style="display:none;text-align:center;margin:-8px 0 12px;"><span style="background:linear-gradient(90deg,#f59e0b,#ef4444);color:#fff;font-size:0.8rem;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:0.05em;" id="userCountTeaserText"></span></div>
     <div id="homeTotalPts" class="home-total-pts" style="display:none">
       <span class="total-pts-label">総合計</span>
       <span class="total-pts-value" id="totalPtsValue">0</span>
@@ -2123,6 +2124,7 @@
       <button class="map-back" id="btnRankingBack">← ホーム</button>
       <div class="ranking-title">🥇 ランキング</div>
       <div style="text-align:center;color:#94a3b8;font-size:0.82rem;margin-top:2px;">👥 登録者 <span id="userCountNum">--</span> 人</div>
+      <div id="userCountdown" style="text-align:center;font-size:0.82rem;margin-top:4px;color:#f59e0b;font-weight:600;display:none;"></div>
     </div>
     <div class="rank-mode-tabs">
       <button class="rank-mode-tab" data-mode="overall">🌟 総合</button>
@@ -5519,8 +5521,32 @@ async function loadUserCount() {
   try {
     const doc = await fbDb.collection('meta').doc('stats').get();
     const count = doc.exists ? (doc.data().userCount || 0) : 0;
+    // ランキング画面: 登録者数
     const el = document.getElementById('userCountNum');
     if (el) el.textContent = count;
+    // ランキング画面: カウントダウン
+    const cdEl = document.getElementById('userCountdown');
+    if (cdEl) {
+      if (count < 100) {
+        cdEl.textContent = '🎯 あと' + (100 - count) + '人で100人達成イベント！';
+        cdEl.style.display = '';
+      } else {
+        cdEl.textContent = '🎉 100人達成！ありがとうございます！';
+        cdEl.style.display = '';
+        cdEl.style.color = '#22c55e';
+      }
+    }
+    // ホーム画面: テザーバナー
+    const teaser = document.getElementById('userCountTeaser');
+    const teaserText = document.getElementById('userCountTeaserText');
+    if (teaser && teaserText) {
+      if (count < 100) {
+        teaserText.textContent = '🎯 あと' + (100 - count) + '人で100人達成イベント！';
+        teaser.style.display = '';
+      } else {
+        teaser.style.display = 'none';
+      }
+    }
   } catch(e) {}
 }
 
@@ -5625,6 +5651,7 @@ fbAuth.onAuthStateChanged(async user => {
     else if (!fbInviteAsked) showInviteModal();
     checkLoginBonus(user);
     trackEvent('login', { method: 'Google' });
+    loadUserCount();
     syncChallengePtsToFirestore(); // ローカルのチャレンジptをFirestoreに同期
   } else {
     updateAuthUI();
