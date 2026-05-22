@@ -2208,6 +2208,17 @@
   <!-- 討伐トースト -->
   <div class="boss-toast" id="bossToast">⚔️ 討伐 +1！</div>
 
+  <!-- 100人達成モーダル -->
+  <div id="user100Modal" class="modal-overlay" style="display:none">
+    <div class="modal-box" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);border:2px solid #f9ca24;max-width:320px;">
+      <div style="font-size:3.5rem;margin-bottom:8px;">🎉</div>
+      <h2 style="font-size:1.4rem;margin-bottom:8px;background:linear-gradient(90deg,#f9ca24,#f0932b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">100人達成！</h2>
+      <p style="color:#e2e8f0;font-size:0.92rem;line-height:1.7;margin-bottom:8px;">はばトレに <strong style="color:#f9ca24;">100人</strong> が集まりました！<br>本当にありがとうございます🙏</p>
+      <p style="color:#94a3b8;font-size:0.82rem;margin-bottom:20px;">「はばタン、みんなと一緒に頑張るで！」</p>
+      <button id="btn100Close" style="background:linear-gradient(90deg,#f9ca24,#f0932b);color:#1a1a2e;font-weight:700;padding:12px 36px;border:none;border-radius:50px;font-size:1rem;cursor:pointer;width:100%;">やったー！🎊</button>
+    </div>
+  </div>
+
   <div id="loginBonusModal" class="modal-overlay" style="display:none">
     <div class="modal-box">
       <div class="modal-icon">🎁</div>
@@ -5508,6 +5519,20 @@ function updateAuthUI() {
 }
 
 // ===== ニックネーム =====
+function show100Celebration() {
+  if (localStorage.getItem('habatan100celebrated')) return;
+  localStorage.setItem('habatan100celebrated', '1');
+  const modal = document.getElementById('user100Modal');
+  if (modal) modal.style.display = 'flex';
+  launchFireworks();
+  launchConfetti();
+  setTimeout(() => launchFireworks(), 700);
+  setTimeout(() => { launchFireworks(); launchConfetti(); }, 1400);
+  setTimeout(() => launchFireworks(), 2100);
+  setTimeout(() => launchFireworks(), 2800);
+  setTimeout(() => launchFireworks(), 3500);
+}
+
 async function incrementUserCount() {
   try {
     await fbDb.collection('meta').doc('stats').set(
@@ -5532,6 +5557,7 @@ async function loadUserCount() {
         cdEl.style.display = '';
       } else {
         cdEl.textContent = '🎉 100人達成！ありがとうございます！';
+        show100Celebration();
         cdEl.style.display = '';
         cdEl.style.color = '#22c55e';
       }
@@ -5638,6 +5664,9 @@ function trackEvent(name, params) {
 }
 
 // ===== ログイン =====
+document.getElementById('btn100Close').addEventListener('click', () => {
+  document.getElementById('user100Modal').style.display = 'none';
+});
 document.getElementById('btnGoogleLogin').addEventListener('click', () => {
   fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => console.error(e));
 });
