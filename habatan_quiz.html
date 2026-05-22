@@ -567,18 +567,22 @@
 
   /* ===== 速報ティッカー ===== */
   .news-ticker-wrap {
-    background: linear-gradient(90deg, #1a1a2e, #16213e);
-    border-bottom: 1px solid rgba(249,202,36,0.3);
-    padding: 7px 0; overflow: hidden; position: relative;
-    margin-bottom: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 8px 0; overflow: hidden;
+    position: relative; margin-bottom: 12px;
+  }
+  .news-ticker-wrap.event-ticker {
+    background: rgba(252,129,129,0.1);
+    border-color: rgba(252,129,129,0.3);
   }
   .news-ticker-inner {
     display: flex; gap: 60px; white-space: nowrap;
-    animation: tickerScroll 30s linear infinite;
+    animation: tickerScroll 40s linear infinite;
   }
   .news-ticker-inner:hover { animation-play-state: paused; }
-  .news-ticker-item { font-size: 0.78rem; font-weight: 700; color: #e2e8f0; flex-shrink: 0; }
-  .news-ticker-item .ticker-icon { color: #f9ca24; margin-right: 4px; }
+  .news-ticker-item { font-size: 0.8rem; font-weight: 700; color: #e2e8f0; flex-shrink: 0; }
+  .news-ticker-item .ticker-icon { margin-right: 4px; }
   @keyframes tickerScroll {
     0%   { transform: translateX(0); }
     100% { transform: translateX(-50%); }
@@ -3452,21 +3456,55 @@ function showBossToast() {
 }
 
 // ===== 速報ティッカー =====
-const TICKER_MESSAGES = [
-  { icon: '⚔️', text: '忽那先生討伐イベント開催中！みんなでトロフィーを集めよう！' },
-  { icon: '🏆', text: 'チャレンジモード小学生レベルでトロフィーを獲得すると討伐に貢献！' },
-  { icon: '🔥', text: '目標200個！みんなで忽那先生を倒せ！' },
+const TICKER_STATIC = [
   { icon: '📣', text: '日→英方向でも挑戦できるようになりました！' },
+  { icon: '📖', text: '単語帳モードで音声付きフラッシュカード学習ができます！' },
+  { icon: '🔁', text: '間違えた単語は復習リストで自動管理されます！' },
+];
+const TICKER_EVENT = [
+  { icon: '⚔️', text: '忽那先生討伐イベント開催中！みんなでトロフィーを集めよう！' },
+  { icon: '🏆', text: 'チャレンジモードでトロフィーを獲得すると討伐に貢献！' },
+  { icon: '🔥', text: '目標200個！みんなで忽那先生を倒せ！' },
 ];
 
-function renderTicker() {
+async function renderTicker() {
   const wrap = document.getElementById('newsTicker');
   const inner = document.getElementById('newsTickerInner');
   if (!wrap || !inner) return;
-  if (getBossMode() !== 'active') { wrap.style.display = 'none'; return; }
+
+  const mode = getBossMode();
+  // イベント中は専用カラー
+  wrap.classList.toggle('event-ticker', mode === 'active');
   wrap.style.display = 'block';
-  // 2セット並べてシームレスにループ
-  const html = [...TICKER_MESSAGES, ...TICKER_MESSAGES].map(m =>
+
+  // ベースメッセージ（イベント中はイベント情報優先）
+  let messages = mode === 'active'
+    ? [...TICKER_EVENT, ...TICKER_STATIC]
+    : [...TICKER_STATIC];
+
+  // Firestore からウィークリー・デイリー1位を取得して先頭に追加
+  if (typeof fbDb !== 'undefined' && fbDb) {
+    try {
+      const wKey = getPeriodKey('weekly');
+      const dKey = getPeriodKey('daily');
+      const snap = await fbDb.collection('rankings_overall')
+        .orderBy('score', 'desc').limit(200).get();
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      const wItems = docs.filter(d => d.w_key === wKey && (d.w_score||0) > 0)
+                         .sort((a,b) => (b.w_score||0) - (a.w_score||0));
+      const dItems = docs.filter(d => d.d_key === dKey && (d.d_score||0) > 0)
+                         .sort((a,b) => (b.d_score||0) - (a.d_score||0));
+
+      const dynamic = [];
+      if (wItems.length) dynamic.push({ icon: '🏆', text: `週間1位：${wItems[0].displayName||'名無し'}さん ${(wItems[0].w_score||0).toLocaleString()}pt！` });
+      if (dItems.length) dynamic.push({ icon: '⚡', text: `デイリー1位：${dItems[0].displayName||'名無し'}さん ${(dItems[0].d_score||0).toLocaleString()}pt！` });
+      if (dynamic.length) messages = [...dynamic, ...messages];
+    } catch(e) { /* Firestore未初期化時は無視 */ }
+  }
+
+  // 2セット並べてシームレスループ
+  const html = [...messages, ...messages].map(m =>
     `<span class="news-ticker-item"><span class="ticker-icon">${m.icon}</span>${m.text}</span>`
   ).join('');
   inner.innerHTML = html;
@@ -5422,6 +5460,7 @@ function updateAuthUI() {
     document.getElementById('rankingCardDesc').textContent = 'みんなのスコアをチェックしよう！目指せ兵庫県、単語ナンバー1！';
     // ボス討伐：ログイン済み
     renderBossHomeBtn();
+    renderTicker();
   } else {
     loginSec.style.display = 'block';
     userSec.style.display  = 'none';
@@ -5437,6 +5476,7 @@ function updateAuthUI() {
     document.getElementById('rankingCardDesc').textContent = '🔒 Googleログインすると見られます';
     // ボス討伐：未ログイン
     renderBossHomeBtn();
+    renderTicker();
   }
 }
 
