@@ -578,7 +578,7 @@
   }
   .news-ticker-inner {
     display: flex; gap: 60px; white-space: nowrap;
-    animation: tickerScroll 40s linear infinite;
+    animation: tickerScroll 22s linear infinite;
   }
   .news-ticker-inner:hover { animation-play-state: paused; }
   .news-ticker-item { font-size: 0.8rem; font-weight: 700; color: #2d3748; flex-shrink: 0; }
@@ -3497,9 +3497,14 @@ async function renderTicker() {
       const dItems = docs.filter(d => d.d_key === dKey && (d.d_score||0) > 0)
                          .sort((a,b) => (b.d_score||0) - (a.d_score||0));
 
+      const medals = ['🥇','🥈','🥉'];
       const dynamic = [];
-      if (wItems.length) dynamic.push({ icon: '🏆', text: `週間1位：${wItems[0].displayName||'名無し'}さん ${(wItems[0].w_score||0).toLocaleString()}pt！` });
-      if (dItems.length) dynamic.push({ icon: '⚡', text: `デイリー1位：${dItems[0].displayName||'名無し'}さん ${(dItems[0].d_score||0).toLocaleString()}pt！` });
+      wItems.slice(0,3).forEach((d,i) =>
+        dynamic.push({ icon: medals[i], text: `週間${i+1}位：${d.displayName||'名無し'}さん ${(d.w_score||0).toLocaleString()}pt` })
+      );
+      dItems.slice(0,3).forEach((d,i) =>
+        dynamic.push({ icon: ['⚡','✨','💫'][i], text: `デイリー${i+1}位：${d.displayName||'名無し'}さん ${(d.d_score||0).toLocaleString()}pt` })
+      );
       if (dynamic.length) messages = [...dynamic, ...messages];
     } catch(e) { /* Firestore未初期化時は無視 */ }
   }
