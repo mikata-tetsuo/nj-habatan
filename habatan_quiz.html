@@ -958,27 +958,34 @@
 
   /* ===== ボス討伐カード ===== */
   .boss-card {
-    background: linear-gradient(135deg, rgba(127,0,0,0.35), rgba(220,38,38,0.2));
-    border: 1px solid rgba(220,38,38,0.5);
+    background: linear-gradient(135deg, #3b0a0a, #5c1a1a);
+    border: 1px solid rgba(252,129,129,0.5);
     border-radius: 20px; padding: 20px; margin-bottom: 12px;
     position: relative; overflow: hidden; cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(220,38,38,0.25);
   }
-  .boss-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(220,38,38,0.3); }
+  .boss-card:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(220,38,38,0.4); }
   .boss-card::before {
     content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at top right, rgba(255,100,0,0.15), transparent 70%);
+    background: radial-gradient(ellipse at top right, rgba(255,120,0,0.2), transparent 65%);
     pointer-events: none;
   }
   .boss-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-  .boss-icon { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: rgba(255,255,255,0.1); }
-  .boss-icon img { width: 100%; height: 100%; object-fit: cover; object-position: 15% 0%; }
-  .boss-label { font-size: 0.7rem; color: #fc8181; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
-  .boss-name { font-size: 1.15rem; font-weight: 800; color: #fff; margin-top: 2px; }
-  .boss-period { font-size: 0.75rem; color: #a0aec0; margin-top: 2px; }
+  .boss-icon {
+    width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+    background-image: url('kutsuna1.png');
+    background-size: 220% 220%;
+    background-position: 7% 4%;
+    border: 2px solid rgba(252,129,129,0.6);
+    box-shadow: 0 0 12px rgba(252,129,129,0.4);
+  }
+  .boss-label { font-size: 0.68rem; color: #fca5a5; font-weight: 800; letter-spacing: 2px; }
+  .boss-name { font-size: 1.15rem; font-weight: 800; color: #fff; margin-top: 3px; text-shadow: 0 1px 6px rgba(0,0,0,0.5); }
+  .boss-period { font-size: 0.75rem; color: #fcd5d5; margin-top: 3px; opacity: 0.85; }
   .boss-progress-wrap { margin-bottom: 10px; }
   .boss-progress-bar-bg {
-    background: rgba(255,255,255,0.1); border-radius: 99px; height: 14px;
+    background: rgba(0,0,0,0.3); border-radius: 99px; height: 14px;
     overflow: hidden; margin-bottom: 6px;
   }
   .boss-progress-bar {
@@ -987,8 +994,8 @@
     transition: width 0.6s ease;
   }
   .boss-progress-text { display: flex; justify-content: space-between; font-size: 0.8rem; }
-  .boss-progress-count { font-weight: 800; color: #fc8181; }
-  .boss-progress-goal { color: #a0aec0; }
+  .boss-progress-count { font-weight: 800; color: #fca5a5; }
+  .boss-progress-goal { color: #fcd5d5; opacity: 0.7; }
   .boss-btn {
     width: 100%; padding: 12px; border: none; border-radius: 12px;
     font-size: 1rem; font-weight: 800; cursor: pointer; letter-spacing: 1px;
@@ -1001,7 +1008,7 @@
   .boss-btn-login {
     width: 100%; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 700;
     background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
-    color: #a0aec0; cursor: default; letter-spacing: 0.5px;
+    color: #fcd5d5; cursor: default; letter-spacing: 0.5px;
   }
 
   /* ===== 学年選択モーダル ===== */
@@ -1648,7 +1655,7 @@
       <!-- ボス討伐イベント -->
       <div class="boss-card" id="bossCard">
         <div class="boss-card-header">
-          <div class="boss-icon"><img src="kutsuna1.png" alt="忽那先生"></div>
+          <div class="boss-icon"></div>
           <div>
             <div class="boss-label">⚔️ 週間ボス討伐イベント</div>
             <div class="boss-name">忽那先生を倒せ！</div>
