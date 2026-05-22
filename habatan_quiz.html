@@ -2122,6 +2122,7 @@
     <div class="ranking-header">
       <button class="map-back" id="btnRankingBack">← ホーム</button>
       <div class="ranking-title">🥇 ランキング</div>
+      <div style="text-align:center;color:#94a3b8;font-size:0.82rem;margin-top:2px;">👥 登録者 <span id="userCountNum">--</span> 人</div>
     </div>
     <div class="rank-mode-tabs">
       <button class="rank-mode-tab" data-mode="overall">🌟 総合</button>
@@ -5505,12 +5506,31 @@ function updateAuthUI() {
 }
 
 // ===== ニックネーム =====
+async function incrementUserCount() {
+  try {
+    await fbDb.collection('meta').doc('stats').set(
+      { userCount: firebase.firestore.FieldValue.increment(1) },
+      { merge: true }
+    );
+  } catch(e) { console.error('userCount:', e); }
+}
+
+async function loadUserCount() {
+  try {
+    const doc = await fbDb.collection('meta').doc('stats').get();
+    const count = doc.exists ? (doc.data().userCount || 0) : 0;
+    const el = document.getElementById('userCountNum');
+    if (el) el.textContent = count;
+  } catch(e) {}
+}
+
 async function loadNickname(user) {
   try {
     const [userDoc, testDoc] = await Promise.all([
       fbDb.collection('users').doc(user.uid).get(),
       fbDb.collection('rankings_test').doc(user.uid).get()
     ]);
+    if (!userDoc.exists) incrementUserCount();
     const data     = userDoc.exists ? userDoc.data() : {};
     const testData = testDoc.exists ? testDoc.data() : {};
     fbNickname     = data.nickname || null;
@@ -5952,6 +5972,7 @@ document.getElementById('cardRanking').addEventListener('click', () => {
   }
   showScreen('rankingScreen');
   renderRankingScreen();
+  loadUserCount();
 });
 document.querySelectorAll('.rank-mode-tab').forEach(tab => {
   tab.addEventListener('click', () => {
