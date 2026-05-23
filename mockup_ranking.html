@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ランキング見本</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Hiragino Sans', sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  min-height: 100vh;
+  color: #fff;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+}
+.container { width: 100%; max-width: 420px; }
+h2 { text-align: center; margin-bottom: 16px; color: #f9ca24; font-size: 1.1rem; letter-spacing: 1px; }
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 24px;
+}
+.label { text-align: center; font-size: 0.78rem; color: #94a3b8; margin-bottom: 6px; }
+
+/* ベース行 */
+.rank-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 8px; border-radius: 12px;
+  margin-bottom: 6px;
+  background: transparent;
+  transition: background 0.2s;
+}
+.rank-num { font-size: 1rem; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #64748b; }
+.rank-num.top1 { color: #f9ca24; }
+.rank-num.top2 { color: #9CA3AF; }
+.rank-num.top3 { color: #B45309; }
+.rank-avatar { width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; flex-shrink: 0; object-fit: cover; }
+.rank-name { flex: 1; font-weight: 600; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #1E293B; }
+.rank-score { font-weight: 800; color: #f0932b; font-size: 0.9rem; white-space: nowrap; }
+
+/* ===== パターン A: 行ハイライト ===== */
+.patA .rank-row.w1 { background: linear-gradient(90deg, rgba(249,202,36,0.18), rgba(249,202,36,0.04)); border: 1px solid rgba(249,202,36,0.5); }
+.patA .rank-row.w2 { background: linear-gradient(90deg, rgba(203,213,225,0.18), rgba(203,213,225,0.04)); border: 1px solid rgba(203,213,225,0.45); }
+.patA .rank-row.w3 { background: linear-gradient(90deg, rgba(180,93,9,0.18), rgba(180,93,9,0.04)); border: 1px solid rgba(180,93,9,0.4); }
+.patA .rank-row.w1 .rank-name { color: #92600a; font-weight: 800; }
+.patA .rank-row.w2 .rank-name { color: #475569; font-weight: 700; }
+.patA .rank-row.w3 .rank-name { color: #92400e; font-weight: 700; }
+.patA .rank-row.w1 .rank-num { font-size: 1.3rem; }
+
+/* ===== パターン B: クラウンバッジ ===== */
+.patB .rank-row.w1 .rank-num::before { content: '👑'; display: block; font-size: 0.9rem; line-height: 1; }
+.patB .rank-row.w2 .rank-num::before { content: '🥈'; display: block; font-size: 0.9rem; line-height: 1; }
+.patB .rank-row.w3 .rank-num::before { content: '🥉'; display: block; font-size: 0.9rem; line-height: 1; }
+.patB .rank-row.w1 { background: rgba(249,202,36,0.08); }
+.patB .week-badge { font-size: 0.62rem; background: linear-gradient(90deg,#f9ca24,#f0932b); color: #1a1a2e; font-weight: 800; padding: 1px 7px; border-radius: 99px; margin-left: 4px; vertical-align: middle; white-space: nowrap; }
+
+/* ===== パターン C: グロー（発光） ===== */
+@keyframes goldGlow { 0%,100%{box-shadow:0 0 8px rgba(249,202,36,0.5);} 50%{box-shadow:0 0 18px rgba(249,202,36,0.9);} }
+.patC .rank-row.w1 { background: linear-gradient(90deg,rgba(249,202,36,0.15),transparent); animation: goldGlow 2s ease-in-out infinite; border-radius: 12px; }
+.patC .rank-row.w1 .rank-name { color: #92600a; font-weight: 800; }
+.patC .rank-row.w2 { background: rgba(203,213,225,0.1); }
+.patC .rank-row.w3 { background: rgba(180,93,9,0.1); }
+.patC .crown { font-size: 1.1rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- パターン A -->
+<h2>パターン A：行ハイライト</h2>
+<div class="card patA">
+  <div class="label">🗓 ウィークリー</div>
+  <div class="rank-row w1">
+    <span class="rank-num top1">🥇</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=1">
+    <span class="rank-name">てつお（長い名前サンプル）</span>
+    <span class="rank-score">4,820pt</span>
+  </div>
+  <div class="rank-row w2">
+    <span class="rank-num top2">🥈</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=2">
+    <span class="rank-name">はなこ</span>
+    <span class="rank-score">3,210pt</span>
+  </div>
+  <div class="rank-row w3">
+    <span class="rank-num top3">🥉</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=3">
+    <span class="rank-name">たろう</span>
+    <span class="rank-score">2,980pt</span>
+  </div>
+  <div class="rank-row">
+    <span class="rank-num">4</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=4">
+    <span class="rank-name">さくら</span>
+    <span class="rank-score">1,540pt</span>
+  </div>
+  <div class="rank-row">
+    <span class="rank-num">5</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=5">
+    <span class="rank-name">けんじ</span>
+    <span class="rank-score">980pt</span>
+  </div>
+</div>
+
+<!-- パターン B -->
+<h2>パターン B：クラウン＋バッジ</h2>
+<div class="card patB">
+  <div class="label">🗓 ウィークリー</div>
+  <div class="rank-row w1">
+    <span class="rank-num top1">🥇</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=1">
+    <span class="rank-name">てつお（長い名前サンプル）<span class="week-badge">週1位</span></span>
+    <span class="rank-score">4,820pt</span>
+  </div>
+  <div class="rank-row w2">
+    <span class="rank-num top2">🥈</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=2">
+    <span class="rank-name">はなこ<span class="week-badge">週2位</span></span>
+    <span class="rank-score">3,210pt</span>
+  </div>
+  <div class="rank-row w3">
+    <span class="rank-num top3">🥉</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=3">
+    <span class="rank-name">たろう<span class="week-badge">週3位</span></span>
+    <span class="rank-score">2,980pt</span>
+  </div>
+  <div class="rank-row">
+    <span class="rank-num">4</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=4">
+    <span class="rank-name">さくら</span>
+    <span class="rank-score">1,540pt</span>
+  </div>
+  <div class="rank-row">
+    <span class="rank-num">5</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=5">
+    <span class="rank-name">けんじ</span>
+    <span class="rank-score">980pt</span>
+  </div>
+</div>
+
+<!-- パターン C -->
+<h2>パターン C：ゴールドグロー</h2>
+<div class="card patC">
+  <div class="label">🗓 ウィークリー</div>
+  <div class="rank-row w1">
+    <span class="rank-num top1 crown">👑</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=1">
+    <span class="rank-name">てつお（長い名前サンプル）</span>
+    <span class="rank-score">4,820pt</span>
+  </div>
+  <div class="rank-row w2">
+    <span class="rank-num top2">🥈</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=2">
+    <span class="rank-name">はなこ</span>
+    <span class="rank-score">3,210pt</span>
+  </div>
+  <div class="rank-row w3">
+    <span class="rank-num top3">🥉</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=3">
+    <span class="rank-name">たろう</span>
+    <span class="rank-score">2,980pt</span>
+  </div>
+  <div class="rank-row">
+    <span class="rank-num">4</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=4">
+    <span class="rank-name">さくら</span>
+    <span class="rank-score">1,540pt</span>
+  </div>
+  <div class="rank-row">
+    <span class="rank-num">5</span>
+    <img class="rank-avatar" src="https://i.pravatar.cc/28?img=5">
+    <span class="rank-name">けんじ</span>
+    <span class="rank-score">980pt</span>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
