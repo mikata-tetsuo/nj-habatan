@@ -2146,7 +2146,6 @@
       <button class="map-back" id="btnRankingBack">← ホーム</button>
       <div class="ranking-title">🥇 ランキング</div>
       <div style="text-align:center;color:#94a3b8;font-size:0.82rem;margin-top:2px;">👥 登録者 <span id="userCountNum">--</span> 人</div>
-      <div id="userCountdown" style="text-align:center;font-size:0.82rem;margin-top:4px;color:#f59e0b;font-weight:600;display:none;"></div>
     </div>
     <div class="rank-mode-tabs">
       <button class="rank-mode-tab" data-mode="overall">🌟 総合</button>
@@ -5588,19 +5587,8 @@ async function loadUserCount() {
     // ランキング画面: 登録者数
     const el = document.getElementById('userCountNum');
     if (el) el.textContent = count;
-    // ランキング画面: カウントダウン
-    const cdEl = document.getElementById('userCountdown');
-    if (cdEl) {
-      if (count < 100) {
-        cdEl.textContent = '🎯 あと' + (100 - count) + '人で100人達成イベント！';
-        cdEl.style.display = '';
-      } else {
-        cdEl.textContent = '🎉 100人達成！ありがとうございます！';
-        show100Celebration();
-        cdEl.style.display = '';
-        cdEl.style.color = '#22c55e';
-      }
-    }
+    // 100人達成チェック（お祝い演出のみ）
+    if (count >= 100) show100Celebration();
     // ホーム画面: テザーバナー
     const teaser = document.getElementById('userCountTeaser');
     const teaserText = document.getElementById('userCountTeaserText');
