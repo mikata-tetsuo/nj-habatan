@@ -744,6 +744,7 @@ let stageAnsweredOK  = false;
 let timerSec         = 0;
 let timerInterval    = null;
 let answered         = false;
+let _currentSpeakBtn = null;
 
 /* ========================================================
    UTILS
@@ -1360,8 +1361,6 @@ $('btnGoogleLogin').addEventListener('click', () => {
 /* ========================================================
    TEXT-TO-SPEECH
 ======================================================== */
-let _currentSpeakBtn = null;
-
 function getEnVoice() {
   const voices = speechSynthesis.getVoices();
   return voices.find(v => v.lang === 'en-US')
