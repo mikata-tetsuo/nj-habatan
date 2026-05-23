@@ -1,0 +1,16 @@
+# 開発用スクリプト（管理対象スクリプトは除外しない）
+*.py
+!generate_passages.py
+!embed_passages.py
+!create_db.py
+
+# データファイル
+*.xlsx
+*.xls
+*.json
+*.zip
+*.csv
+
+# システム
+.DS_Store
+Thumbs.db
