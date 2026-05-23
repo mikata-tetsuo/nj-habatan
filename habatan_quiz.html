@@ -2689,8 +2689,8 @@ document.querySelectorAll('.level-btn[data-lv]').forEach(btn => {
   });
 });
 $('btnLevelAll').addEventListener('click', () => {
-  if (selectedLevels.size === 5) { selectedLevels = new Set([1]); }
-  else { selectedLevels = new Set([1,2,3,4,5]); }
+  if (selectedLevels.size === 7) { selectedLevels = new Set([1]); }
+  else { selectedLevels = new Set([1,2,3,4,5,6,7]); }
   updateLevelUI();
 });
 
@@ -2725,7 +2725,7 @@ document.querySelectorAll('.level-btn[data-testlv]').forEach(btn => {
   });
 });
 $('btnTestLevelAll').addEventListener('click', () => {
-  testSelectedLevels = testSelectedLevels.size === 5 ? new Set([3]) : new Set([1,2,3,4,5]);
+  testSelectedLevels = testSelectedLevels.size === 7 ? new Set([3]) : new Set([1,2,3,4,5,6,7]);
   updateTestLevelUI();
 });
 
@@ -2944,7 +2944,7 @@ document.querySelectorAll('.level-btn[data-jilv]').forEach(btn => {
 const btnJiLevelAll = $('btnJiLevelAll');
 if (btnJiLevelAll) {
   btnJiLevelAll.addEventListener('click', () => {
-    jiSelectedLevels = jiSelectedLevels.size === 5 ? new Set([1]) : new Set([1,2,3,4,5]);
+    jiSelectedLevels = jiSelectedLevels.size === 7 ? new Set([1]) : new Set([1,2,3,4,5,6,7]);
     updateJiLevelUI();
   });
 }
@@ -3026,7 +3026,7 @@ document.querySelectorAll('.level-btn[data-printlv]').forEach(btn => {
   });
 });
 $('btnPrintLevelAll').addEventListener('click', () => {
-  printSelectedLevels = printSelectedLevels.size === 5 ? new Set([1]) : new Set([1,2,3,4,5]);
+  printSelectedLevels = printSelectedLevels.size === 7 ? new Set([1]) : new Set([1,2,3,4,5,6,7]);
   updatePrintLevelUI();
 });
 document.querySelectorAll('input[name=printMode]').forEach(r => {
@@ -4280,7 +4280,7 @@ function chGetLevelScore(lv, dir) {
 }
 // 全レベルの累積スコア合計（両方向 + 🔄復習ボーナス別枠）
 function chGetTotalScore() {
-  const stagePts = [1,2,3,4,5].reduce((sum, lv) =>
+  const stagePts = [1,2,3,4,5,6,7].reduce((sum, lv) =>
     sum + chGetLevelScore(lv, 'en2ja') + chGetLevelScore(lv, 'ja2en'), 0);
   return stagePts + chGetReviewPts();
 }
