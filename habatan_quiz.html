@@ -1619,7 +1619,8 @@
   .rank-num.top2 { color:#9CA3AF; }
   .rank-num.top3 { color:#B45309; }
   .rank-avatar { width:28px; height:28px; border-radius:50%; object-fit:cover; flex-shrink:0; background:var(--surface2,#F5F2EC); }
-  .rank-name { flex:1; font-weight:600; font-size:0.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text,#1E293B); }
+  .rank-name { flex:1; font-weight:600; font-size:0.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text,#1E293B); cursor:pointer; }
+  .rank-name.expanded { white-space:normal; overflow:visible; text-overflow:unset; }
   .rank-score { font-weight:800; color:#f9ca24; font-size:0.9rem; white-space:nowrap; }
   .rank-diff-badge { font-size:0.7rem; padding:2px 7px; border-radius:99px; background:var(--surface2,#F5F2EC); white-space:nowrap; color:var(--text2,#64748B); }
   .ranking-empty { text-align:center; padding:40px 0; color:var(--text3,#9CA3AF); font-size:0.9rem; line-height:2; }
@@ -6101,6 +6102,9 @@ async function renderRankingScreen() {
         (d.eventBadge && new Date(d.eventBadge.expiry) > new Date() ? '<span class="rank-event-badge">'+d.eventBadge.label+'</span>' : '')+
         '</span><span class="rank-score">'+scoreVal.toLocaleString()+'pt</span>'+diffBadge+'</div>';
     }).join('');
+    listEl.querySelectorAll('.rank-name').forEach(el => {
+      el.addEventListener('click', () => el.classList.toggle('expanded'));
+    });
   } catch(e) {
     listEl.innerHTML = '<div class="ranking-empty">読み込みに失敗しました 😢</div>';
     console.error('Ranking:',e);
