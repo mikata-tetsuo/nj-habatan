@@ -442,6 +442,50 @@
     border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); color: #DC2626;
   }
 
+  /* ===== MODE TOGGLE ===== */
+  .mode-toggle { display:flex; gap:8px; margin-bottom:12px; }
+  .mode-toggle-btn {
+    flex:1; padding:10px 8px; border-radius:12px; border:2px solid var(--borderMd);
+    background:var(--surface); color:var(--text2); font-weight:700; font-size:0.92rem;
+    cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .mode-toggle-btn.active {
+    background:linear-gradient(135deg,rgba(47,128,237,0.08),rgba(47,128,237,0.15));
+    border-color:var(--blue); color:var(--blue);
+  }
+  .mode-toggle-btn.active.listen {
+    background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(139,92,246,0.15));
+    border-color:#8B5CF6; color:#8B5CF6;
+  }
+  .listen-options { margin-bottom:12px; display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+  .listen-choices-toggle {
+    display:flex; align-items:center; gap:6px; padding:6px 14px; border-radius:99px;
+    border:1px solid var(--borderMd); background:var(--surface); font-size:0.82rem;
+    font-weight:600; color:var(--text2); cursor:pointer; transition:all 0.2s;
+  }
+  .listen-choices-toggle.on { border-color:#8B5CF6; color:#8B5CF6; background:rgba(139,92,246,0.07); }
+  /* リスニングモード問題画面 */
+  .listen-play-bar { display:none; margin-bottom:14px; }
+  .listen-mode-active .listen-play-bar { display:block; }
+  .listen-mode-active .timer-card { display:none; }
+  .listen-mode-active .passage-ctrl { display:none; }
+  .listen-mode-active #passageBox { display:none; }
+  .listen-mode-active .question-row { display:none; }
+  .listen-mode-active #choicesDiv.choices-hidden { visibility:hidden; }
+  .listen-audio-status {
+    text-align:center; padding:20px 0 8px; font-size:1rem; font-weight:700; color:#8B5CF6;
+    letter-spacing:0.5px;
+  }
+  .listen-audio-status.idle { color:var(--text3); font-weight:500; }
+  .btn-listen-play {
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+    padding:13px; border-radius:14px; border:2px solid #8B5CF6;
+    background:rgba(139,92,246,0.07); color:#8B5CF6; font-weight:800; font-size:0.97rem;
+    cursor:pointer; transition:all 0.2s;
+  }
+  .btn-listen-play:hover { background:rgba(139,92,246,0.14); }
+  .btn-listen-play:disabled { opacity:0.5; cursor:not-allowed; }
+
   /* ===== RANKING ===== */
   @keyframes rankShake {
     0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
@@ -512,6 +556,15 @@
       <h1>⚡ 速トレ</h1>
       <p>英検速読トレーナー</p>
     </div>
+    <div class="mode-toggle">
+      <button class="mode-toggle-btn active" id="btnModeReading" onclick="setMode('reading')">📖 読解モード</button>
+      <button class="mode-toggle-btn listen" id="btnModeListening" onclick="setMode('listening')">🎧 リスニングモード</button>
+    </div>
+    <div class="listen-options" id="listenOptions" style="display:none">
+      <button class="listen-choices-toggle on" id="btnToggleChoices" onclick="toggleListenChoices()">
+        <span id="listenChoicesIcon">👁</span> 選択肢を表示
+      </button>
+    </div>
     <div class="grade-map" id="gradeMapCards"></div>
     <div class="rank-btn-wrap">
       <button class="btn-ranking locked" id="btnOpenRanking">🥇 ランキングを見る</button>
@@ -559,6 +612,12 @@
       <div class="timer-bar-bg">
         <div class="timer-bar" id="timerBar" style="width:0%;"></div>
       </div>
+    </div>
+
+    <!-- Listening mode play bar -->
+    <div class="listen-play-bar">
+      <div class="listen-audio-status idle" id="listenStatus">🎧 再生ボタンで音声を開始</div>
+      <button class="btn-listen-play" id="btnListenPlay" onclick="startListenPlayback()">▶ 再生する</button>
     </div>
 
     <!-- Passage -->
@@ -807,6 +866,8 @@ let timerSec         = 0;
 let timerInterval    = null;
 let answered         = false;
 let _currentSpeakBtn = null;
+let listenMode       = false;
+let listenShowChoices = true;
 
 /* ========================================================
    UTILS
@@ -1004,6 +1065,21 @@ function renderQuestion() {
   $('evidenceBox').classList.remove('show');
   $('btnTranslation').classList.remove('open');
   $('btnEvidence').classList.remove('open');
+
+  // Listening mode
+  const qScreen = $('questionScreen');
+  if (listenMode) {
+    qScreen.classList.add('listen-mode-active');
+    $('choicesDiv').classList.toggle('choices-hidden', !listenShowChoices);
+    $('listenStatus').textContent = '🎧 再生ボタンで音声を開始';
+    $('listenStatus').className = 'listen-audio-status idle';
+    $('btnListenPlay').disabled = false;
+    $('btnListenPlay').textContent = '▶ 再生する';
+    setTimeout(startListenPlayback, 600);
+  } else {
+    qScreen.classList.remove('listen-mode-active');
+    $('choicesDiv').classList.remove('choices-hidden');
+  }
 }
 
 /* ========================================================
@@ -1475,6 +1551,81 @@ function setSpeakBtnState(btn, active) {
 
 if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
   speechSynthesis.onvoiceschanged = () => {};
+}
+
+/* ========================================================
+   LISTENING MODE
+======================================================== */
+function setMode(mode) {
+  listenMode = (mode === 'listening');
+  $('btnModeReading').classList.toggle('active', !listenMode);
+  $('btnModeListening').classList.toggle('active', listenMode);
+  $('listenOptions').style.display = listenMode ? 'flex' : 'none';
+}
+
+function toggleListenChoices() {
+  listenShowChoices = !listenShowChoices;
+  const btn = $('btnToggleChoices');
+  btn.classList.toggle('on', listenShowChoices);
+  btn.innerHTML = listenShowChoices
+    ? '<span id="listenChoicesIcon">👁</span> 選択肢を表示'
+    : '<span id="listenChoicesIcon">🙈</span> 選択肢を非表示';
+}
+
+function speakAsync(text) {
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window)) { resolve(); return; }
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang  = 'en-US';
+    utter.rate  = 0.85;
+    const voice = getEnVoice();
+    if (voice) utter.voice = voice;
+    utter.onend   = () => resolve();
+    utter.onerror = () => resolve();
+    speechSynthesis.speak(utter);
+  });
+}
+
+let _listenPlayId = 0;
+
+async function startListenPlayback() {
+  const q = GRADE_PASSAGES[currentGrade]?.[currentStageIdx];
+  if (!q) return;
+
+  const myId = ++_listenPlayId;
+  const statusEl = $('listenStatus');
+  const playBtn  = $('btnListenPlay');
+
+  playBtn.disabled    = true;
+  playBtn.textContent = '⏸ 再生中...';
+
+  const setStatus = (text) => {
+    if (_listenPlayId !== myId) return;
+    statusEl.textContent = text;
+    statusEl.className   = 'listen-audio-status';
+  };
+
+  setStatus('📖 本文を読んでいます...');
+  await speakAsync(q.passage);
+  if (_listenPlayId !== myId) return;
+
+  setStatus('❓ 問題文を読んでいます...');
+  await speakAsync(q.question);
+  if (_listenPlayId !== myId) return;
+
+  if (listenShowChoices) {
+    setStatus('🔤 選択肢を読んでいます...');
+    const choiceText = `A. ${q.choice_a}. B. ${q.choice_b}. C. ${q.choice_c}. D. ${q.choice_d}.`;
+    await speakAsync(choiceText);
+    if (_listenPlayId !== myId) return;
+  }
+
+  statusEl.textContent = '✅ 再生完了 — 答えを選んでください';
+  statusEl.className   = 'listen-audio-status';
+  if (listenShowChoices) $('choicesDiv').classList.remove('choices-hidden');
+  playBtn.disabled    = false;
+  playBtn.textContent = '▶ もう一度再生';
 }
 
 /* ========================================================
