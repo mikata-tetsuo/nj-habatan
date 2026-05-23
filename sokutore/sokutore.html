@@ -153,6 +153,104 @@
   .stage-item.speed-cleared .stage-info-sub { color: #059669; }
   .stage-item.active       .stage-info-sub { color: var(--goldDark); font-weight: 600; }
 
+  /* ===== STAGE DOT GRID ===== */
+  .stage-chapters { padding: 4px 0; }
+  .stage-chapter { margin-bottom: 20px; }
+  .stage-chapter-title {
+    font-size: 0.78rem; font-weight: 700; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 10px; padding-left: 2px;
+  }
+  .stage-dot-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .stage-dot {
+    aspect-ratio: 1; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem;
+    border: 2px solid var(--borderMd);
+    background: var(--surface2); color: var(--text3);
+    cursor: default; transition: transform 0.18s, box-shadow 0.18s;
+  }
+  .stage-dot.available {
+    background: linear-gradient(135deg, #FBBF24, #F97316);
+    border-color: var(--goldDark); color: #fff; cursor: pointer;
+    animation: stagePulse 2s infinite;
+  }
+  .stage-dot.cleared {
+    background: #10B981; border-color: #059669; color: #fff; cursor: pointer;
+  }
+  .stage-dot.speed {
+    background: linear-gradient(135deg, #FBBF24, #F97316);
+    border-color: var(--goldDark); color: #1a1a2e; cursor: pointer;
+    font-size: 1.1rem;
+  }
+  .stage-dot.locked { opacity: 0.28; }
+  .stage-dot.available:hover,
+  .stage-dot.cleared:hover,
+  .stage-dot.speed:hover { transform: scale(1.1); box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+
+  /* ===== STAGE RESULT ===== */
+  .stage-result-wrap { padding: 8px 0 24px; }
+  .sr-icon { font-size: 4rem; text-align: center; margin-bottom: 8px; }
+  .sr-title {
+    font-size: 1.8rem; font-weight: 900; text-align: center;
+    background: linear-gradient(90deg, #E8A020, #F97316);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
+  .sr-sub { text-align: center; color: var(--text3); font-size: 0.9rem; margin-bottom: 20px; }
+  .sr-score-row {
+    display: flex; justify-content: center; align-items: baseline; gap: 8px;
+    margin-bottom: 6px;
+  }
+  .sr-score { font-size: 2.4rem; font-weight: 900; color: var(--text); }
+  .sr-score-label { color: var(--text3); font-size: 0.9rem; }
+  .sr-pts {
+    text-align: center; font-size: 1.6rem; font-weight: 800;
+    color: var(--gold); margin-bottom: 24px;
+  }
+  .sr-missed-title {
+    font-size: 0.8rem; font-weight: 700; color: #EF4444;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 10px; margin-top: 4px;
+  }
+  .sr-missed-item {
+    background: var(--surface2); border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 10px; border: 1px solid rgba(239,68,68,0.2);
+  }
+  .sr-missed-passage {
+    font-size: 0.8rem; color: var(--text2); margin-bottom: 6px;
+    line-height: 1.5; font-style: italic;
+  }
+  .sr-missed-q { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .sr-missed-ans { display: flex; flex-direction: column; gap: 3px; font-size: 0.82rem; }
+  .sr-wrong  { color: #EF4444; }
+  .sr-correct { color: #059669; font-weight: 700; }
+  .sr-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+  .btn-sr-next {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #FBBF24, #F97316);
+    border: none; border-radius: 12px;
+    font-size: 1.1rem; font-weight: 700; color: #fff; cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+  .btn-sr-next:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(249,115,22,0.4); }
+  .btn-sr-retry {
+    width: 100%; padding: 12px;
+    background: var(--surface2); border: 1px solid var(--borderMd);
+    border-radius: 12px; font-size: 0.95rem; font-weight: 600;
+    color: var(--text2); cursor: pointer; transition: all 0.18s;
+  }
+  .btn-sr-retry:hover { border-color: var(--gold); color: var(--goldDark); }
+  .btn-sr-map {
+    width: 100%; padding: 12px;
+    background: transparent; border: 1px solid var(--borderMd);
+    border-radius: 12px; font-size: 0.9rem;
+    color: var(--text3); cursor: pointer; transition: all 0.18s;
+  }
+  .btn-sr-map:hover { border-color: var(--gold); color: var(--goldDark); }
+
   /* ===== HUD ===== */
   .hud {
     display: flex; justify-content: space-between; align-items: center;
@@ -579,7 +677,7 @@
       <div class="stage-map-grade" id="stageMapGradeLabel"></div>
       <div style="width:72px"></div>
     </div>
-    <div class="stage-path" id="stagePath"></div>
+    <div class="stage-chapters" id="stageChapters"></div>
   </div>
 
   <!-- ===== 問題 ===== -->
@@ -587,16 +685,16 @@
     <!-- HUD -->
     <div class="hud">
       <div class="hud-item">
+        <span class="hud-label">問題</span>
+        <span class="hud-value" id="hudQNum">1/10</span>
+      </div>
+      <div class="hud-item">
         <span class="hud-label">ステージ</span>
-        <span class="hud-value" id="hudQNum">1/3</span>
+        <span class="hud-value hud-grade" id="hudGrade">1/18</span>
       </div>
       <div class="hud-item">
-        <span class="hud-label">英検</span>
-        <span class="hud-value hud-grade" id="hudGrade">5級</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">クリア</span>
-        <span class="hud-value hud-cleared" id="hudCleared">0/3</span>
+        <span class="hud-label">正解</span>
+        <span class="hud-value hud-cleared" id="hudCleared">0</span>
       </div>
       <div class="hud-item">
         <span class="hud-label">獲得PT</span>
@@ -652,8 +750,28 @@
 
     <!-- Stage actions (shown after answer) -->
     <div class="stage-actions" id="stageActions">
-      <button class="btn-next" id="btnStageNext" onclick="stageNext()">次のステージへ →</button>
-      <button class="btn-map" onclick="goToStageMap()">🗺 マップへ戻る</button>
+      <button class="btn-next" id="btnStageNext" onclick="stageNext()">次の問題へ →</button>
+    </div>
+  </div>
+
+  <!-- ===== ステージ結果 ===== -->
+  <div id="stageResultScreen" class="screen">
+    <div class="stage-result-wrap">
+      <div class="sr-icon" id="srIcon">⭐</div>
+      <div class="sr-title" id="srTitle">ステージクリア！</div>
+      <div class="sr-sub" id="srSub">ステージ 1 / 18</div>
+      <div class="sr-score-row">
+        <span class="sr-score" id="srScore">8</span>
+        <span class="sr-score-label">/ 10 正解</span>
+      </div>
+      <div class="sr-pts" id="srPts">+80pt</div>
+      <div class="sr-missed-title" id="srMissedTitle" style="display:none">間違えた問題</div>
+      <div id="srMissedList"></div>
+      <div class="sr-btns">
+        <button class="btn-sr-next" id="btnSrNext">次のステージへ →</button>
+        <button class="btn-sr-retry" onclick="retryStage()">🔄 このステージをやり直す</button>
+        <button class="btn-sr-map" onclick="goToStageMap()">🗺 マップへ戻る</button>
+      </div>
     </div>
   </div>
 
@@ -768,9 +886,16 @@ GRADE_ORDER.forEach(g => {
 });
 
 /* ========================================================
+   STAGE CONFIG
+======================================================== */
+const STAGE_SIZE  = 10;   // 問題数/ステージ
+const STAGE_TOTAL = 18;   // ステージ数/級 (180問 ÷ 10)
+const CHAPTER_SIZE = 6;   // ステージ数/チャプター
+
+/* ========================================================
    PROGRESS (localStorage)
 ======================================================== */
-const PROGRESS_KEY = 'sokutore_v1';
+const PROGRESS_KEY = 'sokutore_v2';
 
 function loadProgress() {
   try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{"cleared":{}}'); }
@@ -779,16 +904,16 @@ function loadProgress() {
 function saveProgress(p) {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
 }
-function stageKey(grade, idx) { return grade + '_' + idx; }
-function isStageCleared(grade, idx) {
-  return !!loadProgress().cleared[stageKey(grade, idx)];
+function stageKey(grade, sNum) { return grade + '_s' + sNum; }
+function isStageCleared(grade, sNum) {
+  return !!loadProgress().cleared[stageKey(grade, sNum)];
 }
-function isStageSpeedCleared(grade, idx) {
-  return loadProgress().cleared[stageKey(grade, idx)] === 'speed';
+function isStageSpeedCleared(grade, sNum) {
+  return loadProgress().cleared[stageKey(grade, sNum)] === 'speed';
 }
-function markStageCleared(grade, idx, isSpeed, earnedPts) {
+function markStageCleared(grade, sNum, isSpeed, earnedPts) {
   const p = loadProgress();
-  const k = stageKey(grade, idx);
+  const k = stageKey(grade, sNum);
   if (p.cleared[k] !== 'speed') {
     p.cleared[k] = isSpeed ? 'speed' : true;
   }
@@ -797,25 +922,26 @@ function markStageCleared(grade, idx, isSpeed, earnedPts) {
   saveProgress(p);
 }
 function isGradeUnlocked(grade) {
-  return true; // 全級いつでも開放
+  return true;
 }
 function isGradeComplete(grade) {
-  const pp = GRADE_PASSAGES[grade];
-  if (!pp || !pp.length) return false;
-  return pp.every((p, i) => isStageCleared(grade, i));
+  return gradeClearedCount(grade) >= STAGE_TOTAL;
 }
 function gradeClearedCount(grade) {
-  const pp = GRADE_PASSAGES[grade];
-  if (!pp) return 0;
-  return pp.filter((p, i) => isStageCleared(grade, i)).length;
+  return Array.from({length: STAGE_TOTAL}, (_, i) => isStageCleared(grade, i))
+    .filter(Boolean).length;
 }
 
 /* ========================================================
    STATE
 ======================================================== */
 let currentGrade     = null;
-let currentStageIdx  = null;
-let stageAnsweredOK  = false;
+let currentStageNum  = 0;    // ステージ番号 (0-17)
+let currentQInStage  = 0;    // ステージ内問題番号 (0-9)
+let stageQuestions   = [];   // 現ステージの10問
+let stageScore       = 0;    // ステージ獲得PT
+let stageCorrect     = 0;    // ステージ正解数
+let stageMissed      = [];   // [{q, selectedKey}]
 let timerSec         = 0;
 let timerInterval    = null;
 let answered         = false;
@@ -856,7 +982,7 @@ function buildGradeMap() {
     const unlocked   = isGradeUnlocked(g);
     const complete   = isGradeComplete(g);
     const cleared    = gradeClearedCount(g);
-    const total      = pp.length;
+    const total      = STAGE_TOTAL;
     const pct        = Math.round((cleared / total) * 100);
 
     let statusText, cardClass;
@@ -908,62 +1034,74 @@ function buildStageMap() {
   const grade = currentGrade;
   $('stageMapGradeLabel').textContent = GRADE_LABEL[grade] || grade;
 
-  const pp        = GRADE_PASSAGES[grade];
-  const container = $('stagePath');
+  const container = $('stageChapters');
   container.innerHTML = '';
 
-  pp.forEach((passage, i) => {
-    const cleared    = isStageCleared(grade, i);
-    const speed      = isStageSpeedCleared(grade, i);
-    const prevOK     = i === 0 || isStageCleared(grade, i - 1);
-    const isActive   = !cleared && prevOK;
-    const isLocked   = !cleared && !prevOK;
-    const clickable  = !isLocked;
+  const numChapters = Math.ceil(STAGE_TOTAL / CHAPTER_SIZE);
+  const sp = loadProgress();
 
-    let itemClass = 'stage-item';
-    if (speed)         itemClass += ' speed-cleared';
-    else if (cleared)  itemClass += ' cleared';
-    else if (isActive) itemClass += ' active';
-    else               itemClass += ' locked';
+  for (let ci = 0; ci < numChapters; ci++) {
+    const chEl = document.createElement('div');
+    chEl.className = 'stage-chapter';
 
-    let circleContent = (i + 1).toString();
-    if (speed)       circleContent = '⭐';
-    else if (cleared) circleContent = '✓';
-    else if (isLocked) circleContent = '🔒';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'stage-chapter-title';
+    titleEl.textContent = 'Chapter ' + (ci + 1);
+    chEl.appendChild(titleEl);
 
-    const sp = loadProgress();
-    const stagePts = (cleared || speed) && sp.pts ? (sp.pts[stageKey(grade, i)] || 0) : 0;
-    const ptsBadge = stagePts > 0 ? ' • ' + stagePts + 'pt' : '';
+    const gridEl = document.createElement('div');
+    gridEl.className = 'stage-dot-grid';
 
-    let statusText = 'チャレンジ！';
-    if (speed)         statusText = 'スピードクリア！' + ptsBadge;
-    else if (cleared)  statusText = 'クリア済み' + ptsBadge;
-    else if (isLocked) statusText = 'ロック中';
+    const startS = ci * CHAPTER_SIZE;
+    const endS   = Math.min(startS + CHAPTER_SIZE, STAGE_TOTAL);
 
-    // Sub-level hint
-    const lvHint = passage.sub_level ? '  Lv.' + passage.sub_level : '';
+    for (let si = startS; si < endS; si++) {
+      const cleared  = isStageCleared(grade, si);
+      const speed    = isStageSpeedCleared(grade, si);
+      const prevOK   = si === 0 || isStageCleared(grade, si - 1);
+      const available = !cleared && prevOK;
+      const locked    = !cleared && !prevOK;
 
-    const item = document.createElement('div');
-    item.className  = itemClass;
-    if (clickable) item.dataset.clickable = '1';
-    item.innerHTML  = `
-      <div class="stage-circle">${circleContent}</div>
-      <div class="stage-info">
-        <div class="stage-info-title">ステージ ${i + 1}${lvHint}</div>
-        <div class="stage-info-sub">${statusText}</div>
-      </div>`;
-    if (clickable) item.addEventListener('click', () => startStage(i));
-    container.appendChild(item);
-  });
+      let dotClass = 'stage-dot';
+      if (speed)          dotClass += ' speed';
+      else if (cleared)   dotClass += ' cleared';
+      else if (available) dotClass += ' available';
+      else                dotClass += ' locked';
+
+      let label = (si + 1).toString();
+      if (speed)    label = '⭐';
+      else if (cleared) label = '✓';
+
+      const dot = document.createElement('button');
+      dot.className = dotClass;
+      dot.textContent = label;
+      dot.disabled = locked;
+      dot.title = locked ? 'ロック中' :
+                  speed  ? 'スピードクリア済み' :
+                  cleared ? 'クリア済み (' + (sp.pts?.[stageKey(grade, si)] || 0) + 'pt)' :
+                  'ステージ ' + (si + 1);
+
+      if (!locked) dot.addEventListener('click', () => startStage(si));
+      gridEl.appendChild(dot);
+    }
+
+    chEl.appendChild(gridEl);
+    container.appendChild(chEl);
+  }
 }
 
 /* ========================================================
    START STAGE
 ======================================================== */
-function startStage(idx) {
-  currentStageIdx = idx;
-  answered        = false;
-  stageAnsweredOK = false;
+function startStage(sNum) {
+  currentStageNum  = sNum;
+  currentQInStage  = 0;
+  stageScore       = 0;
+  stageCorrect     = 0;
+  stageMissed      = [];
+  const start      = sNum * STAGE_SIZE;
+  stageQuestions   = GRADE_PASSAGES[currentGrade].slice(start, start + STAGE_SIZE);
+  answered         = false;
   showScreen('questionScreen');
   renderQuestion();
 }
@@ -972,14 +1110,13 @@ function startStage(idx) {
    RENDER QUESTION
 ======================================================== */
 function renderQuestion() {
-  const q     = GRADE_PASSAGES[currentGrade][currentStageIdx];
-  const total = GRADE_PASSAGES[currentGrade].length;
+  const q  = stageQuestions[currentQInStage];
   answered = false;
 
   // HUD
-  $('hudQNum').textContent    = (currentStageIdx + 1) + '/' + total;
-  $('hudGrade').textContent   = GRADE_LABEL[currentGrade] || currentGrade;
-  $('hudCleared').textContent = gradeClearedCount(currentGrade) + '/' + total;
+  $('hudQNum').textContent    = (currentQInStage + 1) + '/' + STAGE_SIZE;
+  $('hudGrade').textContent   = (currentStageNum + 1) + '/' + STAGE_TOTAL;
+  $('hudCleared').textContent = stageCorrect;
   $('hudPts').textContent     = getTotalQuizPts().toLocaleString();
 
   // Timer
@@ -1056,17 +1193,16 @@ function onAnswer(key) {
   answered = true;
   clearInterval(timerInterval);
 
-  const q         = GRADE_PASSAGES[currentGrade][currentStageIdx];
+  const q         = stageQuestions[currentQInStage];
   const isCorrect = key === q.answer.toLowerCase();
   const isSpeed   = timerSec <= q.target_time_sec;
-  stageAnsweredOK = isCorrect;
 
-  // ポイント計算・進捗を保存
-  const earnedPts = isCorrect ? (10 + (isSpeed ? 5 : 0)) : 0;
+  // ステージスコア集計
   if (isCorrect) {
-    markStageCleared(currentGrade, currentStageIdx, isSpeed, earnedPts);
-    $('hudPts').textContent = getTotalQuizPts().toLocaleString();
-    if (fbUser) syncQuizPtsToFirestore();
+    stageCorrect++;
+    stageScore += 10 + (isSpeed ? 5 : 0);
+  } else {
+    stageMissed.push({ q, selectedKey: key });
   }
 
   // 選択肢を色分け
@@ -1081,9 +1217,7 @@ function onAnswer(key) {
   if (isCorrect) {
     fb.className = 'feedback show correct-fb';
     $('feedbackIcon').textContent = '⭕';
-    $('feedbackMsg').textContent  = isSpeed
-      ? '正解！⚡ スピードクリア！ +' + earnedPts + 'pt'
-      : '正解！ +' + earnedPts + 'pt';
+    $('feedbackMsg').textContent  = isSpeed ? '正解！⚡ スピード！' : '正解！';
   } else {
     fb.className = 'feedback show wrong-fb';
     $('feedbackIcon').textContent = '✖';
@@ -1095,64 +1229,96 @@ function onAnswer(key) {
   // 復習ボタン
   $('reviewBtns').style.display = 'flex';
 
-  // ステージアクション
-  const actions = $('stageActions');
+  // 次へボタン
+  const isLast = (currentQInStage === STAGE_SIZE - 1);
   const btnNext = $('btnStageNext');
-  actions.style.display = 'flex';
+  btnNext.textContent = isLast ? '結果を見る →' : '次の問題へ →';
+  btnNext.className   = 'btn-next';
+  $('stageActions').style.display = 'flex';
 
-  if (!isCorrect) {
-    btnNext.textContent = '🔄 もう一度';
-    btnNext.className   = 'btn-next btn-retry';
-  } else {
-    const gradeDone = isGradeComplete(currentGrade);
-    const nextIdx   = currentStageIdx + 1;
-    const hasNext   = nextIdx < GRADE_PASSAGES[currentGrade].length;
-
-    if (gradeDone) {
-      btnNext.textContent = '🎉 クリア！';
-    } else if (hasNext) {
-      btnNext.textContent = '次のステージへ →';
-    } else {
-      btnNext.textContent = '🗺 マップへ戻る';
-    }
-    btnNext.className = 'btn-next';
-  }
-
-  // HUDのクリア数を更新
-  $('hudCleared').textContent =
-    gradeClearedCount(currentGrade) + '/' + GRADE_PASSAGES[currentGrade].length;
+  // HUD 正解数を更新
+  $('hudCleared').textContent = stageCorrect;
 }
 
 /* ========================================================
    STAGE NEXT
 ======================================================== */
 function stageNext() {
-  if (!stageAnsweredOK) {
-    // リトライ
-    startStage(currentStageIdx);
-    return;
-  }
-  if (isGradeComplete(currentGrade)) {
-    showGradeClear();
-    return;
-  }
-  const nextIdx = currentStageIdx + 1;
-  if (nextIdx < GRADE_PASSAGES[currentGrade].length) {
-    startStage(nextIdx);
+  currentQInStage++;
+  if (currentQInStage >= STAGE_SIZE) {
+    showStageResult();
   } else {
-    goToStageMap();
+    answered = false;
+    renderQuestion();
   }
+}
+
+function showStageResult() {
+  const isPerfect = (stageCorrect === STAGE_SIZE);
+
+  // ステージをクリア済みに記録
+  markStageCleared(currentGrade, currentStageNum, isPerfect, stageScore);
+  if (fbUser) syncQuizPtsToFirestore();
+
+  // 結果画面の内容
+  $('srIcon').textContent  = isPerfect ? '⭐' : '✅';
+  $('srTitle').textContent = isPerfect ? 'パーフェクト！' : 'ステージクリア！';
+  $('srSub').textContent   = (GRADE_LABEL[currentGrade] || currentGrade) +
+                              ' ステージ ' + (currentStageNum + 1) + ' / ' + STAGE_TOTAL;
+  $('srScore').textContent = stageCorrect;
+  $('srPts').textContent   = '+' + stageScore + 'pt';
+
+  // 間違えた問題
+  const missedTitle = $('srMissedTitle');
+  const missedList  = $('srMissedList');
+  if (stageMissed.length === 0) {
+    missedTitle.style.display = 'none';
+    missedList.innerHTML = '';
+  } else {
+    missedTitle.style.display = 'block';
+    missedList.innerHTML = stageMissed.map(({ q, selectedKey }) => `
+      <div class="sr-missed-item">
+        <div class="sr-missed-passage">${escapeHtml(q.passage.slice(0, 100))}...</div>
+        <div class="sr-missed-q">${escapeHtml(q.question)}</div>
+        <div class="sr-missed-ans">
+          <span class="sr-wrong">✖ ${selectedKey.toUpperCase()}: ${escapeHtml(q['choice_' + selectedKey])}</span>
+          <span class="sr-correct">→ 正解 ${q.answer.toUpperCase()}: ${escapeHtml(q['choice_' + q.answer])}</span>
+        </div>
+      </div>`).join('');
+  }
+
+  // 次へボタン
+  const btnNext = $('btnSrNext');
+  const nextStageNum = currentStageNum + 1;
+  if (isGradeComplete(currentGrade)) {
+    btnNext.textContent = '🎉 級クリア！';
+    btnNext.onclick = showGradeClear;
+  } else if (nextStageNum < STAGE_TOTAL) {
+    btnNext.textContent = '次のステージへ →';
+    btnNext.onclick = () => startStage(nextStageNum);
+  } else {
+    btnNext.style.display = 'none';
+  }
+
+  showScreen('stageResultScreen');
+  buildGradeMap();
+}
+
+function retryStage() {
+  startStage(currentStageNum);
 }
 
 function goToStageMap() {
   clearInterval(timerInterval);
   buildStageMap();
+  buildGradeMap();
   showScreen('stageMapScreen');
 }
 
 function exitQuiz() {
   clearInterval(timerInterval);
   buildStageMap();
+  buildGradeMap();
   showScreen('stageMapScreen');
 }
 
@@ -1160,7 +1326,7 @@ function exitQuiz() {
    TOGGLE 和訳 / 根拠
 ======================================================== */
 function toggleTranslation() {
-  const q   = GRADE_PASSAGES[currentGrade][currentStageIdx];
+  const q   = stageQuestions[currentQInStage];
   const box = $('translationBox');
   const btn = $('btnTranslation');
   const open = box.classList.toggle('show');
@@ -1169,7 +1335,7 @@ function toggleTranslation() {
 }
 
 function toggleEvidence() {
-  const q   = GRADE_PASSAGES[currentGrade][currentStageIdx];
+  const q   = stageQuestions[currentQInStage];
   const box = $('evidenceBox');
   const btn = $('btnEvidence');
   const open = box.classList.toggle('show');
@@ -1422,11 +1588,10 @@ function getTotalQuizPts() {
 }
 
 function calcGradePts(grade) {
-  const pp = GRADE_PASSAGES[grade];
-  if (!pp) return 0;
   const p = loadProgress();
   if (!p.pts) return 0;
-  return pp.reduce((sum, _, i) => sum + (p.pts[stageKey(grade, i)] || 0), 0);
+  return Array.from({length: STAGE_TOTAL}, (_, i) => p.pts[stageKey(grade, i)] || 0)
+    .reduce((s, v) => s + v, 0);
 }
 
 function openNicknameModal() {
@@ -1544,7 +1709,7 @@ function speakAsync(text) {
 let _listenPlayId = 0;
 
 async function startListenPlayback() {
-  const q = GRADE_PASSAGES[currentGrade]?.[currentStageIdx];
+  const q = stageQuestions[currentQInStage];
   if (!q) return;
 
   const myId = ++_listenPlayId;
@@ -1712,12 +1877,12 @@ document.querySelectorAll('#rankPeriodTabs .rank-tab').forEach(tab => {
 });
 
 $('btnSpeakPassage').addEventListener('click', () => {
-  const q = GRADE_PASSAGES[currentGrade]?.[currentStageIdx];
+  const q = stageQuestions[currentQInStage];
   if (q) speakText(q.passage, $('btnSpeakPassage'));
 });
 
 $('btnSpeakQuestion').addEventListener('click', () => {
-  const q = GRADE_PASSAGES[currentGrade]?.[currentStageIdx];
+  const q = stageQuestions[currentQInStage];
   if (q) speakText(q.question, $('btnSpeakQuestion'));
 });
 </script>
