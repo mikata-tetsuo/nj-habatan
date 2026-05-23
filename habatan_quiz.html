@@ -3609,9 +3609,8 @@ function openBossEvent() {
   showScreen('bossEventScreen');
 }
 
-// ページロード時にホームボタン・ティッカー初期化
+// ページロード時にホームボタン初期化（ティッカーはonAuthStateChanged確定後に1回だけ呼ぶ）
 renderBossHomeBtn();
-renderTicker();
 
 // ホームカード全体クリックでボス画面へ
 document.getElementById('bossCard').addEventListener('click', () => openBossEvent());
