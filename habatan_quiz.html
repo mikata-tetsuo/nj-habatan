@@ -2145,7 +2145,7 @@
     <div class="ranking-header">
       <button class="map-back" id="btnRankingBack">← ホーム</button>
       <div class="ranking-title">🥇 ランキング</div>
-      <div style="text-align:center;color:#94a3b8;font-size:0.82rem;margin-top:2px;">👥 登録者 <span id="userCountNum">--</span> 人</div>
+      <div id="userCountDisplay" style="text-align:center;color:#94a3b8;font-size:0.82rem;margin-top:2px;">👥 登録者 <span id="userCountNum">--</span> 人</div>
     </div>
     <div class="rank-mode-tabs">
       <button class="rank-mode-tab" data-mode="overall">🌟 総合</button>
@@ -5597,9 +5597,17 @@ async function loadUserCount() {
   try {
     const doc = await fbDb.collection('meta').doc('stats').get();
     const count = doc.exists ? (doc.data().userCount || 0) : 0;
-    // ランキング画面: 登録者数
-    const el = document.getElementById('userCountNum');
-    if (el) el.textContent = count;
+    // ランキング画面: 登録者数 / 達成バッジ
+    const display = document.getElementById('userCountDisplay');
+    if (display) {
+      if (count >= 100) {
+        display.style.cssText = 'text-align:center;margin-top:2px;';
+        display.innerHTML = '<span style="display:inline-block;background:linear-gradient(90deg,#cd7f32,#8b5e3c,#cd7f32);color:#fff;font-size:0.8rem;font-weight:700;padding:4px 16px;border-radius:20px;letter-spacing:0.05em;">🏅 登録者 ' + count + '人 達成！</span>';
+      } else {
+        const el = document.getElementById('userCountNum');
+        if (el) el.textContent = count;
+      }
+    }
     // 100人達成チェック（お祝い演出のみ）
     if (count >= 100) show100Celebration();
     // ホーム画面: テザーバナー
@@ -5609,8 +5617,11 @@ async function loadUserCount() {
       if (count < 100) {
         teaserText.textContent = '🎯 あと' + (100 - count) + '人で100人達成！';
         teaser.style.display = '';
+      } else if (count < 200) {
+        teaserText.textContent = '🎯 次の目標 200人まであと' + (200 - count) + '人！';
+        teaser.style.display = '';
       } else {
-        teaserText.textContent = '🎉 100人達成！ありがとうございます！';
+        teaserText.textContent = '🎉 200人達成！ありがとうございます！';
         teaser.style.display = '';
       }
     }
