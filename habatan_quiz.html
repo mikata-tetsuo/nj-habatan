@@ -3565,6 +3565,9 @@ async function renderTicker() {
   const html = [...messages, ...messages].map(m =>
     `<span class="news-ticker-item"><span class="ticker-icon">${m.icon}</span>${m.text}</span>`
   ).join('');
+  // 前回と同じ内容なら innerHTML を書き換えない（アニメーションリセット防止）
+  if (inner._tickerHtml === html) return;
+  inner._tickerHtml = html;
   inner.innerHTML = html;
 }
 
