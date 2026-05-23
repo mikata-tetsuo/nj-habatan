@@ -5594,10 +5594,11 @@ async function loadUserCount() {
     const teaserText = document.getElementById('userCountTeaserText');
     if (teaser && teaserText) {
       if (count < 100) {
-        teaserText.textContent = '🎯 あと' + (100 - count) + '人で100人達成イベント！';
+        teaserText.textContent = '🎯 あと' + (100 - count) + '人で100人達成！';
         teaser.style.display = '';
       } else {
-        teaser.style.display = 'none';
+        teaserText.textContent = '🎉 100人達成！ありがとうございます！';
+        teaser.style.display = '';
       }
     }
   } catch(e) {}
