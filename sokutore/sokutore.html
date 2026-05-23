@@ -441,6 +441,43 @@
   .btn-speak-sm.speaking {
     border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); color: #DC2626;
   }
+
+  /* ===== RANKING ===== */
+  @keyframes rankShake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+  }
+  .rank-btn-wrap { margin-top: 12px; }
+  .btn-ranking {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    padding: 12px 24px; border-radius: 14px;
+    background: linear-gradient(135deg, #7b5c00, #f9ca24);
+    color: #fff; font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px;
+    border: none; cursor: pointer; box-shadow: 0 2px 12px rgba(249,202,36,0.3);
+    transition: all 0.2s;
+  }
+  .btn-ranking:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(249,202,36,0.4); }
+  .btn-ranking.locked { background: linear-gradient(135deg, #555, #888); opacity: 0.65; cursor: not-allowed; }
+  .ranking-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .ranking-title { font-size:1.2rem; font-weight:800; flex:1; text-align:center; color:var(--text); }
+  .btn-rank-back { padding:8px 14px; border-radius:10px; border:1px solid var(--borderMd); background:var(--surface2); color:var(--text2); cursor:pointer; font-size:0.9rem; font-weight:600; transition:all 0.2s; flex-shrink:0; }
+  .btn-rank-back:hover { border-color:var(--gold); color:var(--goldDark); }
+  .rank-tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  .rank-tab { flex:1; min-width:60px; padding:7px 4px; border-radius:8px; border:1px solid var(--borderMd); background:none; color:var(--text2); font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+  .rank-tab.active { background:rgba(249,202,36,0.12); border-color:#f9ca24; color:#f9ca24; }
+  .ranking-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px 12px; box-shadow:0 2px 10px rgba(0,0,0,0.06); }
+  .ranking-list { max-height:65vh; overflow-y:auto; }
+  .rank-row { display:flex; align-items:center; gap:8px; padding:9px 4px; border-bottom:1px solid var(--border); }
+  .rank-row.rank-me { background:rgba(249,202,36,0.07); border-radius:8px; padding:9px 8px; }
+  .rank-num { font-size:1rem; font-weight:800; min-width:28px; text-align:center; color:var(--text3); }
+  .rank-num.top1 { color:#f9ca24; }
+  .rank-num.top2 { color:#9CA3AF; }
+  .rank-num.top3 { color:#B45309; }
+  .rank-avatar { width:28px; height:28px; border-radius:50%; object-fit:cover; background:var(--surface2); flex-shrink:0; }
+  .rank-name { flex:1; font-weight:600; font-size:0.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); }
+  .rank-score { font-weight:800; color:#f9ca24; font-size:0.9rem; white-space:nowrap; }
+  .ranking-empty { text-align:center; padding:40px 0; color:var(--text3); font-size:0.9rem; line-height:2; }
+  .ranking-loading { text-align:center; padding:32px 0; color:var(--text3); font-size:0.9rem; }
+  .ranking-login-hint { text-align:center; padding:14px; background:rgba(249,202,36,0.06); border-radius:12px; margin-top:12px; font-size:0.83rem; color:var(--text2); }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
@@ -476,6 +513,9 @@
       <p>英検速読トレーナー</p>
     </div>
     <div class="grade-map" id="gradeMapCards"></div>
+    <div class="rank-btn-wrap">
+      <button class="btn-ranking locked" id="btnOpenRanking">🥇 ランキングを見る</button>
+    </div>
   </div>
 
   <!-- ===== ステージマップ ===== -->
@@ -567,6 +607,28 @@
         <button class="btn-result again" id="btnNextGrade" onclick="goNextGrade()">次の級へ →</button>
         <button class="btn-result home" onclick="backToGradeMap()">🗺 マップへ戻る</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== ランキング ===== -->
+  <div id="rankingScreen" class="screen">
+    <div class="ranking-header">
+      <button class="btn-rank-back" id="btnRankingBack">← ホーム</button>
+      <div class="ranking-title">🥇 ランキング</div>
+    </div>
+    <div class="rank-tabs" id="rankPeriodTabs">
+      <button class="rank-tab active" data-period="daily">デイリー</button>
+      <button class="rank-tab" data-period="weekly">ウィークリー</button>
+      <button class="rank-tab" data-period="monthly">マンスリー</button>
+      <button class="rank-tab" data-period="yearly">年間</button>
+    </div>
+    <div class="ranking-card">
+      <div class="ranking-list" id="rankingList">
+        <div class="ranking-loading">読み込み中... ⏳</div>
+      </div>
+    </div>
+    <div class="ranking-login-hint" id="rankingLoginHint" style="display:none">
+      💡 Googleログインするとランキングに登録されます
     </div>
   </div>
 
@@ -1220,6 +1282,8 @@ function updateAuthUI() {
     $('authPtsWrap').style.display = 'none';
     fbNickname = null; fbStreak = 0; fbBonusPts = 0; fbQuizPts = 0;
   }
+  const rankBtn = $('btnOpenRanking');
+  if (rankBtn) rankBtn.classList.toggle('locked', !fbUser);
 }
 
 function getTodayJST() {
@@ -1286,6 +1350,7 @@ async function checkLoginBonus(user) {
     fbBonusPts += bonus;
     updateAuthUI();
     showLoginBonusModal(bonus, streak);
+    submitToSokutoreRanking();
   } catch(e) {
     console.error('LoginBonus:', e);
     localStorage.removeItem(localKey);
@@ -1317,6 +1382,7 @@ async function syncQuizPtsToFirestore() {
     );
     fbQuizPts = pts;
     updateAuthUI();
+    submitToSokutoreRanking();
   } catch(e) { console.error('SyncQuizPts:', e); }
 }
 
@@ -1410,6 +1476,135 @@ function setSpeakBtnState(btn, active) {
 if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
   speechSynthesis.onvoiceschanged = () => {};
 }
+
+/* ========================================================
+   RANKING
+======================================================== */
+let rankingPeriod = 'daily';
+
+function getPeriodKey(type) {
+  const d = new Date();
+  const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9*60)*60*1000);
+  const y   = jst.getFullYear();
+  const m   = String(jst.getMonth()+1).padStart(2,'0');
+  const dy  = String(jst.getDate()).padStart(2,'0');
+  const dow = jst.getDay() || 7;
+  const monday = new Date(jst); monday.setDate(jst.getDate() - dow + 1);
+  const jan4 = new Date(monday.getFullYear(), 0, 4);
+  const startW1 = new Date(jan4); startW1.setDate(jan4.getDate() - (jan4.getDay()||7) + 1);
+  const weekNum = Math.floor((monday - startW1) / (7*86400000)) + 1;
+  if (type === 'daily')   return `${y}-${m}-${dy}`;
+  if (type === 'weekly')  return `${y}-W${String(weekNum).padStart(2,'0')}`;
+  if (type === 'monthly') return `${y}-${m}`;
+  return `${y}`;
+}
+
+function calcPeriodUpdates(ex, newScore) {
+  const periods = [
+    {type:'daily',   sf:'d_score', kf:'d_key'},
+    {type:'weekly',  sf:'w_score', kf:'w_key'},
+    {type:'monthly', sf:'m_score', kf:'m_key'},
+    {type:'yearly',  sf:'y_score', kf:'y_key'},
+  ];
+  const updates = {};
+  for (const {type, sf, kf} of periods) {
+    const key = getPeriodKey(type);
+    updates[kf] = key;
+    updates[sf] = ex[kf] === key ? Math.max(ex[sf] || 0, newScore) : newScore;
+  }
+  return updates;
+}
+
+async function submitToSokutoreRanking() {
+  if (!fbUser) return;
+  const totalPts = (fbBonusPts || 0) + (fbQuizPts || 0);
+  if (totalPts <= 0) return;
+  const name = fbNickname || fbUser.displayName || '名無し';
+  try {
+    const ref = fbDb.collection('sokutore_rankings').doc(fbUser.uid);
+    const doc = await ref.get();
+    const ex  = doc.data() || {};
+    await ref.set({
+      displayName: name,
+      photoURL:    fbUser.photoURL || '',
+      score:       totalPts,
+      updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
+      ...calcPeriodUpdates(ex, totalPts)
+    }, { merge: true });
+  } catch(e) { console.error('Ranking:', e); }
+}
+
+async function renderRankingScreen() {
+  const listEl = $('rankingList');
+  const hintEl = $('rankingLoginHint');
+  listEl.innerHTML = '<div class="ranking-loading">読み込み中... ⏳</div>';
+  if (hintEl) hintEl.style.display = fbUser ? 'none' : 'block';
+
+  const periodMap = {
+    daily:   {kf:'d_key', sf:'d_score'},
+    weekly:  {kf:'w_key', sf:'w_score'},
+    monthly: {kf:'m_key', sf:'m_score'},
+    yearly:  {kf:'y_key', sf:'y_score'},
+  };
+  const pInfo  = periodMap[rankingPeriod];
+  const curKey = getPeriodKey(rankingPeriod);
+
+  try {
+    const snap = await fbDb.collection('sokutore_rankings').orderBy('score','desc').limit(200).get();
+    let items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    if (rankingPeriod === 'yearly') {
+      items.sort((a,b) => (b.score||0) - (a.score||0));
+    } else {
+      items = items
+        .filter(d => d[pInfo.kf] === curKey && (d[pInfo.sf]||0) > 0)
+        .sort((a,b) => (b[pInfo.sf]||0) - (a[pInfo.sf]||0));
+    }
+    items = items.slice(0, 30);
+
+    if (!items.length) {
+      listEl.innerHTML = '<div class="ranking-empty">まだ記録がありません 🤔<br>プレイしてランキングに載ろう！</div>';
+      return;
+    }
+    listEl.innerHTML = items.map((d, i) => {
+      const isMe    = fbUser && d.id === fbUser.uid;
+      const medal   = ['🥇','🥈','🥉'][i] || (i+1)+'';
+      const nc      = ['top1','top2','top3'][i] || '';
+      const avatar  = d.photoURL
+        ? `<img class="rank-avatar" src="${d.photoURL}" alt="">`
+        : '<span class="rank-avatar"></span>';
+      const scoreVal = rankingPeriod === 'yearly' ? (d.score||0) : (d[pInfo.sf]||0);
+      return `<div class="rank-row${isMe?' rank-me':''}">` +
+        `<span class="rank-num ${nc}">${medal}</span>${avatar}` +
+        `<span class="rank-name">${d.displayName||'名無し'}${isMe?' 👈':''}</span>` +
+        `<span class="rank-score">${scoreVal.toLocaleString()}pt</span></div>`;
+    }).join('');
+  } catch(e) {
+    listEl.innerHTML = '<div class="ranking-empty">読み込みに失敗しました 😢</div>';
+    console.error('Ranking:', e);
+  }
+}
+
+$('btnOpenRanking').addEventListener('click', () => {
+  if (!fbUser) {
+    const btn = $('btnOpenRanking');
+    btn.style.animation = 'none';
+    void btn.offsetWidth;
+    btn.style.animation = 'rankShake 0.4s ease';
+    return;
+  }
+  showScreen('rankingScreen');
+  renderRankingScreen();
+});
+$('btnRankingBack').addEventListener('click', () => showScreen('gradeMapScreen'));
+document.querySelectorAll('#rankPeriodTabs .rank-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('#rankPeriodTabs .rank-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    rankingPeriod = tab.dataset.period;
+    renderRankingScreen();
+  });
+});
 
 $('btnSpeakPassage').addEventListener('click', () => {
   const q = GRADE_PASSAGES[currentGrade]?.[currentStageIdx];
