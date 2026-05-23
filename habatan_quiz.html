@@ -602,7 +602,7 @@
   .news-ticker-item .ticker-icon { margin-right: 4px; }
   @keyframes tickerScroll {
     0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    100% { transform: translateX(var(--ticker-offset, -50%)); }
   }
   @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(249,202,36,0.4)} 50%{box-shadow:0 0 0 6px rgba(249,202,36,0)} }
 
@@ -3568,7 +3568,16 @@ async function renderTicker() {
   // 前回と同じ内容なら innerHTML を書き換えない（アニメーションリセット防止）
   if (inner._tickerHtml === html) return;
   inner._tickerHtml = html;
+
+  // アニメーション停止 → innerHTML 更新 → 幅計算 → 再開
+  inner.style.animation = 'none';
   inner.innerHTML = html;
+  // Safari 対応: -50% ではなくピクセル値で正確にループ位置を指定
+  requestAnimationFrame(() => {
+    const offset = Math.floor(inner.scrollWidth / 2);
+    inner.style.setProperty('--ticker-offset', `-${offset}px`);
+    inner.style.animation = '';
+  });
 }
 
 async function renderBossHomeBtn() {
