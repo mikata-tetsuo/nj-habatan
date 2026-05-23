@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>速トレ｜英検速読トレーナー</title>
+<style>
+  /* ===== CSS変数 ===== */
+  :root {
+    --bg:       #EEE9E1;
+    --surface:  #FFFFFF;
+    --surface2: #F5F2EC;
+    --border:   rgba(0,0,0,0.09);
+    --borderMd: rgba(0,0,0,0.14);
+    --text:     #1E293B;
+    --text2:    #64748B;
+    --text3:    #9CA3AF;
+    --gold:     #E8A020;
+    --goldDark: #C47D10;
+    --blue:     #2F80ED;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Hiragino Sans', sans-serif;
+    background: var(--bg); min-height: 100vh; color: var(--text);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 12px 16px 48px;
+  }
+  .container { width: 100%; max-width: 640px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ===== TITLE ===== */
+  .title { text-align: center; margin-bottom: 24px; }
+  .title h1 {
+    font-size: 2.6rem; font-weight: 900;
+    background: linear-gradient(90deg, #E8A020, #F97316);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: 3px;
+  }
+  .title p { color: var(--text2); margin-top: 6px; font-size: 0.95rem; }
+
+  /* ===== GRADE MAP ===== */
+  .grade-map {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .grade-card {
+    background: var(--surface); border: 2px solid var(--borderMd);
+    border-radius: 16px; padding: 20px 14px 16px;
+    cursor: pointer; transition: all 0.18s; text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .grade-card:hover:not(.locked) {
+    transform: translateY(-2px); border-color: var(--gold);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+  }
+  .grade-card.locked   { opacity: 0.4; cursor: not-allowed; }
+  .grade-card.complete { border-color: #10B981; background: rgba(16,185,129,0.04); }
+  .grade-card.in-progress { border-color: var(--gold); background: rgba(232,160,32,0.04); }
+
+  .grade-card-name { font-size: 1.5rem; font-weight: 900; margin-bottom: 5px; color: var(--text); }
+  .grade-card.complete     .grade-card-name { color: #059669; }
+  .grade-card.in-progress  .grade-card-name { color: var(--goldDark); }
+  .grade-card.locked       .grade-card-name { color: var(--text3); }
+
+  .grade-card-status { font-size: 0.78rem; color: var(--text3); margin-bottom: 10px; min-height: 1.2em; }
+  .grade-card.complete    .grade-card-status { color: #059669; }
+  .grade-card.in-progress .grade-card-status { color: var(--goldDark); }
+
+  .grade-card-bar { height: 4px; background: rgba(0,0,0,0.08); border-radius: 2px; overflow: hidden; }
+  .grade-card-fill { height: 100%; border-radius: 2px; background: var(--gold); transition: width 0.5s; }
+  .grade-card.complete .grade-card-fill { background: #10B981; }
+
+  /* ===== STAGE MAP ===== */
+  .stage-map-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; gap: 12px;
+  }
+  .btn-back {
+    padding: 8px 14px; border-radius: 10px;
+    border: 1px solid var(--borderMd); background: var(--surface2);
+    color: var(--text2); cursor: pointer; font-size: 0.9rem;
+    font-weight: 600; transition: all 0.2s; flex-shrink: 0;
+  }
+  .btn-back:hover { border-color: var(--gold); color: var(--goldDark); }
+  .stage-map-grade {
+    font-size: 1.7rem; font-weight: 900;
+    background: linear-gradient(90deg, #E8A020, #F97316);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-align: center;
+  }
+
+  /* ===== STAGE PATH ===== */
+  .stage-path { display: flex; flex-direction: column; }
+
+  .stage-item {
+    display: flex; align-items: flex-start; gap: 16px;
+    position: relative; cursor: default;
+  }
+  /* Vertical connector line */
+  .stage-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px; top: 42px; height: 30px; width: 2px;
+    background: var(--borderMd); z-index: 0;
+  }
+  .stage-item.cleared:not(:last-child)::after,
+  .stage-item.speed-cleared:not(:last-child)::after { background: #10B981; }
+  .stage-item.active:not(:last-child)::after { background: rgba(232,160,32,0.5); }
+
+  /* Stage circle */
+  .stage-circle {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.95rem; flex-shrink: 0;
+    border: 2px solid var(--borderMd);
+    background: var(--surface2); color: var(--text3);
+    position: relative; z-index: 1; transition: transform 0.18s;
+  }
+  .stage-item[data-clickable="1"]:hover .stage-circle { transform: scale(1.12); }
+
+  .stage-item.cleared .stage-circle {
+    background: #10B981; border-color: #059669; color: #fff; font-size: 1.1rem;
+  }
+  .stage-item.speed-cleared .stage-circle {
+    background: linear-gradient(135deg, #FBBF24, #F97316);
+    border-color: var(--goldDark); color: #fff; font-size: 1rem;
+  }
+  .stage-item.active .stage-circle {
+    background: linear-gradient(135deg, #FBBF24, #F97316);
+    border-color: var(--goldDark); color: #fff;
+    box-shadow: 0 0 0 5px rgba(232,160,32,0.18);
+    animation: stagePulse 2s infinite;
+  }
+  .stage-item.locked .stage-circle { opacity: 0.35; }
+
+  @keyframes stagePulse {
+    0%,100% { box-shadow: 0 0 0 5px rgba(232,160,32,0.18); }
+    50%      { box-shadow: 0 0 0 10px rgba(232,160,32,0.07); }
+  }
+
+  /* Stage info */
+  .stage-info {
+    flex: 1; padding: 7px 0 30px;
+    border-bottom: 1px solid var(--border);
+  }
+  .stage-item:last-child .stage-info { border-bottom: none; }
+  .stage-info-title { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+  .stage-item.locked       .stage-info-title { color: var(--text3); }
+  .stage-info-sub { font-size: 0.78rem; color: var(--text3); margin-top: 3px; }
+  .stage-item.cleared      .stage-info-sub,
+  .stage-item.speed-cleared .stage-info-sub { color: #059669; }
+  .stage-item.active       .stage-info-sub { color: var(--goldDark); font-weight: 600; }
+
+  /* ===== HUD ===== */
+  .hud {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 14px; margin-bottom: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  }
+  .hud-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .hud-label { color: var(--text3); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .hud-value { font-weight: 700; font-size: 1rem; color: var(--text); }
+  .hud-grade   { color: var(--blue); }
+  .hud-cleared { color: #059669; }
+
+  /* ===== TIMER ===== */
+  .timer-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  }
+  .timer-display {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .timer-elapsed { font-size: 1.5rem; font-weight: 800; color: var(--blue); }
+  .timer-target  { font-size: 0.85rem; color: var(--text3); }
+  .timer-bar-bg  { width: 100%; height: 8px; background: rgba(0,0,0,0.08); border-radius: 4px; overflow: hidden; }
+  .timer-bar     { height: 100%; border-radius: 4px; transition: width 0.5s linear, background-color 0.5s; background: #10B981; }
+
+  /* ===== PASSAGE ===== */
+  .passage-box {
+    background: var(--surface2); border-radius: 14px; padding: 18px;
+    margin-bottom: 14px; max-height: 260px; overflow-y: auto;
+    line-height: 1.85; font-size: 0.95rem; color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .passage-box mark {
+    background: rgba(232,160,32,0.25); color: var(--goldDark);
+    border-radius: 3px; padding: 1px 2px;
+  }
+
+  /* ===== QUESTION ===== */
+  .question-text { font-size: 0.95rem; color: var(--text); margin-bottom: 14px; line-height: 1.6; font-weight: 600; }
+
+  /* ===== CHOICES ===== */
+  .choices { display: grid; gap: 10px; margin-bottom: 14px; }
+  .choice-btn {
+    width: 100%; padding: 13px 16px; border-radius: 12px; text-align: left;
+    border: 1px solid var(--borderMd); background: var(--surface);
+    color: var(--text); cursor: pointer; font-size: 0.92rem;
+    transition: all 0.15s; display: flex; align-items: flex-start; gap: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .choice-btn:hover:not(:disabled) { border-color: var(--gold); background: rgba(232,160,32,0.05); transform: translateY(-1px); }
+  .choice-btn:disabled { cursor: not-allowed; }
+  .choice-btn.correct { border-color: #10B981 !important; background: rgba(16,185,129,0.1) !important; color: #065F46 !important; font-weight: 700; }
+  .choice-btn.wrong   { border-color: #EF4444 !important; background: rgba(239,68,68,0.08) !important; color: #991B1B !important; }
+  .choice-label { font-weight: 700; min-width: 22px; color: var(--gold); }
+
+  /* ===== FEEDBACK ===== */
+  .feedback { display: none; border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.9rem; align-items: center; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.4); color: #065F46; }
+  .feedback.wrong-fb   { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); color: #991B1B; }
+  .feedback-icon { font-size: 1.4rem; }
+
+  /* ===== REVIEW BUTTONS ===== */
+  .review-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .btn-review {
+    padding: 9px 16px; border-radius: 10px; border: 1px solid var(--borderMd);
+    background: var(--surface2); color: var(--text2); cursor: pointer;
+    font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+  }
+  .btn-review:hover { border-color: var(--gold); color: var(--goldDark); }
+  .btn-review.open  { border-color: var(--gold); background: rgba(232,160,32,0.08); color: var(--goldDark); }
+
+  /* ===== COLLAPSIBLE ===== */
+  .collapse-content {
+    display: none; background: var(--surface2); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 12px;
+    font-size: 0.88rem; line-height: 1.75; color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .collapse-content.show { display: block; }
+  .collapse-content .rp-label { color: var(--blue); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 6px; }
+
+  /* ===== STAGE ACTIONS ===== */
+  .stage-actions { display: none; flex-direction: column; gap: 10px; }
+
+  .btn-next {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #FBBF24, #F97316);
+    border: none; border-radius: 12px;
+    font-size: 1.1rem; font-weight: 700; color: #fff; cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 3px 14px rgba(251,191,36,0.4);
+  }
+  .btn-next:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(251,191,36,0.55); }
+  .btn-next:active { transform: translateY(0); }
+  .btn-next.btn-retry {
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    box-shadow: 0 3px 14px rgba(99,102,241,0.35);
+  }
+  .btn-next.btn-retry:hover { box-shadow: 0 5px 20px rgba(99,102,241,0.5); }
+
+  .btn-map {
+    width: 100%; padding: 12px;
+    background: var(--surface2); border: 1px solid var(--borderMd);
+    border-radius: 12px; font-size: 0.95rem; font-weight: 600;
+    color: var(--text2); cursor: pointer; transition: all 0.2s;
+  }
+  .btn-map:hover { color: var(--text); border-color: rgba(0,0,0,0.22); background: var(--surface); }
+
+  /* ===== EXIT (fixed) ===== */
+  .btn-exit {
+    position: fixed; top: 14px; right: 14px; z-index: 100;
+    padding: 7px 14px; border-radius: 10px;
+    border: 1px solid rgba(239,68,68,0.35); background: rgba(239,68,68,0.08);
+    color: #DC2626; cursor: pointer; font-size: 0.85rem;
+    font-weight: 700; transition: all 0.2s; display: none;
+  }
+  .btn-exit.show  { display: block; }
+  .btn-exit:hover { background: rgba(239,68,68,0.15); border-color: #EF4444; }
+
+  /* ===== GRADE CLEAR ===== */
+  .grade-clear-wrap { text-align: center; padding: 48px 0 24px; }
+  .grade-clear-star {
+    font-size: 3.2rem; margin-bottom: 16px;
+    animation: starPop 0.55s cubic-bezier(.36,1.56,.64,1) both;
+  }
+  @keyframes starPop {
+    from { transform: scale(0.2); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  .grade-clear-title {
+    font-size: 2.2rem; font-weight: 900; margin-bottom: 10px;
+    background: linear-gradient(90deg, #E8A020, #F97316);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .grade-clear-msg { color: var(--text2); font-size: 1rem; margin-bottom: 36px; line-height: 1.7; }
+
+  /* ===== RESULT BUTTONS (shared) ===== */
+  .result-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn-result {
+    padding: 14px; border-radius: 12px; font-size: 1rem;
+    font-weight: 700; cursor: pointer; border: none;
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+  .btn-result:hover { transform: translateY(-2px); }
+  .btn-result.again { background: linear-gradient(135deg, #FBBF24, #F97316); color: #fff; box-shadow: 0 3px 12px rgba(251,191,36,0.4); }
+  .btn-result.home  { background: var(--surface2); color: var(--text2); border: 1px solid var(--borderMd); }
+  .btn-result.home:hover { color: var(--text); border-color: rgba(0,0,0,0.28); }
+
+  /* ===== SPEED POPUP ===== */
+  .speed-popup {
+    display: none; position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.6);
+    background: linear-gradient(135deg, #FBBF24, #F97316);
+    color: #fff; font-size: 1.5rem; font-weight: 900;
+    padding: 18px 36px; border-radius: 20px;
+    z-index: 200; pointer-events: none;
+    box-shadow: 0 8px 40px rgba(251,191,36,0.5); letter-spacing: 1px;
+  }
+  .speed-popup.pop { display: block; animation: popAnim 1.2s ease forwards; }
+  @keyframes popAnim {
+    0%   { transform: translate(-50%,-50%) scale(0.6); opacity:0; }
+    20%  { transform: translate(-50%,-50%) scale(1.1); opacity:1; }
+    40%  { transform: translate(-50%,-50%) scale(1.0); opacity:1; }
+    75%  { transform: translate(-50%,-50%) scale(1.0); opacity:1; }
+    100% { transform: translate(-50%,-50%) scale(0.8); opacity:0; }
+  }
+
+  @media (max-width: 400px) {
+    .result-btns { grid-template-columns: 1fr; }
+  }
+
+  /* ===== AUTH HEADER ===== */
+  .auth-header {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 10px 14px; margin-bottom: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.05); min-height: 54px;
+    display: flex; align-items: center;
+  }
+  .btn-google-login {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 18px; border-radius: 10px;
+    border: 1px solid var(--borderMd); background: var(--surface2);
+    color: var(--text2); cursor: pointer; font-size: 0.88rem;
+    font-weight: 600; transition: all 0.2s; width: 100%; justify-content: center;
+  }
+  .btn-google-login:hover { border-color: var(--blue); color: var(--blue); }
+  .auth-user { display: flex; align-items: center; gap: 10px; width: 100%; }
+  .auth-avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid var(--border); object-fit: cover;
+  }
+  .auth-info { flex: 1; min-width: 0; }
+  .auth-name {
+    font-size: 0.9rem; font-weight: 700; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .auth-streak { font-size: 0.75rem; color: var(--goldDark); font-weight: 600; margin-top: 1px; }
+  .auth-pts-wrap { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+  .auth-pts-label { font-size: 0.68rem; color: var(--text3); letter-spacing: 0.4px; }
+  .auth-pts-value { font-size: 1.1rem; font-weight: 900; color: var(--gold); line-height: 1.2; }
+
+  /* ===== MODALS ===== */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300; padding: 16px;
+  }
+  .modal-card {
+    background: var(--surface); border-radius: 20px; padding: 28px 24px;
+    width: 100%; max-width: 340px; text-align: center;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    animation: modalIn 0.25s cubic-bezier(.36,1.56,.64,1) both;
+  }
+  @keyframes modalIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+  .modal-title { font-size: 1.25rem; font-weight: 800; color: var(--text); margin-bottom: 16px; }
+  .bonus-pts-big {
+    font-size: 3.2rem; font-weight: 900; line-height: 1;
+    background: linear-gradient(90deg, #E8A020, #F97316);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .bonus-sub { font-size: 0.88rem; color: var(--text2); margin-bottom: 24px; }
+  .btn-modal-ok {
+    width: 100%; padding: 13px; border-radius: 12px;
+    background: linear-gradient(135deg, #FBBF24, #F97316);
+    border: none; font-size: 1rem; font-weight: 700; color: #fff;
+    cursor: pointer; transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 3px 12px rgba(251,191,36,0.35);
+  }
+  .btn-modal-ok:hover { transform: translateY(-1px); }
+  .nickname-input {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--borderMd);
+    border-radius: 12px; font-size: 1rem; background: var(--surface2);
+    color: var(--text); outline: none; text-align: center; margin-bottom: 14px;
+  }
+  .nickname-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(232,160,32,0.2); }
+  .modal-btn-row { display: flex; gap: 10px; }
+  .btn-modal-sub {
+    flex: 1; padding: 11px; border-radius: 12px;
+    border: 1px solid var(--borderMd); background: var(--surface2);
+    color: var(--text2); cursor: pointer; font-size: 0.9rem; font-weight: 600;
+  }
+  .btn-modal-sub:hover { border-color: rgba(0,0,0,0.22); color: var(--text); }
+
+  /* ===== GRADE CARD PTS ===== */
+  .grade-card-pts { font-size: 0.78rem; color: var(--text3); margin-top: 8px; font-weight: 600; min-height: 1.1em; }
+  .grade-card.in-progress .grade-card-pts,
+  .grade-card.complete    .grade-card-pts { color: var(--goldDark); }
+
+  /* ===== HUD PTS ===== */
+  .hud-pts { color: var(--gold); }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<div class="container">
+
+  <!-- ===== 級マップ ===== -->
+  <div id="gradeMapScreen" class="screen active">
+    <!-- AUTH HEADER -->
+    <div class="auth-header">
+      <div id="authLoginSection" style="width:100%">
+        <button class="btn-google-login" id="btnGoogleLogin">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.9 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.5 20-21 0-1.4-.2-2.7-.5-4z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15 16.1 19.1 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 16.2 3 9.5 7.8 6.3 14.7z"/><path fill="#FBBC05" d="M24 45c5.8 0 10.7-1.9 14.3-5.2l-6.6-5.4C29.6 36 26.9 37 24 37c-5.8 0-10.7-3.9-12.5-9.3l-7 5.4C7.9 40.5 15.4 45 24 45z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-.8 2.4-2.2 4.5-4.2 6l6.6 5.4C41.8 36.3 45 30.6 45 24c0-1.4-.2-2.7-.5-4z"/></svg>
+          Googleでログイン
+        </button>
+      </div>
+      <div id="authUserSection" class="auth-user" style="display:none">
+        <img id="authAvatar" class="auth-avatar" src="" alt="">
+        <div class="auth-info">
+          <div class="auth-name" id="authName"></div>
+          <div class="auth-streak" id="authStreak" style="display:none"></div>
+        </div>
+        <div class="auth-pts-wrap" id="authPtsWrap" style="display:none">
+          <span class="auth-pts-label">合計PT</span>
+          <span class="auth-pts-value" id="authPtsValue">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="title">
+      <h1>⚡ 速トレ</h1>
+      <p>英検速読トレーナー</p>
+    </div>
+    <div class="grade-map" id="gradeMapCards"></div>
+  </div>
+
+  <!-- ===== ステージマップ ===== -->
+  <div id="stageMapScreen" class="screen">
+    <div class="stage-map-header">
+      <button class="btn-back" onclick="backToGradeMap()">← 級マップ</button>
+      <div class="stage-map-grade" id="stageMapGradeLabel"></div>
+      <div style="width:72px"></div>
+    </div>
+    <div class="stage-path" id="stagePath"></div>
+  </div>
+
+  <!-- ===== 問題 ===== -->
+  <div id="questionScreen" class="screen">
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hud-item">
+        <span class="hud-label">ステージ</span>
+        <span class="hud-value" id="hudQNum">1/3</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">英検</span>
+        <span class="hud-value hud-grade" id="hudGrade">5級</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">クリア</span>
+        <span class="hud-value hud-cleared" id="hudCleared">0/3</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">獲得PT</span>
+        <span class="hud-value hud-pts" id="hudPts">0</span>
+      </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-card">
+      <div class="timer-display">
+        <span class="timer-elapsed" id="timerElapsed">0:00</span>
+        <span class="timer-target" id="timerTarget">目標: 0:30</span>
+      </div>
+      <div class="timer-bar-bg">
+        <div class="timer-bar" id="timerBar" style="width:0%;"></div>
+      </div>
+    </div>
+
+    <!-- Passage -->
+    <div class="passage-box" id="passageBox"></div>
+
+    <!-- Question -->
+    <div class="question-text" id="questionText"></div>
+
+    <!-- Choices -->
+    <div class="choices" id="choicesDiv"></div>
+
+    <!-- Feedback -->
+    <div class="feedback" id="feedbackDiv">
+      <span class="feedback-icon" id="feedbackIcon"></span>
+      <span id="feedbackMsg"></span>
+    </div>
+
+    <!-- Review buttons (shown after answer) -->
+    <div class="review-btns" id="reviewBtns" style="display:none;">
+      <button class="btn-review" id="btnTranslation" onclick="toggleTranslation()">📖 和訳を見る</button>
+      <button class="btn-review" id="btnEvidence" onclick="toggleEvidence()">🔍 根拠を見る</button>
+    </div>
+    <div class="collapse-content" id="translationBox"></div>
+    <div class="collapse-content" id="evidenceBox"></div>
+
+    <!-- Stage actions (shown after answer) -->
+    <div class="stage-actions" id="stageActions">
+      <button class="btn-next" id="btnStageNext" onclick="stageNext()">次のステージへ →</button>
+      <button class="btn-map" onclick="goToStageMap()">🗺 マップへ戻る</button>
+    </div>
+  </div>
+
+  <!-- ===== 級クリア ===== -->
+  <div id="gradeClearScreen" class="screen">
+    <div class="grade-clear-wrap">
+      <div class="grade-clear-star" id="gradeClearStar">🎉</div>
+      <h2 class="grade-clear-title" id="gradeClearTitle">5級 クリア！</h2>
+      <p class="grade-clear-msg" id="gradeClearMsg">全ステージをクリアしました！</p>
+      <div class="result-btns">
+        <button class="btn-result again" id="btnNextGrade" onclick="goNextGrade()">次の級へ →</button>
+        <button class="btn-result home" onclick="backToGradeMap()">🗺 マップへ戻る</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== ログインボーナスモーダル ===== -->
+<div id="loginBonusModal" class="modal-overlay" style="display:none">
+  <div class="modal-card">
+    <div class="modal-title" id="bonusTitle">ログインボーナス！🎉</div>
+    <div class="bonus-pts-big" id="bonusPtsText">+50pt</div>
+    <div class="bonus-sub" id="bonusStreakText">次回ログインで +70pt</div>
+    <button class="btn-modal-ok" id="btnBonusClose">やったー！</button>
+  </div>
+</div>
+
+<!-- ===== ニックネームモーダル ===== -->
+<div id="nicknameModal" class="modal-overlay" style="display:none">
+  <div class="modal-card">
+    <div class="modal-title">ニックネームを設定</div>
+    <div style="color:var(--text2);font-size:0.85rem;margin-bottom:16px;">ランキングに表示される名前です</div>
+    <input type="text" id="nicknameInput" class="nickname-input" placeholder="ニックネーム（15文字以内）" maxlength="15">
+    <div class="modal-btn-row">
+      <button class="btn-modal-sub" id="btnNicknameSkip">あとで</button>
+      <button class="btn-modal-ok" id="btnNicknameSave" style="flex:2">決定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 終了ボタン（fixed） -->
+<button class="btn-exit" id="btnExit" onclick="exitQuiz()">✕ 終了</button>
+
+<!-- スピードポップアップ -->
+<div class="speed-popup" id="speedPopup">⚡ スピードボーナス！</div>
+
+<script>
+/* ========================================================
+   DATA
+======================================================== */
+const PASSAGES = [{"id":0,"type":"reading","eiken_grade":"5","sub_level":1,"passage":"I have a cat. Her name is Shiro. She is white. She likes fish.","japanese_translation":"私は猫を飼っています。名前はシロ。白い猫です。魚が好きです。","question":"What does Shiro like?","choice_a":"Milk","choice_b":"Meat","choice_c":"Fish","choice_d":"Rice","answer":"C","target_time_sec":25,"reading_point":"She likes fish. が答えの根拠","evidence_text":"She likes fish","reward_point":10},{"id":1,"type":"reading","eiken_grade":"5","sub_level":2,"passage":"Today is Sunday. Ken goes to the park with his brother. They play soccer and have fun.","japanese_translation":"今日は日曜日。ケンはお兄さんと公園へ行きます。サッカーをして楽しんでいます。","question":"Who does Ken go to the park with?","choice_a":"His friend","choice_b":"His sister","choice_c":"His father","choice_d":"His brother","answer":"D","target_time_sec":30,"reading_point":"with his brother が一緒にいる人の根拠","evidence_text":"his brother","reward_point":10},{"id":2,"type":"reading","eiken_grade":"5","sub_level":3,"passage":"Lisa goes to school every day. She studies math, science, and English. English is her favorite subject because she likes learning new words.","japanese_translation":"リサは毎日学校へ行きます。数学・理科・英語を勉強します。新しい単語を覚えるのが好きなので英語が一番好きです。","question":"Why is English Lisa's favorite subject?","choice_a":"The teacher is nice","choice_b":"It is easy","choice_c":"She likes learning new words","choice_d":"Her friends study it","answer":"C","target_time_sec":35,"reading_point":"because she likes learning new words が理由の根拠","evidence_text":"she likes learning new words","reward_point":10},{"id":3,"type":"reading","eiken_grade":"4","sub_level":1,"passage":"Last summer, Yuki visited Kyoto with her family. She saw many beautiful temples and traditional gardens. It was her first time there, and she wants to go again.","japanese_translation":"去年の夏、ユキは家族と京都を訪れました。美しいお寺と日本庭園をたくさん見ました。初めての訪問で、またいつか行きたいと思っています。","question":"What did Yuki see in Kyoto?","choice_a":"Modern buildings","choice_b":"Temples and gardens","choice_c":"Famous restaurants","choice_d":"Shopping malls","answer":"B","target_time_sec":40,"reading_point":"temples and traditional gardens を本文から探す","evidence_text":"temples and traditional gardens","reward_point":10},{"id":4,"type":"reading","eiken_grade":"4","sub_level":2,"passage":"Tom started learning Japanese six months ago. He practices every day by watching Japanese videos and writing new words. He can now have simple conversations.","japanese_translation":"トムは6ヶ月前に日本語の勉強を始めました。毎日動画を見たり単語を書いたりして練習しています。今では簡単な会話ができます。","question":"How long has Tom been learning Japanese?","choice_a":"One year","choice_b":"Three months","choice_c":"Six months","choice_d":"Two years","answer":"C","target_time_sec":45,"reading_point":"six months ago から開始時期を計算","evidence_text":"six months ago","reward_point":10},{"id":5,"type":"reading","eiken_grade":"4","sub_level":3,"passage":"Anna joined the school volleyball club last year. She practices three times a week after school. It was hard at first, but now she enjoys it and has made many new friends.","japanese_translation":"アンナは去年学校のバレーボール部に入りました。放課後、週に3回練習します。最初は大変でしたが、今では楽しんでおり友達もたくさんできました。","question":"How often does Anna practice volleyball?","choice_a":"Every day","choice_b":"Once a week","choice_c":"Twice a week","choice_d":"Three times a week","answer":"D","target_time_sec":50,"reading_point":"three times a week が頻度の根拠","evidence_text":"three times a week","reward_point":10},{"id":6,"type":"reading","eiken_grade":"3","sub_level":1,"passage":"Recycling is important for protecting our environment. When we recycle paper, plastic, and glass, we reduce the amount of waste sent to landfills. Many cities now provide separate bins to make recycling easier for everyone.","japanese_translation":"リサイクルは環境を守るために大切です。紙・プラスチック・ガラスをリサイクルすると埋め立て地へのごみを減らせます。多くの都市では分別ゴミ箱を設けています。","question":"What is the benefit of recycling mentioned in the text?","choice_a":"It saves money","choice_b":"It reduces waste in landfills","choice_c":"It creates new jobs","choice_d":"It saves energy","answer":"B","target_time_sec":55,"reading_point":"reduce the amount of waste sent to landfills が具体的な効果","evidence_text":"reduce the amount of waste sent to landfills","reward_point":10},{"id":7,"type":"reading","eiken_grade":"3","sub_level":2,"passage":"Social media has become a major part of daily life for many young people. While it helps people stay connected with friends and family, spending too much time on it can lead to poor sleep and feelings of anxiety. Experts suggest limiting screen time, especially before bed.","japanese_translation":"SNSは多くの若者の日常生活の大きな部分を占めています。友人との連絡に役立つ一方、使いすぎると睡眠の質の低下や不安感につながります。専門家は特に寝る前の画面時間を制限するよう勧めています。","question":"What do experts suggest?","choice_a":"Stopping social media completely","choice_b":"Limiting screen time before bed","choice_c":"Using social media only for study","choice_d":"Checking phones in the morning","answer":"B","target_time_sec":60,"reading_point":"Experts suggest limiting screen time, especially before bed が専門家のアドバイス","evidence_text":"limiting screen time, especially before bed","reward_point":10},{"id":8,"type":"reading","eiken_grade":"3","sub_level":3,"passage":"Many high school students in Japan have part-time jobs. Working part-time gives students a chance to earn their own money and learn responsibility. Some use the money to pay for hobbies or save for the future. However, it is important to balance work with study.","japanese_translation":"日本では多くの高校生がアルバイトをしています。アルバイトは自分でお金を稼ぎ責任感を学ぶ機会です。趣味や貯金に使う生徒もいます。しかし仕事と勉強のバランスを取ることが大切です。","question":"What is one benefit of part-time jobs for students?","choice_a":"They can skip classes","choice_b":"They learn responsibility","choice_c":"They get better grades","choice_d":"They meet teachers","answer":"B","target_time_sec":65,"reading_point":"learn responsibility が具体的なメリット","evidence_text":"learn responsibility","reward_point":10},{"id":9,"type":"reading","eiken_grade":"pre2","sub_level":1,"passage":"Scientists have shown that sleep is essential for both physical and mental health. During sleep, the brain processes information gathered throughout the day and strengthens memories. Most adults need seven to nine hours of sleep each night, but many people get far less than this.","japanese_translation":"科学者たちは睡眠が身体的・精神的健康に不可欠であることを示しています。睡眠中、脳は一日を通して集めた情報を処理し記憶を強化します。ほとんどの大人は毎晩7〜9時間が必要ですが、それより少ない人も多くいます。","question":"What does the brain do during sleep?","choice_a":"It rests completely","choice_b":"It processes information and strengthens memories","choice_c":"It prepares for the next day","choice_d":"It repairs the body","answer":"B","target_time_sec":70,"reading_point":"the brain processes information ... and strengthens memories がキー","evidence_text":"processes information gathered throughout the day and strengthens memories","reward_point":10},{"id":10,"type":"reading","eiken_grade":"pre2","sub_level":2,"passage":"Volunteering is a meaningful way to give back to the community. Many people spend their free time helping at hospitals, schools, or local events. Research has found that volunteers often report higher levels of happiness and a greater sense of purpose in their lives compared to non-volunteers.","japanese_translation":"ボランティアは地域社会に貢献する意義ある方法です。多くの人が病院・学校・地域イベントでボランティアをしています。研究によると、ボランティアをしている人はしていない人と比べて幸福度が高く目的意識が強いと報告しています。","question":"What does research show about volunteers?","choice_a":"They earn more money","choice_b":"They are healthier physically","choice_c":"They report higher happiness and purpose","choice_d":"They have more free time","answer":"C","target_time_sec":75,"reading_point":"Research has found that volunteers often report ... happiness and ... purpose","evidence_text":"higher levels of happiness and a greater sense of purpose","reward_point":10},{"id":11,"type":"reading","eiken_grade":"pre2","sub_level":3,"passage":"Exercise is widely known for its physical benefits, but its effects on mental health are equally significant. When people exercise, the brain releases chemicals called endorphins, which naturally improve mood and reduce feelings of stress. Regular physical activity has been shown to help reduce symptoms of depression and anxiety.","japanese_translation":"運動は身体への効果でよく知られていますが、精神的健康への効果も同様に重要です。運動をすると脳はエンドルフィンという化学物質を分泌し、気分を改善しストレスを軽減します。定期的な運動はうつや不安の症状を和らげるのに役立つことが示されています。","question":"What are endorphins?","choice_a":"A type of exercise","choice_b":"Chemicals that improve mood during exercise","choice_c":"Vitamins found in food","choice_d":"A symptom of stress","answer":"B","target_time_sec":80,"reading_point":"chemicals called endorphins, which naturally improve mood and reduce feelings of stress","evidence_text":"chemicals called endorphins, which naturally improve mood","reward_point":10},{"id":12,"type":"reading","eiken_grade":"pre2p","sub_level":1,"passage":"Remote work, once considered a temporary solution, has become a permanent feature of many workplaces worldwide. Employees report benefits such as reduced commuting time and greater flexibility in managing their schedules. However, some workers struggle with feelings of isolation and find it difficult to separate their professional and personal lives.","japanese_translation":"在宅勤務はかつて一時的な解決策とされていましたが、世界中の多くの職場で恒久的な働き方になっています。通勤時間の短縮やスケジュール管理の柔軟性向上などの利点が報告されています。一方、孤独感に悩んだり仕事とプライベートの切り分けが難しい人もいます。","question":"What challenge do some remote workers face?","choice_a":"Longer working hours","choice_b":"Higher costs","choice_c":"Feelings of isolation","choice_d":"Less flexibility","answer":"C","target_time_sec":85,"reading_point":"some workers struggle with feelings of isolation に注目","evidence_text":"feelings of isolation","reward_point":10},{"id":13,"type":"reading","eiken_grade":"pre2p","sub_level":2,"passage":"Urban farming—growing food within or around cities—is gaining attention as a sustainable approach to food production. By establishing rooftop gardens and vertical farms, cities can produce fresh vegetables closer to consumers, significantly reducing transportation costs and carbon emissions. Proponents also argue that urban farms can strengthen community relationships and improve food security.","japanese_translation":"都市農業は持続可能な食料生産アプローチとして注目されています。屋上庭園や垂直農場を設置することで、都市は消費者の近くで新鮮な野菜を生産し、輸送コストや炭素排出量を大幅に削減できます。支持者はコミュニティの絆の強化や食料安全保障の改善にもなると主張しています。","question":"What is one environmental benefit of urban farming?","choice_a":"It creates more jobs","choice_b":"It reduces transportation emissions","choice_c":"It improves air quality","choice_d":"It eliminates food waste","answer":"B","target_time_sec":90,"reading_point":"reducing transportation costs and carbon emissions が環境への具体的効果","evidence_text":"reducing transportation costs and carbon emissions","reward_point":10},{"id":14,"type":"reading","eiken_grade":"pre2p","sub_level":3,"passage":"The rapid spread of misinformation on social media has become a serious concern for governments and researchers. False content can travel faster than factual corrections, particularly when it appeals to people's emotions. Media literacy experts stress the importance of verifying information through credible sources before sharing it online.","japanese_translation":"SNS上での誤情報の急速な拡散は政府や研究者にとって深刻な問題となっています。虚偽のコンテンツは、特に感情に訴えるものの場合、事実の訂正よりも速く広まります。メディアリテラシーの専門家は、共有前に信頼できる情報源で確認することの重要性を強調しています。","question":"Why does misinformation spread quickly?","choice_a":"People do not use the internet","choice_b":"It is hard to identify online","choice_c":"It often appeals to people's emotions","choice_d":"Governments do not control it","answer":"C","target_time_sec":95,"reading_point":"particularly when it appeals to people's emotions が拡散理由","evidence_text":"appeals to people's emotions","reward_point":10},{"id":15,"type":"reading","eiken_grade":"2","sub_level":1,"passage":"Artificial intelligence is transforming the field of medicine. AI systems can now analyze thousands of medical images in minutes, helping doctors detect diseases such as cancer at earlier stages. While these tools improve diagnostic accuracy, experts caution that AI should function as a support tool rather than replace the clinical judgment of trained physicians.","japanese_translation":"人工知能は医療分野を変革しています。AIシステムは数千枚の医療画像を数分で分析し、医師がガンなどの病気を早期発見するのを助けます。これらのツールは診断精度を向上させますが、AIは医師の臨床判断を置き換えるのではなく補助ツールとして機能すべきだと専門家は警告しています。","question":"What do experts say about AI in medicine?","choice_a":"It should replace doctors completely","choice_b":"It is not yet accurate enough","choice_c":"It should support, not replace, doctors","choice_d":"It is too expensive to use","answer":"C","target_time_sec":100,"reading_point":"AI should function as a support tool rather than replace ... physicians","evidence_text":"support tool rather than replace the clinical judgment of trained physicians","reward_point":10},{"id":16,"type":"reading","eiken_grade":"2","sub_level":2,"passage":"Climate change is increasingly affecting food production around the world. Rising temperatures, unpredictable rainfall, and extreme weather events are making it harder for farmers to maintain stable harvests. In response, many governments are investing in research to develop drought-resistant crops and more efficient irrigation systems to protect food security.","japanese_translation":"気候変動は世界中の食料生産にますます影響を与えています。気温の上昇・不規則な降雨・極端な気象により農家が安定した収穫を維持することが難しくなっています。多くの政府は干ばつに強い作物や効率的な灌漑システムの研究に投資しています。","question":"How are governments responding to climate change's effect on farming?","choice_a":"By reducing farm sizes","choice_b":"By importing more food","choice_c":"By investing in research for resilient crops","choice_d":"By increasing food prices","answer":"C","target_time_sec":110,"reading_point":"investing in research to develop drought-resistant crops が政府の対策","evidence_text":"investing in research to develop drought-resistant crops and more efficient irrigation systems","reward_point":10},{"id":17,"type":"reading","eiken_grade":"2","sub_level":3,"passage":"Space exploration, once driven purely by national competition, has increasingly yielded practical benefits for everyday life on Earth. Technologies developed for space missions—including GPS navigation, memory foam, and water purification systems—have since found widespread civilian applications. This transfer of innovation from space programs to consumer products highlights the broader societal value of continued investment in space research.","japanese_translation":"かつて国家間の競争で推進されていた宇宙探査は、地球上の日常生活に実用的な恩恵をもたらすようになっています。GPS・低反発フォーム・水浄化システムなど宇宙ミッションのために開発された技術はその後広く一般に応用されています。この技術革新の移転は宇宙研究への継続的投資の社会的価値を示しています。","question":"What is the main point of this passage?","choice_a":"Space exploration is too expensive","choice_b":"Space research benefits everyday life on Earth","choice_c":"GPS was invented by NASA","choice_d":"National competition drives innovation","answer":"B","target_time_sec":120,"reading_point":"practical benefits for everyday life on Earth が主旨。技術移転の例が根拠","evidence_text":"practical benefits for everyday life on Earth","reward_point":10},{"id":18,"type":"reading","eiken_grade":"pre1","sub_level":1,"passage":"Confirmation bias refers to the tendency of individuals to seek out, interpret, and recall information in ways that confirm their pre-existing beliefs, while ignoring contradictory evidence. This cognitive bias can significantly distort decision-making and is considered one of the most prevalent forms of faulty reasoning. Awareness of this bias is the first step toward more objective thinking.","japanese_translation":"確証バイアスとは、既存の信念を確認する方法で情報を探し・解釈し・記憶する一方で、矛盾する証拠を無視する傾向です。この認知バイアスは意思決定を大きく歪め、誤った推論の最も一般的な形の一つとされています。このバイアスへの認識が、より客観的な思考への第一歩と考えられています。","question":"What is confirmation bias?","choice_a":"The tendency to share information widely","choice_b":"A preference for complex information","choice_c":"Seeking information that confirms existing beliefs","choice_d":"The ability to change one's opinion easily","answer":"C","target_time_sec":130,"reading_point":"the tendency ... to seek out ... information in ways that confirm their pre-existing beliefs","evidence_text":"seek out, interpret, and recall information in ways that confirm their pre-existing beliefs","reward_point":10},{"id":19,"type":"reading","eiken_grade":"pre1","sub_level":2,"passage":"Microplastics—particles of plastic smaller than five millimeters—have been detected in virtually every environment on Earth, including oceans, rivers, soil, and the human bloodstream. They originate primarily from the gradual breakdown of larger plastic items through exposure to sunlight and mechanical forces. Scientists are increasingly concerned about their potential to disrupt hormonal systems and accumulate in body tissues.","japanese_translation":"5ミリ未満のプラスチック粒子であるマイクロプラスチックは、海・川・土壌・人間の血液など地球上のほぼあらゆる環境で検出されています。主に太陽光や機械的な力による大きなプラスチック製品の分解から生じます。科学者たちはホルモン系を乱し体組織に蓄積する可能性への懸念を強めています。","question":"Where do microplastics primarily come from?","choice_a":"Industrial chemical waste","choice_b":"Breakdown of larger plastic items","choice_c":"Ocean pollution from ships","choice_d":"Atmospheric particles","answer":"B","target_time_sec":140,"reading_point":"originate primarily from the gradual breakdown of larger plastic items が由来","evidence_text":"gradual breakdown of larger plastic items","reward_point":10},{"id":20,"type":"reading","eiken_grade":"pre1","sub_level":3,"passage":"Universal Basic Income (UBI) is a policy proposal in which every citizen receives a regular, unconditional cash payment from the government, regardless of employment status. Proponents argue that UBI could eliminate poverty, reduce bureaucratic inefficiency in existing welfare systems, and provide individuals with greater freedom to pursue education or entrepreneurship. Critics, however, question whether the substantial cost could be sustained without raising taxes significantly or reducing other public services.","japanese_translation":"ユニバーサル・ベーシック・インカム（UBI）は、雇用状況に関わらず全市民が政府から定期的・無条件で現金を受け取る政策提案です。支持者はUBIが貧困をなくし福祉制度の非効率を削減し個人の自由を広げると主張します。批判者は、税率の大幅引き上げや他サービスの削減なしにコストを維持できるか疑問を呈しています。","question":"What is the main concern raised by critics of UBI?","choice_a":"It would reduce individual freedom","choice_b":"It cannot be funded without major trade-offs","choice_c":"It would increase unemployment","choice_d":"It would harm small businesses","answer":"B","target_time_sec":150,"reading_point":"critics question whether the substantial cost could be sustained without raising taxes or reducing other services","evidence_text":"substantial cost could be sustained without raising taxes significantly or reducing other public services","reward_point":10},{"id":21,"type":"reading","eiken_grade":"5","sub_level":4,"passage":"Japan went to a big meeting. Many countries want a world without nuclear weapons. Japan and 115 other countries signed a letter together.","japanese_translation":"日本は大きな会議に出席しました。多くの国が核兵器のない世界を望んでいます。日本と115の国々が一緒に手紙に署名しました。","question":"How many countries signed the letter with Japan?","choice_a":"15","choice_b":"50","choice_c":"100","choice_d":"115","answer":"D","target_time_sec":30,"reading_point":"115 other countries が国の数の根拠","evidence_text":"115 other countries","reward_point":10},{"id":22,"type":"reading","eiken_grade":"4","sub_level":4,"passage":"The Japanese yen fell to a very low level against the US dollar. The Japanese government decided to buy yen to make it stronger. After this action, the yen rose by more than two percent in one day.","japanese_translation":"日本円は米ドルに対してとても低い水準まで下落しました。日本政府は円を強くするために円買いを決定しました。この介入後、円は1日で2パーセント以上上昇しました。","question":"What did the Japanese government do to strengthen the yen?","choice_a":"Raised interest rates","choice_b":"Bought yen","choice_c":"Sold dollars","choice_d":"Lowered taxes","answer":"B","target_time_sec":45,"reading_point":"decided to buy yen が政府の行動の根拠","evidence_text":"decided to buy yen to make it stronger","reward_point":10}];
+
+/* ========================================================
+   CONFIG
+======================================================== */
+const POINT_CONFIG = {
+  correct:    10,
+  speedBonus:  5,
+  combo3:      3,
+  combo5:      5,
+};
+
+const GRADE_LABEL = {
+  '5':    '5級',
+  '4':    '4級',
+  '3':    '3級',
+  'pre2':  '準2級',
+  'pre2p': '準2+',
+  '2':     '2級',
+  'pre1':  '準1級',
+  '1':     '1級',
+};
+const GRADE_ORDER = ['5','4','3','pre2','pre2p','2','pre1','1'];
+
+/* ========================================================
+   PRE-PROCESS
+======================================================== */
+// グレードキーを正規化（pre2+ → pre2p）
+PASSAGES.forEach(p => {
+  if (p.eiken_grade === 'pre2+') p.eiken_grade = 'pre2p';
+});
+
+// 級ごとにグルーピング（sub_level順でソート）
+const GRADE_PASSAGES = {};
+GRADE_ORDER.forEach(g => {
+  GRADE_PASSAGES[g] = PASSAGES
+    .filter(p => p.eiken_grade === g)
+    .sort((a, b) => (a.sub_level || 0) - (b.sub_level || 0));
+});
+
+/* ========================================================
+   PROGRESS (localStorage)
+======================================================== */
+const PROGRESS_KEY = 'sokutore_v1';
+
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{"cleared":{}}'); }
+  catch(e) { return { cleared: {} }; }
+}
+function saveProgress(p) {
+  localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+}
+function stageKey(grade, idx) { return grade + '_' + idx; }
+function isStageCleared(grade, idx) {
+  return !!loadProgress().cleared[stageKey(grade, idx)];
+}
+function isStageSpeedCleared(grade, idx) {
+  return loadProgress().cleared[stageKey(grade, idx)] === 'speed';
+}
+function markStageCleared(grade, idx, isSpeed, earnedPts) {
+  const p = loadProgress();
+  const k = stageKey(grade, idx);
+  if (p.cleared[k] !== 'speed') {
+    p.cleared[k] = isSpeed ? 'speed' : true;
+  }
+  if (!p.pts) p.pts = {};
+  if ((p.pts[k] || 0) < (earnedPts || 0)) p.pts[k] = earnedPts || 0;
+  saveProgress(p);
+}
+function isGradeUnlocked(grade) {
+  return true; // 全級いつでも開放
+}
+function isGradeComplete(grade) {
+  const pp = GRADE_PASSAGES[grade];
+  if (!pp || !pp.length) return false;
+  return pp.every((p, i) => isStageCleared(grade, i));
+}
+function gradeClearedCount(grade) {
+  const pp = GRADE_PASSAGES[grade];
+  if (!pp) return 0;
+  return pp.filter((p, i) => isStageCleared(grade, i)).length;
+}
+
+/* ========================================================
+   STATE
+======================================================== */
+let currentGrade     = null;
+let currentStageIdx  = null;
+let stageAnsweredOK  = false;
+let timerSec         = 0;
+let timerInterval    = null;
+let answered         = false;
+
+/* ========================================================
+   UTILS
+======================================================== */
+function $(id) { return document.getElementById(id); }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  $('btnExit').classList.toggle('show', id === 'questionScreen');
+  window.scrollTo(0, 0);
+}
+function formatTime(sec) {
+  return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+}
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ========================================================
+   GRADE MAP
+======================================================== */
+function buildGradeMap() {
+  const el = $('gradeMapCards');
+  el.innerHTML = '';
+  GRADE_ORDER.forEach(g => {
+    const pp = GRADE_PASSAGES[g];
+    if (!pp || !pp.length) return;
+    const unlocked   = isGradeUnlocked(g);
+    const complete   = isGradeComplete(g);
+    const cleared    = gradeClearedCount(g);
+    const total      = pp.length;
+    const pct        = Math.round((cleared / total) * 100);
+
+    let statusText, cardClass;
+    if (!unlocked) {
+      statusText = '🔒 ロック中';
+      cardClass  = 'grade-card locked';
+    } else if (complete) {
+      statusText = '✓ クリア済み';
+      cardClass  = 'grade-card complete';
+    } else if (cleared > 0) {
+      statusText = cleared + '/' + total + ' ステージ';
+      cardClass  = 'grade-card in-progress';
+    } else {
+      statusText = total + ' ステージ';
+      cardClass  = 'grade-card';
+    }
+
+    const gradePts = calcGradePts(g);
+    const card = document.createElement('div');
+    card.className = cardClass;
+    card.innerHTML = `
+      <div class="grade-card-name">${GRADE_LABEL[g] || g}</div>
+      <div class="grade-card-status">${statusText}</div>
+      <div class="grade-card-bar">
+        <div class="grade-card-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="grade-card-pts">${gradePts > 0 ? '⚡ ' + gradePts + 'pt' : ''}</div>`;
+    if (unlocked) card.addEventListener('click', () => openStageMap(g));
+    el.appendChild(card);
+  });
+}
+
+/* ========================================================
+   STAGE MAP
+======================================================== */
+function openStageMap(grade) {
+  currentGrade = grade;
+  buildStageMap();
+  showScreen('stageMapScreen');
+}
+
+function backToGradeMap() {
+  clearInterval(timerInterval);
+  buildGradeMap();
+  showScreen('gradeMapScreen');
+}
+
+function buildStageMap() {
+  const grade = currentGrade;
+  $('stageMapGradeLabel').textContent = GRADE_LABEL[grade] || grade;
+
+  const pp        = GRADE_PASSAGES[grade];
+  const container = $('stagePath');
+  container.innerHTML = '';
+
+  pp.forEach((passage, i) => {
+    const cleared    = isStageCleared(grade, i);
+    const speed      = isStageSpeedCleared(grade, i);
+    const prevOK     = i === 0 || isStageCleared(grade, i - 1);
+    const isActive   = !cleared && prevOK;
+    const isLocked   = !cleared && !prevOK;
+    const clickable  = !isLocked;
+
+    let itemClass = 'stage-item';
+    if (speed)         itemClass += ' speed-cleared';
+    else if (cleared)  itemClass += ' cleared';
+    else if (isActive) itemClass += ' active';
+    else               itemClass += ' locked';
+
+    let circleContent = (i + 1).toString();
+    if (speed)       circleContent = '⭐';
+    else if (cleared) circleContent = '✓';
+    else if (isLocked) circleContent = '🔒';
+
+    const sp = loadProgress();
+    const stagePts = (cleared || speed) && sp.pts ? (sp.pts[stageKey(grade, i)] || 0) : 0;
+    const ptsBadge = stagePts > 0 ? ' • ' + stagePts + 'pt' : '';
+
+    let statusText = 'チャレンジ！';
+    if (speed)         statusText = 'スピードクリア！' + ptsBadge;
+    else if (cleared)  statusText = 'クリア済み' + ptsBadge;
+    else if (isLocked) statusText = 'ロック中';
+
+    // Sub-level hint
+    const lvHint = passage.sub_level ? '  Lv.' + passage.sub_level : '';
+
+    const item = document.createElement('div');
+    item.className  = itemClass;
+    if (clickable) item.dataset.clickable = '1';
+    item.innerHTML  = `
+      <div class="stage-circle">${circleContent}</div>
+      <div class="stage-info">
+        <div class="stage-info-title">ステージ ${i + 1}${lvHint}</div>
+        <div class="stage-info-sub">${statusText}</div>
+      </div>`;
+    if (clickable) item.addEventListener('click', () => startStage(i));
+    container.appendChild(item);
+  });
+}
+
+/* ========================================================
+   START STAGE
+======================================================== */
+function startStage(idx) {
+  currentStageIdx = idx;
+  answered        = false;
+  stageAnsweredOK = false;
+  showScreen('questionScreen');
+  renderQuestion();
+}
+
+/* ========================================================
+   RENDER QUESTION
+======================================================== */
+function renderQuestion() {
+  const q     = GRADE_PASSAGES[currentGrade][currentStageIdx];
+  const total = GRADE_PASSAGES[currentGrade].length;
+  answered = false;
+
+  // HUD
+  $('hudQNum').textContent    = (currentStageIdx + 1) + '/' + total;
+  $('hudGrade').textContent   = GRADE_LABEL[currentGrade] || currentGrade;
+  $('hudCleared').textContent = gradeClearedCount(currentGrade) + '/' + total;
+  $('hudPts').textContent     = getTotalQuizPts().toLocaleString();
+
+  // Timer
+  clearInterval(timerInterval);
+  timerSec = 0;
+  updateTimerDisplay(q.target_time_sec);
+  timerInterval = setInterval(() => { timerSec++; updateTimerDisplay(q.target_time_sec); }, 1000);
+
+  // Passage
+  $('passageBox').innerHTML = escapeHtml(q.passage);
+
+  // Question
+  $('questionText').textContent = q.question;
+
+  // Choices
+  const choicesDiv = $('choicesDiv');
+  choicesDiv.innerHTML = '';
+  [
+    { key: 'a', text: q.choice_a },
+    { key: 'b', text: q.choice_b },
+    { key: 'c', text: q.choice_c },
+    { key: 'd', text: q.choice_d },
+  ].forEach(({ key, text }) => {
+    const btn = document.createElement('button');
+    btn.className   = 'choice-btn';
+    btn.dataset.key = key;
+    btn.innerHTML   = `<span class="choice-label">${key.toUpperCase()}</span>${escapeHtml(text)}`;
+    btn.addEventListener('click', () => onAnswer(key));
+    choicesDiv.appendChild(btn);
+  });
+
+  // Reset UI
+  $('feedbackDiv').className = 'feedback';
+  $('reviewBtns').style.display    = 'none';
+  $('stageActions').style.display  = 'none';
+  $('translationBox').classList.remove('show');
+  $('evidenceBox').classList.remove('show');
+  $('btnTranslation').classList.remove('open');
+  $('btnEvidence').classList.remove('open');
+}
+
+/* ========================================================
+   TIMER
+======================================================== */
+function updateTimerDisplay(target) {
+  $('timerElapsed').textContent = formatTime(timerSec);
+  $('timerTarget').textContent  = '目標: ' + formatTime(target);
+  const ratio = Math.min(timerSec / target, 1);
+  const bar   = $('timerBar');
+  bar.style.width      = (ratio * 100).toFixed(1) + '%';
+  bar.style.background = ratio < 0.6 ? '#10B981' : ratio < 0.9 ? '#FBBF24' : '#EF4444';
+}
+
+/* ========================================================
+   ON ANSWER
+======================================================== */
+function onAnswer(key) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const q         = GRADE_PASSAGES[currentGrade][currentStageIdx];
+  const isCorrect = key === q.answer.toLowerCase();
+  const isSpeed   = timerSec <= q.target_time_sec;
+  stageAnsweredOK = isCorrect;
+
+  // ポイント計算・進捗を保存
+  const earnedPts = isCorrect ? (10 + (isSpeed ? 5 : 0)) : 0;
+  if (isCorrect) {
+    markStageCleared(currentGrade, currentStageIdx, isSpeed, earnedPts);
+    $('hudPts').textContent = getTotalQuizPts().toLocaleString();
+    if (fbUser) syncQuizPtsToFirestore();
+  }
+
+  // 選択肢を色分け
+  document.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.disabled = true;
+    if (btn.dataset.key === q.answer.toLowerCase()) btn.classList.add('correct');
+    else if (btn.dataset.key === key && !isCorrect) btn.classList.add('wrong');
+  });
+
+  // フィードバック
+  const fb = $('feedbackDiv');
+  if (isCorrect) {
+    fb.className = 'feedback show correct-fb';
+    $('feedbackIcon').textContent = '⭕';
+    $('feedbackMsg').textContent  = isSpeed
+      ? '正解！⚡ スピードクリア！ +' + earnedPts + 'pt'
+      : '正解！ +' + earnedPts + 'pt';
+  } else {
+    fb.className = 'feedback show wrong-fb';
+    $('feedbackIcon').textContent = '✖';
+    $('feedbackMsg').textContent  = '不正解… 正解は ' + q.answer.toUpperCase() + ' でした';
+  }
+
+  if (isCorrect && isSpeed) showSpeedPopup();
+
+  // 復習ボタン
+  $('reviewBtns').style.display = 'flex';
+
+  // ステージアクション
+  const actions = $('stageActions');
+  const btnNext = $('btnStageNext');
+  actions.style.display = 'flex';
+
+  if (!isCorrect) {
+    btnNext.textContent = '🔄 もう一度';
+    btnNext.className   = 'btn-next btn-retry';
+  } else {
+    const gradeDone = isGradeComplete(currentGrade);
+    const nextIdx   = currentStageIdx + 1;
+    const hasNext   = nextIdx < GRADE_PASSAGES[currentGrade].length;
+
+    if (gradeDone) {
+      btnNext.textContent = '🎉 クリア！';
+    } else if (hasNext) {
+      btnNext.textContent = '次のステージへ →';
+    } else {
+      btnNext.textContent = '🗺 マップへ戻る';
+    }
+    btnNext.className = 'btn-next';
+  }
+
+  // HUDのクリア数を更新
+  $('hudCleared').textContent =
+    gradeClearedCount(currentGrade) + '/' + GRADE_PASSAGES[currentGrade].length;
+}
+
+/* ========================================================
+   STAGE NEXT
+======================================================== */
+function stageNext() {
+  if (!stageAnsweredOK) {
+    // リトライ
+    startStage(currentStageIdx);
+    return;
+  }
+  if (isGradeComplete(currentGrade)) {
+    showGradeClear();
+    return;
+  }
+  const nextIdx = currentStageIdx + 1;
+  if (nextIdx < GRADE_PASSAGES[currentGrade].length) {
+    startStage(nextIdx);
+  } else {
+    goToStageMap();
+  }
+}
+
+function goToStageMap() {
+  clearInterval(timerInterval);
+  buildStageMap();
+  showScreen('stageMapScreen');
+}
+
+function exitQuiz() {
+  clearInterval(timerInterval);
+  buildStageMap();
+  showScreen('stageMapScreen');
+}
+
+/* ========================================================
+   TOGGLE 和訳 / 根拠
+======================================================== */
+function toggleTranslation() {
+  const q   = GRADE_PASSAGES[currentGrade][currentStageIdx];
+  const box = $('translationBox');
+  const btn = $('btnTranslation');
+  const open = box.classList.toggle('show');
+  btn.classList.toggle('open', open);
+  if (open) box.innerHTML = escapeHtml(q.japanese_translation);
+}
+
+function toggleEvidence() {
+  const q   = GRADE_PASSAGES[currentGrade][currentStageIdx];
+  const box = $('evidenceBox');
+  const btn = $('btnEvidence');
+  const open = box.classList.toggle('show');
+  btn.classList.toggle('open', open);
+  if (open) {
+    const ep = escapeHtml(q.passage);
+    const ee = escapeHtml(q.evidence_text);
+    $('passageBox').innerHTML = ep.replace(ee, '<mark>' + ee + '</mark>');
+    box.innerHTML = `<div class="rp-label">📌 読み方のポイント</div>${escapeHtml(q.reading_point)}`;
+  } else {
+    $('passageBox').innerHTML = escapeHtml(q.passage);
+  }
+}
+
+/* ========================================================
+   GRADE CLEAR
+======================================================== */
+function showGradeClear() {
+  const grade      = currentGrade;
+  const gi         = GRADE_ORDER.indexOf(grade);
+  const total      = GRADE_PASSAGES[grade].length;
+  const speedCount = GRADE_PASSAGES[grade].filter((p, i) => isStageSpeedCleared(grade, i)).length;
+  const allSpeed   = speedCount === total;
+
+  $('gradeClearStar').textContent  = allSpeed ? '⭐⭐⭐' : '🎉';
+  $('gradeClearTitle').textContent = GRADE_LABEL[grade] + ' クリア！';
+
+  let msg = '全' + total + 'ステージをクリアしました！';
+  if (allSpeed) msg += '\n⚡ 全問スピードクリア達成！';
+  $('gradeClearMsg').textContent = msg;
+
+  // 次の級ボタン
+  const nextGradeIdx = gi + 1;
+  const btnNext = $('btnNextGrade');
+  const nextG   = GRADE_ORDER[nextGradeIdx];
+  if (nextG && GRADE_PASSAGES[nextG] && GRADE_PASSAGES[nextG].length > 0) {
+    btnNext.textContent   = GRADE_LABEL[nextG] + ' へ →';
+    btnNext.style.display = '';
+  } else {
+    btnNext.style.display = 'none';
+  }
+
+  showScreen('gradeClearScreen');
+}
+
+function goNextGrade() {
+  const gi = GRADE_ORDER.indexOf(currentGrade);
+  if (gi + 1 < GRADE_ORDER.length) {
+    openStageMap(GRADE_ORDER[gi + 1]);
+  }
+}
+
+/* ========================================================
+   SPEED POPUP
+======================================================== */
+function showSpeedPopup() {
+  const popup = $('speedPopup');
+  popup.classList.remove('pop');
+  void popup.offsetWidth;
+  popup.classList.add('pop');
+  setTimeout(() => popup.classList.remove('pop'), 1200);
+}
+
+/* ========================================================
+   INIT
+======================================================== */
+buildGradeMap();
+showScreen('gradeMapScreen');
+
+/* ========================================================
+   FIREBASE
+======================================================== */
+firebase.initializeApp({
+  apiKey:     'AIzaSyCst_ughzwc9mItR7AEJP_gj6N_vmvaCWo',
+  authDomain: 'nakatajuku.firebaseapp.com',
+  projectId:  'nakatajuku',
+  appId:      '1:910433282266:web:63ea258f1c6160c7cb9de3'
+});
+const fbAuth = firebase.auth();
+const fbDb   = firebase.firestore();
+
+let fbUser     = null;
+let fbNickname = null;
+let fbStreak   = 0;
+let fbBonusPts = 0;
+let fbQuizPts  = 0;
+
+fbAuth.onAuthStateChanged(async user => {
+  fbUser = user;
+  if (user) {
+    await loadUserData(user);
+    updateAuthUI();
+    checkLoginBonus(user);
+    syncQuizPtsToFirestore();
+  } else {
+    updateAuthUI();
+  }
+});
+
+async function loadUserData(user) {
+  try {
+    const doc  = await fbDb.collection('users').doc(user.uid).get();
+    const data = doc.data() || {};
+    fbNickname = data.nickname || null;
+    fbStreak   = data.sokutoreLoginStreak || 0;
+    const lsDate   = localStorage.getItem('sokutoreStreakDate_' + user.uid);
+    const lsStreak = parseInt(localStorage.getItem('sokutoreStreak_' + user.uid) || '0');
+    if (lsDate === getTodayJST() && lsStreak > 0) fbStreak = lsStreak;
+    fbBonusPts = data.sokutoreBonusPts || 0;
+    fbQuizPts  = data.sokutoreQuizPts  || 0;
+  } catch(e) {
+    fbNickname = null; fbStreak = 0; fbBonusPts = 0; fbQuizPts = 0;
+  }
+}
+
+function updateAuthUI() {
+  const loginSec = $('authLoginSection');
+  const userSec  = $('authUserSection');
+  if (!loginSec) return;
+  if (fbUser) {
+    loginSec.style.display = 'none';
+    userSec.style.display  = 'flex';
+    const avatar = $('authAvatar');
+    if (fbUser.photoURL) { avatar.src = fbUser.photoURL; avatar.style.display = ''; }
+    else avatar.style.display = 'none';
+    $('authName').textContent = fbNickname || fbUser.displayName || 'ユーザー';
+    const streakEl = $('authStreak');
+    if (fbStreak >= 1) {
+      streakEl.textContent = fbStreak + '日連続ログイン中🔥';
+      streakEl.style.display = 'block';
+    } else {
+      streakEl.style.display = 'none';
+    }
+    const total = fbBonusPts + fbQuizPts;
+    $('authPtsValue').textContent = total.toLocaleString();
+    $('authPtsWrap').style.display = 'flex';
+  } else {
+    loginSec.style.display = 'block';
+    userSec.style.display  = 'none';
+    $('authPtsWrap').style.display = 'none';
+    fbNickname = null; fbStreak = 0; fbBonusPts = 0; fbQuizPts = 0;
+  }
+}
+
+function getTodayJST() {
+  const d   = new Date();
+  const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9 * 60) * 60 * 1000);
+  return jst.getFullYear() + '-'
+    + String(jst.getMonth() + 1).padStart(2, '0') + '-'
+    + String(jst.getDate()).padStart(2, '0');
+}
+
+function calcLoginBonus(streak) {
+  const table = [50, 70, 100, 120, 140, 160, 200, 220, 240, 300];
+  return table[Math.min(streak, 10) - 1];
+}
+
+let _loginBonusRunning = false;
+async function checkLoginBonus(user) {
+  const today        = getTodayJST();
+  const localKey     = 'sokutoreLastBonus_'   + user.uid;
+  const localStrKey  = 'sokutoreStreak_'      + user.uid;
+  const localDateKey = 'sokutoreStreakDate_'   + user.uid;
+
+  if (localStorage.getItem(localKey) === today) return;
+  if (_loginBonusRunning) return;
+  _loginBonusRunning = true;
+  localStorage.setItem(localKey, today);
+
+  try {
+    const ref  = fbDb.collection('users').doc(user.uid);
+    const doc  = await ref.get();
+    const data = doc.data() || {};
+
+    if (data.sokutoreLastLoginDate === today) return;
+
+    const d   = new Date();
+    const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9 * 60) * 60 * 1000);
+    jst.setDate(jst.getDate() - 1);
+    const prevStr = jst.getFullYear() + '-'
+      + String(jst.getMonth() + 1).padStart(2, '0') + '-'
+      + String(jst.getDate()).padStart(2, '0');
+
+    let baseStreak = 0;
+    if (data.sokutoreLastLoginDate === prevStr) {
+      baseStreak = data.sokutoreLoginStreak || 0;
+    } else if (localStorage.getItem(localDateKey) === prevStr) {
+      baseStreak = parseInt(localStorage.getItem(localStrKey) || '0');
+    }
+    const streak = baseStreak + 1;
+    const bonus  = calcLoginBonus(streak);
+    fbStreak = streak;
+    updateAuthUI();
+
+    await ref.set({
+      displayName:           user.displayName,
+      photoURL:              user.photoURL || '',
+      sokutoreLastLoginDate: today,
+      sokutoreLoginStreak:   streak,
+      sokutoreBonusPts:      firebase.firestore.FieldValue.increment(bonus)
+    }, { merge: true });
+
+    localStorage.setItem(localStrKey,  String(streak));
+    localStorage.setItem(localDateKey, today);
+
+    fbBonusPts += bonus;
+    updateAuthUI();
+    showLoginBonusModal(bonus, streak);
+  } catch(e) {
+    console.error('LoginBonus:', e);
+    localStorage.removeItem(localKey);
+  } finally {
+    _loginBonusRunning = false;
+  }
+}
+
+function showLoginBonusModal(bonus, streak) {
+  const isMax = bonus >= 300;
+  $('bonusTitle').textContent     = streak === 1 ? '初回ログインボーナス！🎉' : streak + '日連続ログイン！🔥';
+  $('bonusPtsText').textContent   = '+' + bonus + 'pt';
+  $('bonusStreakText').textContent = isMax
+    ? '🏆 MAX達成！明日も続けよう！'
+    : '次回ログインで +' + calcLoginBonus(streak + 1) + 'pt';
+  $('loginBonusModal').style.display = 'flex';
+}
+$('btnBonusClose').addEventListener('click', () => {
+  $('loginBonusModal').style.display = 'none';
+});
+
+async function syncQuizPtsToFirestore() {
+  if (!fbUser) return;
+  const pts = getTotalQuizPts();
+  if (pts <= 0) return;
+  try {
+    await fbDb.collection('users').doc(fbUser.uid).set(
+      { sokutoreQuizPts: pts }, { merge: true }
+    );
+    fbQuizPts = pts;
+    updateAuthUI();
+  } catch(e) { console.error('SyncQuizPts:', e); }
+}
+
+function getTotalQuizPts() {
+  const p = loadProgress();
+  return Object.values(p.pts || {}).reduce((s, v) => s + (v || 0), 0);
+}
+
+function calcGradePts(grade) {
+  const pp = GRADE_PASSAGES[grade];
+  if (!pp) return 0;
+  const p = loadProgress();
+  if (!p.pts) return 0;
+  return pp.reduce((sum, _, i) => sum + (p.pts[stageKey(grade, i)] || 0), 0);
+}
+
+function openNicknameModal() {
+  $('nicknameInput').value = '';
+  $('nicknameModal').style.display = 'flex';
+  setTimeout(() => $('nicknameInput').focus(), 100);
+}
+
+async function saveNickname() {
+  if (!fbUser) return;
+  const val = $('nicknameInput').value.trim().slice(0, 15);
+  if (!val) { $('nicknameInput').focus(); return; }
+  try {
+    await fbDb.collection('users').doc(fbUser.uid).set({ nickname: val }, { merge: true });
+    fbNickname = val;
+    updateAuthUI();
+    $('nicknameModal').style.display = 'none';
+  } catch(e) { console.error('Nickname:', e); }
+}
+$('nicknameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveNickname(); });
+$('btnNicknameSave').addEventListener('click', saveNickname);
+$('btnNicknameSkip').addEventListener('click', () => { $('nicknameModal').style.display = 'none'; });
+
+$('btnGoogleLogin').addEventListener('click', () => {
+  fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => console.error(e));
+});
+</script>
+</body>
+</html>
