@@ -3258,11 +3258,18 @@ chMigrateOldProg();
 updateChHomeScore(); // ページ読み込み時にチャレンジ累積スコアを表示
 
 // ===== ボス討伐イベント =====
-const BOSS_GOAL = 200;
-const BOSS_MOCK_CURRENT = 47; // モック用（後でFirestoreから取得）
+const BOSS_GOAL  = 200;
 const BOSS_START = new Date('2026-05-25T00:00:00+09:00');
 const BOSS_END   = new Date('2026-06-01T23:59:59+09:00');
 const BOSS_TEST  = new URLSearchParams(location.search).get('bosstest') === '1';
+
+async function loadBossTotal() {
+  if (typeof fbDb === 'undefined' || !fbDb) return 0;
+  try {
+    const doc = await fbDb.collection('boss_events').doc(BOSS_EVENT_ID).get();
+    return doc.exists ? (doc.data().total || 0) : 0;
+  } catch(e) { return 0; }
+}
 
 function getBossMode() {
   if (BOSS_TEST) return 'active';
@@ -3312,8 +3319,8 @@ function saveGrade(grade) {
   localStorage.setItem('habatan_grade', grade);
 }
 
-function renderBossEventScreen() {
-  const current = BOSS_MOCK_CURRENT;
+async function renderBossEventScreen() {
+  const current = await loadBossTotal();
   const pct     = Math.min(current / BOSS_GOAL * 100, 100);
   document.getElementById('bossHpBar').style.width = pct + '%';
   document.getElementById('bossHpCurrent').textContent = current;
@@ -3385,29 +3392,21 @@ function renderBossEventScreen() {
 
 // ===== 貢献度ランキング =====
 const BOSS_EVENT_ID = 'kutsuna_week1'; // イベントIDで管理
-const MOCK_CONTRIB = [
-  { name: 'たろう',   photoURL: '', count: 12 },
-  { name: 'はなこ',   photoURL: '', count: 9  },
-  { name: 'けんじ',   photoURL: '', count: 7  },
-  { name: 'みさき',   photoURL: '', count: 5  },
-  { name: 'りょうた', photoURL: '', count: 3  },
-];
 
 async function loadBossContribRanking() {
   const listEl = document.getElementById('bossContribList');
   const meEl   = document.getElementById('bossContribMe');
   if (!listEl) return;
-
-  // --- Firestore実装後はここをコメント解除 ---
-  // try {
-  //   const snap = await fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
-  //     .collection('contributions').orderBy('count','desc').limit(20).get();
-  //   const items = snap.docs.map(d => ({id:d.id, ...d.data()}));
-  //   renderContribList(items, meEl, listEl);
-  // } catch(e) { console.error(e); }
-
-  // --- モック表示（月曜に差し替え） ---
-  renderContribList(MOCK_CONTRIB, meEl, listEl);
+  if (typeof fbDb === 'undefined' || !fbDb) { renderContribList([], meEl, listEl); return; }
+  try {
+    const snap = await fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
+      .collection('contributions').orderBy('count','desc').limit(20).get();
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderContribList(items, meEl, listEl);
+  } catch(e) {
+    console.error('Boss contrib ranking:', e);
+    renderContribList([], meEl, listEl);
+  }
 }
 
 function renderContribList(items, meEl, listEl) {
@@ -3570,19 +3569,28 @@ async function renderTicker() {
   inner.innerHTML = html;
 }
 
-function renderBossHomeBtn() {
+async function renderBossHomeBtn() {
   const wrap = document.getElementById('bossBtnWrap');
   if (!wrap) return;
   const mode = getBossMode();
   const loggedIn = typeof fbUser !== 'undefined' && fbUser;
   if (mode === 'pre') {
-    wrap.innerHTML = '<div style="text-align:center;padding:10px;background:rgba(249,202,36,0.12);border:1px solid rgba(249,202,36,0.4);border-radius:12px;color:#f9ca24;font-weight:800;font-size:0.9rem;">📣 5月26日（月）スタート！ タップして予告を見る</div>';
+    wrap.innerHTML = '<div style="text-align:center;padding:10px;background:rgba(249,202,36,0.12);border:1px solid rgba(249,202,36,0.4);border-radius:12px;color:#f9ca24;font-weight:800;font-size:0.9rem;">📣 5月25日（月）スタート！ タップして予告を見る</div>';
   } else if (mode === 'end') {
     wrap.innerHTML = '<div style="text-align:center;padding:10px;color:#a0aec0;font-size:0.85rem;">🏁 イベント終了</div>';
   } else if (!loggedIn) {
     wrap.innerHTML = '<div class="boss-btn-login">🔒 Googleログインで討伐に参加できます</div>';
   } else {
     wrap.innerHTML = '<button class="boss-btn">⚔️ 討伐に参加する！</button>';
+  }
+  // ホームカードのプログレスバーをFirestoreの実データで更新
+  if (mode === 'active' || mode === 'end') {
+    const current = await loadBossTotal();
+    const pct = Math.min(current / BOSS_GOAL * 100, 100);
+    const bar = document.getElementById('bossProgressBar');
+    const cnt = document.getElementById('bossProgressCount');
+    if (bar) bar.style.width = pct + '%';
+    if (cnt) cnt.textContent = `🏆 ${current}個 獲得済み`;
   }
 }
 
