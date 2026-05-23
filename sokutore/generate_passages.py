@@ -18,9 +18,10 @@ import sys
 
 import anthropic
 import openpyxl
+
 try:
     from dotenv import load_dotenv
-    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"), override=True)
 except ImportError:
     pass
 
@@ -198,7 +199,7 @@ def generate_one(client: anthropic.Anthropic, grade_key: str, theme: str,
 
     try:
         response = client.messages.create(
-            model="claude-opus-4-5",
+            model="claude-haiku-4-5-20251001",
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -252,6 +253,7 @@ def main():
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         print("[ERROR] ANTHROPIC_API_KEY が設定されていません")
+        print("  sokutore/.env に ANTHROPIC_API_KEY=xxx を記入してください")
         sys.exit(1)
 
     client = anthropic.Anthropic(api_key=api_key)
@@ -260,7 +262,10 @@ def main():
 
     new_passages: list[dict] = []
     theme_iter = itertools.cycle([args.theme] if args.theme else THEMES)
-    next_id = max((int(d.get("id", 0)) for d in existing), default=-1) + 1
+    def to_int(v):
+        try: return int(v)
+        except: return 0
+    next_id = max((to_int(d.get("id", 0)) for d in existing), default=-1) + 1
 
     for grade_key in grades:
         print(f"\n=== {GRADE_SPECS[grade_key]['name']} ({args.count}問) ===")
@@ -281,7 +286,7 @@ def main():
 
     all_data = existing + new_passages
     save_excel(output_path, all_data)
-    print(f"\n✅ {len(new_passages)}問を追記 → {output_path}")
+    print(f"\n[完了] {len(new_passages)}問を追記 -> {output_path}")
     print("次のコマンドで HTML に反映してください:")
     print("  python embed_passages.py")
 

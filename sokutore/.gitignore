@@ -11,6 +11,9 @@
 *.zip
 *.csv
 
+# 環境変数（APIキー等）
+.env
+
 # システム
 .DS_Store
 Thumbs.db
