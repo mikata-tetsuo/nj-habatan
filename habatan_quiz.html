@@ -3799,7 +3799,22 @@ function showQuestion() {
   const lvNames = {1:'①小学生',2:'②中1',3:'③中2',4:'④中3',5:'⑤高校受験',6:'⑥英検2級',7:'⑦英検準1級'};
   $('qNum').innerHTML = 'No.' + q.word.id + ' <span class="level-badge lv-badge-' + lv + '">' + lvNames[lv] + '</span>';
   const dir = window._direction || 'en2ja';
-  $('qWord').textContent = dir === 'en2ja' ? q.word.en : q.word.ja;
+  const qWordEl = $('qWord');
+  if (dir === 'en2ja') {
+    qWordEl.style.cssText = '';
+    qWordEl.textContent = q.word.en;
+  } else {
+    const parts = q.word.ja.split('\n');
+    if (parts.length >= 2) {
+      qWordEl.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:0.4em;';
+      qWordEl.innerHTML = '<span>' + parts[0] + '</span>' +
+        '<span style="font-size:0.75rem;font-weight:500;color:#94a3b8;line-height:1.5;">' +
+        parts.slice(1).join('<br>') + '</span>';
+    } else {
+      qWordEl.style.cssText = '';
+      qWordEl.textContent = q.word.ja;
+    }
+  }
 
   const badge = $('comboBadge');
   if (!jiMode && combo >= 3) { badge.textContent = (currentDifficulty === 'nolimit' ? '🧠 ' : '🔥 ') + combo + '連コンボ中！'; badge.classList.add('show'); }
@@ -3810,7 +3825,20 @@ function showQuestion() {
   q.choices.forEach(c => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
-    btn.textContent = dir === 'en2ja' ? c.ja : c.en;
+    btn.dataset.wordId = c.id;
+    if (dir === 'en2ja') {
+      const parts = c.ja.split('\n');
+      if (parts.length >= 2) {
+        btn.style.flexDirection = 'column';
+        btn.innerHTML = '<span>' + parts[0] + '</span>' +
+          '<span style="font-size:0.68rem;font-weight:400;color:#94a3b8;margin-top:3px;line-height:1.4;">' +
+          parts.slice(1).join('<br>') + '</span>';
+      } else {
+        btn.textContent = c.ja;
+      }
+    } else {
+      btn.textContent = c.en;
+    }
     btn.addEventListener('click', () => onAnswer(c, btn, q));
     choicesEl.appendChild(btn);
   });
@@ -3861,8 +3889,7 @@ function onTimeout() {
   rvAdd(q.word.id);
   document.querySelectorAll('.choice-btn').forEach(btn => {
     btn.disabled = true;
-    const _dir = window._direction || 'en2ja';
-    if (btn.textContent === (_dir === 'en2ja' ? q.word.ja : q.word.en)) btn.classList.add('reveal');
+    if (btn.dataset.wordId == q.word.id) btn.classList.add('reveal');
   });
   showFeedback('❌', '#fc8181');
   setTimeout(() => speak(q.word.en), 350);
@@ -3935,8 +3962,7 @@ function onAnswer(choice, btn, q) {
       $('hudCombo').textContent = '-';
     }
     document.querySelectorAll('.choice-btn').forEach(b => {
-      const _dir2 = window._direction || 'en2ja';
-      if (b.textContent === (_dir2 === 'en2ja' ? q.word.ja : q.word.en)) b.classList.add('reveal');
+      if (b.dataset.wordId == q.word.id) b.classList.add('reveal');
     });
     missWords.push(q.word);
     rvAdd(q.word.id);
@@ -3956,8 +3982,7 @@ $('btnDontKnow').addEventListener('click', () => {
   // 選択肢を無効化・正解を表示
   document.querySelectorAll('.choice-btn').forEach(b => {
     b.disabled = true;
-    const _dir = window._direction || 'en2ja';
-    if (b.textContent === (_dir === 'en2ja' ? q.word.ja : q.word.en)) b.classList.add('reveal');
+    if (b.dataset.wordId == q.word.id) b.classList.add('reveal');
   });
   missWords.push(q.word);
   rvAdd(q.word.id);
@@ -4079,7 +4104,9 @@ function showResult() {
       d.innerHTML =
         '<span class="en">' + w.en + '</span>' +
         '<button class="miss-speak-btn" title="発音を聞く">🔊</button>' +
-        '<span class="ja">' + w.ja + '</span>';
+        '<span class="ja">' + (w.ja.includes('\n')
+          ? w.ja.split('\n')[0] + '<br><small style="font-weight:400;color:#718096;font-size:0.85em;">' + w.ja.split('\n').slice(1).join('<br>') + '</small>'
+          : w.ja) + '</span>';
       d.querySelector('.miss-speak-btn').addEventListener('click', e => {
         e.stopPropagation();
         speak(w.en);
