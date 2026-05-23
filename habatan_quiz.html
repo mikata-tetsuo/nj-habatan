@@ -5531,7 +5531,6 @@ function updateAuthUI() {
     document.getElementById('rankingCardDesc').textContent = 'みんなのスコアをチェックしよう！目指せ兵庫県、単語ナンバー1！';
     // ボス討伐：ログイン済み
     renderBossHomeBtn();
-    renderTicker();
   } else {
     loginSec.style.display = 'block';
     userSec.style.display  = 'none';
@@ -5547,7 +5546,6 @@ function updateAuthUI() {
     document.getElementById('rankingCardDesc').textContent = '🔒 Googleログインすると見られます';
     // ボス討伐：未ログイン
     renderBossHomeBtn();
-    renderTicker();
   }
 }
 
@@ -5709,6 +5707,7 @@ fbAuth.onAuthStateChanged(async user => {
   if (user) {
     await loadNickname(user);
     updateAuthUI();
+    renderTicker(); // 認証確定後に1回だけ更新
     if (!fbNickname) openNicknameModal(false);
     else if (!fbInviteAsked) showInviteModal();
     checkLoginBonus(user);
@@ -5717,6 +5716,7 @@ fbAuth.onAuthStateChanged(async user => {
     syncChallengePtsToFirestore(); // ローカルのチャレンジptをFirestoreに同期
   } else {
     updateAuthUI();
+    renderTicker(); // ログアウト時もランキング表示をリセット
   }
 });
 
