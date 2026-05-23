@@ -3577,7 +3577,7 @@ async function renderTicker() {
     const offset = Math.floor(inner.scrollWidth / 2);
     inner.style.setProperty('--ticker-offset', `-${offset}px`);
     // 50px/秒 を基準に秒数を動的計算（最低20秒）
-    const duration = Math.max(20, Math.round(offset / 19));
+    const duration = Math.max(20, Math.round(offset / 15));
     inner.style.animation = `tickerScroll ${duration}s linear infinite`;
   });
 }
