@@ -4902,7 +4902,18 @@ function showPracticeCard(dir) {
   [enEl, jaEl].forEach(el => { el.classList.remove('slide-in','slide-in-left'); void el.offsetWidth; el.classList.add(cls); });
 
   enEl.textContent = w.en;
-  jaEl.textContent = w.ja;
+  const jaParts = w.ja.split('\n');
+  if (jaParts.length >= 2) {
+    jaEl.style.flexDirection = 'column';
+    jaEl.innerHTML =
+      '<span>' + jaParts[0] + '</span>' +
+      '<span style="display:block;height:0.6em;"></span>' +
+      '<span style="font-size:0.72rem;font-weight:500;color:#94a3b8;line-height:1.5;">' +
+      jaParts.slice(1).join('<br>') + '</span>';
+  } else {
+    jaEl.style.flexDirection = '';
+    jaEl.textContent = w.ja;
+  }
 
   // 用例を表示
   $('pracExEn').textContent = w.ex   || '';
