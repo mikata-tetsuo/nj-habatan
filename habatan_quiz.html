@@ -1621,6 +1621,11 @@
   .rank-avatar { width:28px; height:28px; border-radius:50%; object-fit:cover; flex-shrink:0; background:var(--surface2,#F5F2EC); }
   .rank-name { flex:1; font-weight:600; font-size:0.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text,#1E293B); cursor:pointer; }
   .rank-name.expanded { white-space:normal; overflow:visible; text-overflow:unset; }
+  @keyframes weekChampGlow { 0%,100%{box-shadow:0 0 7px rgba(249,202,36,0.55);} 50%{box-shadow:0 0 18px rgba(249,202,36,0.95);} }
+  .rank-row.week-champ-1 { background:linear-gradient(90deg,rgba(249,202,36,0.18),rgba(249,202,36,0.04)); border:1px solid rgba(249,202,36,0.5); border-radius:10px; animation:weekChampGlow 2s ease-in-out infinite; }
+  .rank-row.week-champ-2 { background:linear-gradient(90deg,rgba(203,213,225,0.15),rgba(203,213,225,0.03)); border:1px solid rgba(203,213,225,0.4); border-radius:10px; }
+  .rank-row.week-champ-3 { background:linear-gradient(90deg,rgba(180,93,9,0.15),rgba(180,93,9,0.03)); border:1px solid rgba(180,93,9,0.35); border-radius:10px; }
+  .rank-row.week-champ-1 .rank-name { font-weight:800; }
   .rank-score { font-weight:800; color:#f9ca24; font-size:0.9rem; white-space:nowrap; }
   .rank-diff-badge { font-size:0.7rem; padding:2px 7px; border-radius:99px; background:var(--surface2,#F5F2EC); white-space:nowrap; color:var(--text2,#64748B); }
   .ranking-empty { text-align:center; padding:40px 0; color:var(--text3,#9CA3AF); font-size:0.9rem; line-height:2; }
@@ -5957,6 +5962,17 @@ showChallengeResult = function() {
 let rankingMode   = 'challenge';
 let rankingPeriod = 'daily'; // 'daily'|'weekly'|'monthly'|'yearly'
 
+function getPrevWeekKey() {
+  const d = new Date(); d.setDate(d.getDate() - 7);
+  const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9*60)*60*1000);
+  const dow = jst.getDay() || 7;
+  const monday = new Date(jst); monday.setDate(jst.getDate() - dow + 1);
+  const jan4 = new Date(monday.getFullYear(), 0, 4);
+  const startW1 = new Date(jan4); startW1.setDate(jan4.getDate() - (jan4.getDay()||7) + 1);
+  const weekNum = Math.floor((monday - startW1) / (7*86400000)) + 1;
+  return `${monday.getFullYear()}-W${String(weekNum).padStart(2,'0')}`;
+}
+
 function getPeriodKey(type) {
   const d = new Date();
   const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9*60)*60*1000);
@@ -6065,14 +6081,23 @@ async function renderRankingScreen() {
     const colName = rankingMode === 'overall' ? 'rankings_overall'
                   : rankingMode === 'challenge' ? 'rankings_challenge'
                   : 'rankings_test';
-    const snap = await fbDb.collection(colName).orderBy('score','desc').limit(200).get();
+    const prevWKey = getPrevWeekKey();
+    const [snap, prevSnap] = await Promise.all([
+      fbDb.collection(colName).orderBy('score','desc').limit(200).get(),
+      fbDb.collection(colName).orderBy('w_score','desc').limit(10).get()
+    ]);
     let items = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
 
+    // 先週の週間上位3名を取得
+    const prevChamps = new Map();
+    prevSnap.docs
+      .filter(d => d.data().w_key === prevWKey && (d.data().w_score||0) > 0)
+      .slice(0, 3)
+      .forEach((d, i) => prevChamps.set(d.id, i + 1));
+
     if (rankingPeriod === 'yearly') {
-      // 年間 = 全件（既存データも含む）をall-timeスコアで表示
       items.sort((a,b) => (b.score||0)-(a.score||0));
     } else {
-      // デイリー/ウィークリー/マンスリー：期間内の獲得ptで（総合・チャレンジ・テスト共通）
       items = items
         .filter(d => d[pInfo.kf] === curKey && (d[pInfo.sf]||0) > 0)
         .sort((a,b) => (b[pInfo.sf]||0)-(a[pInfo.sf]||0));
@@ -6088,13 +6113,15 @@ async function renderRankingScreen() {
       const isMe = fbUser && d.id === fbUser.uid;
       const medal = ['🥇','🥈','🥉'][i] || (i+1)+'';
       const nc    = ['top1','top2','top3'][i] || '';
+      const champRank = prevChamps.get(d.id);
+      const champClass = champRank ? ' week-champ-'+champRank : '';
       const avatarHtml = d.photoURL
         ? '<img class="rank-avatar" src="'+d.photoURL+'" alt="">'
         : '<span class="rank-avatar"></span>';
       const scoreVal = rankingPeriod==='yearly' ? (d.score||0) : (d[pInfo.sf]||0);
       const diffBadge = rankingMode==='test'
         ? '<span class="rank-diff-badge">'+(DL[d.difficulty]||'')+'</span>' : '';
-      return '<div class="rank-row'+(isMe?' rank-me':'')+'">' +
+      return '<div class="rank-row'+(isMe?' rank-me':'')+champClass+'">' +
         '<span class="rank-num '+nc+'">'+medal+'</span>' +
         avatarHtml +
         '<span class="rank-name">'+(d.isStudent?'<span class="rank-student-star">★</span>':'')+
