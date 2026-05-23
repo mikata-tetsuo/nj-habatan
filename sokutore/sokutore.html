@@ -471,7 +471,8 @@
   .listen-mode-active .passage-ctrl { display:none; }
   .listen-mode-active #passageBox { display:none; }
   .listen-mode-active .question-row { display:none; }
-  .listen-mode-active #choicesDiv.choices-hidden { visibility:hidden; }
+  .listen-mode-active #choicesDiv.choices-hidden .choice-btn { color: transparent; }
+  .listen-mode-active #choicesDiv.choices-hidden .choice-btn .choice-label { color: var(--gold); }
   .listen-audio-status {
     text-align:center; padding:20px 0 8px; font-size:1rem; font-weight:700; color:#8B5CF6;
     letter-spacing:0.5px;
@@ -1623,7 +1624,7 @@ async function startListenPlayback() {
 
   statusEl.textContent = '✅ 再生完了 — 答えを選んでください';
   statusEl.className   = 'listen-audio-status';
-  if (listenShowChoices) $('choicesDiv').classList.remove('choices-hidden');
+  $('choicesDiv').classList.remove('choices-hidden');
   playBtn.disabled    = false;
   playBtn.textContent = '▶ もう一度再生';
 }
