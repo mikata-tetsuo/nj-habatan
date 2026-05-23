@@ -411,6 +411,36 @@
 
   /* ===== HUD PTS ===== */
   .hud-pts { color: var(--gold); }
+
+  /* ===== SPEAK BUTTONS ===== */
+  .passage-ctrl {
+    display: flex; justify-content: flex-end; margin-bottom: 6px;
+  }
+  .btn-speak {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 8px;
+    border: 1px solid rgba(47,128,237,0.35);
+    background: rgba(47,128,237,0.07);
+    color: var(--blue); cursor: pointer; font-size: 0.8rem;
+    font-weight: 600; transition: all 0.2s;
+  }
+  .btn-speak:hover { background: rgba(47,128,237,0.18); }
+  .btn-speak.speaking {
+    border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); color: #DC2626;
+  }
+  .question-row {
+    display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px;
+  }
+  .question-row .question-text { flex: 1; margin-bottom: 0; }
+  .btn-speak-sm {
+    flex-shrink: 0; padding: 5px 9px; border-radius: 8px; margin-top: 1px;
+    border: 1px solid rgba(47,128,237,0.3); background: rgba(47,128,237,0.07);
+    color: var(--blue); cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
+  }
+  .btn-speak-sm:hover { background: rgba(47,128,237,0.18); }
+  .btn-speak-sm.speaking {
+    border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); color: #DC2626;
+  }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
@@ -492,10 +522,16 @@
     </div>
 
     <!-- Passage -->
+    <div class="passage-ctrl">
+      <button class="btn-speak" id="btnSpeakPassage">🔊 読み上げ</button>
+    </div>
     <div class="passage-box" id="passageBox"></div>
 
     <!-- Question -->
-    <div class="question-text" id="questionText"></div>
+    <div class="question-row">
+      <div class="question-text" id="questionText"></div>
+      <button class="btn-speak-sm" id="btnSpeakQuestion" title="問題を読む">🔊</button>
+    </div>
 
     <!-- Choices -->
     <div class="choices" id="choicesDiv"></div>
@@ -715,6 +751,7 @@ let answered         = false;
 function $(id) { return document.getElementById(id); }
 
 function showScreen(id) {
+  stopSpeech();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
   $('btnExit').classList.toggle('show', id === 'questionScreen');
@@ -1318,6 +1355,71 @@ $('btnNicknameSkip').addEventListener('click', () => { $('nicknameModal').style.
 
 $('btnGoogleLogin').addEventListener('click', () => {
   fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => console.error(e));
+});
+
+/* ========================================================
+   TEXT-TO-SPEECH
+======================================================== */
+let _currentSpeakBtn = null;
+
+function getEnVoice() {
+  const voices = speechSynthesis.getVoices();
+  return voices.find(v => v.lang === 'en-US')
+    || voices.find(v => v.lang === 'en-GB')
+    || voices.find(v => v.lang.startsWith('en'));
+}
+
+function speakText(text, btn) {
+  if (!('speechSynthesis' in window)) return;
+  if (speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+    const wasSame = _currentSpeakBtn === btn;
+    setSpeakBtnState(_currentSpeakBtn, false);
+    _currentSpeakBtn = null;
+    if (wasSame) return;
+  }
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = 0.85;
+  const voice = getEnVoice();
+  if (voice) utter.voice = voice;
+  utter.onend   = () => { setSpeakBtnState(btn, false); _currentSpeakBtn = null; };
+  utter.onerror = () => { setSpeakBtnState(btn, false); _currentSpeakBtn = null; };
+  _currentSpeakBtn = btn;
+  setSpeakBtnState(btn, true);
+  speechSynthesis.speak(utter);
+}
+
+function stopSpeech() {
+  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+  }
+  setSpeakBtnState(_currentSpeakBtn, false);
+  _currentSpeakBtn = null;
+}
+
+function setSpeakBtnState(btn, active) {
+  if (!btn) return;
+  btn.classList.toggle('speaking', active);
+  if (btn.id === 'btnSpeakPassage') {
+    btn.innerHTML = active ? '⏹ 停止' : '🔊 読み上げ';
+  } else {
+    btn.innerHTML = active ? '⏹' : '🔊';
+  }
+}
+
+if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = () => {};
+}
+
+$('btnSpeakPassage').addEventListener('click', () => {
+  const q = GRADE_PASSAGES[currentGrade]?.[currentStageIdx];
+  if (q) speakText(q.passage, $('btnSpeakPassage'));
+});
+
+$('btnSpeakQuestion').addEventListener('click', () => {
+  const q = GRADE_PASSAGES[currentGrade]?.[currentStageIdx];
+  if (q) speakText(q.question, $('btnSpeakQuestion'));
 });
 </script>
 </body>
