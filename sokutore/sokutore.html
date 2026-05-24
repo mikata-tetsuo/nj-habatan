@@ -419,6 +419,14 @@
   }
   .btn-map:hover { color: var(--text); border-color: rgba(0,0,0,0.22); background: var(--surface); }
 
+  .btn-skip {
+    width: 100%; padding: 12px;
+    background: var(--surface2); border: 1.5px dashed rgba(239,68,68,0.4);
+    border-radius: 12px; font-size: 0.92rem; font-weight: 600;
+    color: #EF4444; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-skip:hover { background: rgba(239,68,68,0.06); border-color: #EF4444; }
+
   /* ===== SPARKLE EFFECT ===== */
   .sparkle-container {
     position: fixed; inset: 0;
@@ -823,7 +831,8 @@
     <!-- Stage actions (shown after answer) -->
     <div class="stage-actions" id="stageActions">
       <button class="btn-next" id="btnStageNext" onclick="stageNext()">次の問題へ →</button>
-      <button class="btn-map" onclick="goToStageMap()">今日はここまで</button>
+      <button class="btn-skip" id="btnSkipQuestion" onclick="skipQuestion()" style="display:none">次へ進む（後で復習する）</button>
+      <button class="btn-map" onclick="goToStageMap()">🗺 マップへ戻る</button>
     </div>
   </div>
 
@@ -1272,8 +1281,9 @@ function renderQuestion() {
 
   // Reset UI
   $('feedbackDiv').className = 'feedback';
-  $('reviewBtns').style.display    = 'none';
-  $('stageActions').style.display  = 'none';
+  $('reviewBtns').style.display       = 'none';
+  $('stageActions').style.display     = 'none';
+  $('btnSkipQuestion').style.display  = 'none';
   $('translationBox').classList.remove('show');
   $('evidenceBox').classList.remove('show');
   $('btnTranslation').classList.remove('open');
@@ -1339,7 +1349,10 @@ function onAnswer(key) {
     $('feedbackMsg').textContent  = '不正解… 正解は ' + q.answer.toUpperCase() + ' でした';
   }
 
-  if (isCorrect && isSpeed) showSpeedPopup();
+  // 効果音
+  if (isCorrect && isSpeed) { playSound('speed'); showSpeedPopup(); }
+  else if (isCorrect)       { playSound('correct'); }
+  else                      { playSound('wrong'); }
 
   // 正解なら即記録
   if (isCorrect) {
@@ -1355,18 +1368,20 @@ function onAnswer(key) {
   const rowNum  = Math.floor(currentStageIdx / ROW_SIZE);
   const rowSz   = rowSize(currentGrade, rowNum);
   const btnNext = $('btnStageNext');
+  const btnSkip = $('btnSkipQuestion');
   if (isCorrect) {
-    if (isRowCleared(currentGrade, rowNum)) {
-      btnNext.textContent = '🎉 週クリア！';
-    } else {
-      btnNext.textContent = '次の問題へ →';
-    }
-    btnNext.className = 'btn-next';
+    btnNext.textContent = isRowCleared(currentGrade, rowNum) ? '🎉 週クリア！' : '次の問題へ →';
+    btnNext.className   = 'btn-next';
+    btnSkip.style.display = 'none';
   } else {
-    btnNext.textContent = 'もう一度挑戦 →';
-    btnNext.className   = 'btn-next btn-retry';
+    btnNext.textContent   = 'もう一度挑戦 →';
+    btnNext.className     = 'btn-next btn-retry';
+    btnSkip.style.display = '';
   }
   $('stageActions').style.display = 'flex';
+
+  // 問題＋正解を読み上げ（正解・不正解どちらも）
+  speakAnswer(q);
 
   // HUD 更新
   $('hudCleared').textContent = countRowCleared(currentGrade, rowNum) + '/' + rowSz;
@@ -1431,7 +1446,21 @@ function showRowClear(rowNum) {
 
   showScreen('stageResultScreen');
   buildGradeMap();
+  playSound('clear');
   triggerSparkles();
+}
+
+function skipQuestion() {
+  // 不正解のまま次の問題へ（ドットは未クリアのまま残る）
+  const rowNum   = Math.floor(currentStageIdx / ROW_SIZE);
+  const rowStart = rowNum * ROW_SIZE;
+  const rowEnd   = Math.min(rowStart + ROW_SIZE, GRADE_PASSAGES[currentGrade].length);
+  const nextIdx  = currentStageIdx + 1;
+  if (nextIdx < rowEnd) {
+    startStage(nextIdx);
+  } else {
+    goToStageMap();
+  }
 }
 
 function goToStageMap() {
@@ -1523,6 +1552,56 @@ function showSpeedPopup() {
   void popup.offsetWidth;
   popup.classList.add('pop');
   setTimeout(() => popup.classList.remove('pop'), 1200);
+}
+
+/* ========================================================
+   SOUND EFFECTS（Web Audio API）
+======================================================== */
+let _audioCtx = null;
+function _getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+function _beep(ctx, freq, startT, dur, vol = 0.25, type = 'sine') {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, ctx.currentTime + startT);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startT + dur);
+  osc.start(ctx.currentTime + startT);
+  osc.stop(ctx.currentTime + startT + dur);
+}
+function playSound(type) {
+  try {
+    const ctx = _getAudioCtx();
+    if (type === 'correct') {
+      // 上昇チャイム C5→E5→G5
+      [[523,0],[659,0.13],[784,0.26]].forEach(([f,t]) => _beep(ctx, f, t, 0.35));
+    } else if (type === 'speed') {
+      // キラキラ高音 G5→C6→E6
+      [[784,0],[1047,0.08],[1319,0.16]].forEach(([f,t]) => _beep(ctx, f, t, 0.22, 0.15));
+    } else if (type === 'wrong') {
+      // 低いブザー
+      _beep(ctx, 180, 0,    0.18, 0.2, 'sawtooth');
+      _beep(ctx, 120, 0.18, 0.25, 0.18, 'sawtooth');
+    } else if (type === 'clear') {
+      // ファンファーレ C5→E5→G5→C6
+      [[523,0],[659,0.1],[784,0.2],[1047,0.32]].forEach(([f,t]) => _beep(ctx, f, t, 0.55, 0.28));
+    }
+  } catch(e) {}
+}
+
+/* ========================================================
+   ANSWER READ-ALOUD（回答後の自動読み上げ）
+======================================================== */
+async function speakAnswer(q) {
+  stopSpeech();
+  await new Promise(r => setTimeout(r, 350));
+  await speakAsync(q.question);
+  await speakAsync('The answer is: ' + q['choice_' + q.answer.toLowerCase()] + '.');
 }
 
 /* ========================================================
