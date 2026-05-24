@@ -798,12 +798,12 @@
     padding: 4px 10px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;
   }
   .auth-name-wrap {
-    display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
+    display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; overflow: hidden;
   }
   .auth-name2 {
     font-size: 0.95rem; font-weight: 700; color: var(--text);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    min-width: 0;
+    flex: 1; min-width: 0;
   }
   .btn-edit-name {
     background: none; border: none; cursor: pointer; font-size: 1rem;
@@ -811,11 +811,11 @@
   }
   .btn-edit-name:hover { background: rgba(0,0,0,0.07); }
   .btn-logout {
-    padding: 4px 7px; border-radius: 7px; flex-shrink: 0;
+    padding: 4px 6px; border-radius: 7px; flex-shrink: 0;
     border: 1px solid var(--borderMd); background: var(--surface2);
-    color: var(--text3); cursor: pointer; font-size: 0.72rem; font-weight: 600;
-    transition: all 0.2s; white-space: normal; width: 36px;
-    text-align: center; line-height: 1.3;
+    color: var(--text3); cursor: pointer; font-size: 0.62rem; font-weight: 600;
+    transition: all 0.2s; white-space: normal; width: 40px;
+    text-align: center; line-height: 1.4; word-break: keep-all;
   }
   .btn-logout:hover { border-color: #EF4444; color: #EF4444; background: rgba(239,68,68,0.06); }
 
