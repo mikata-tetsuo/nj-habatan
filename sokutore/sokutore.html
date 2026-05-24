@@ -153,24 +153,33 @@
   .stage-item.speed-cleared .stage-info-sub { color: #059669; }
   .stage-item.active       .stage-info-sub { color: var(--goldDark); font-weight: 600; }
 
-  /* ===== STAGE DOT GRID ===== */
+  /* ===== STAGE DOT GRID (7/行) ===== */
   .stage-chapters { padding: 4px 0; }
-  .stage-chapter { margin-bottom: 20px; }
-  .stage-chapter-title {
+  .stage-row { margin-bottom: 16px; }
+  .stage-row-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 7px;
+  }
+  .stage-row-label {
     font-size: 0.78rem; font-weight: 700; color: var(--text3);
-    text-transform: uppercase; letter-spacing: 1px;
-    margin-bottom: 10px; padding-left: 2px;
+    text-transform: uppercase; letter-spacing: 1px; min-width: 36px;
+  }
+  .row-clear-badge {
+    font-size: 0.72rem; font-weight: 700; color: var(--goldDark);
+    background: rgba(232,160,32,0.12); border: 1px solid rgba(232,160,32,0.35);
+    border-radius: 20px; padding: 2px 8px; letter-spacing: 0.3px;
   }
   .stage-dot-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
   }
   .stage-dot {
     aspect-ratio: 1; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 1rem;
+    font-weight: 800; font-size: 0.82rem;
     border: 2px solid var(--borderMd);
     background: var(--surface2); color: var(--text3);
     cursor: default; transition: transform 0.18s, box-shadow 0.18s;
+    min-height: 36px;
   }
   .stage-dot.available {
     background: linear-gradient(135deg, #FBBF24, #F97316);
@@ -183,7 +192,6 @@
   .stage-dot.speed {
     background: linear-gradient(135deg, #FBBF24, #F97316);
     border-color: var(--goldDark); color: #1a1a2e; cursor: pointer;
-    font-size: 1.1rem;
   }
   .stage-dot.locked { opacity: 0.28; }
   .stage-dot.available:hover,
@@ -685,16 +693,16 @@
     <!-- HUD -->
     <div class="hud">
       <div class="hud-item">
-        <span class="hud-label">問題</span>
-        <span class="hud-value" id="hudQNum">1/10</span>
+        <span class="hud-label">今日</span>
+        <span class="hud-value" id="hudQNum">1/7</span>
       </div>
       <div class="hud-item">
-        <span class="hud-label">ステージ</span>
-        <span class="hud-value hud-grade" id="hudGrade">1/18</span>
+        <span class="hud-label">今週</span>
+        <span class="hud-value hud-grade" id="hudGrade">週1</span>
       </div>
       <div class="hud-item">
-        <span class="hud-label">正解</span>
-        <span class="hud-value hud-cleared" id="hudCleared">0</span>
+        <span class="hud-label">週の進捗</span>
+        <span class="hud-value hud-cleared" id="hudCleared">0/7</span>
       </div>
       <div class="hud-item">
         <span class="hud-label">獲得PT</span>
@@ -751,25 +759,19 @@
     <!-- Stage actions (shown after answer) -->
     <div class="stage-actions" id="stageActions">
       <button class="btn-next" id="btnStageNext" onclick="stageNext()">次の問題へ →</button>
+      <button class="btn-map" onclick="goToStageMap()">今日はここまで</button>
     </div>
   </div>
 
-  <!-- ===== ステージ結果 ===== -->
+  <!-- ===== 週クリア ===== -->
   <div id="stageResultScreen" class="screen">
     <div class="stage-result-wrap">
-      <div class="sr-icon" id="srIcon">⭐</div>
-      <div class="sr-title" id="srTitle">ステージクリア！</div>
-      <div class="sr-sub" id="srSub">ステージ 1 / 18</div>
-      <div class="sr-score-row">
-        <span class="sr-score" id="srScore">8</span>
-        <span class="sr-score-label">/ 10 正解</span>
-      </div>
-      <div class="sr-pts" id="srPts">+80pt</div>
-      <div class="sr-missed-title" id="srMissedTitle" style="display:none">間違えた問題</div>
-      <div id="srMissedList"></div>
+      <div class="sr-icon">🎉</div>
+      <div class="sr-title">週クリア！</div>
+      <div class="sr-sub" id="srSub">5級 週1 クリア！</div>
+      <div class="sr-pts" id="srPts">+70pt</div>
       <div class="sr-btns">
-        <button class="btn-sr-next" id="btnSrNext">次のステージへ →</button>
-        <button class="btn-sr-retry" onclick="retryStage()">🔄 このステージをやり直す</button>
+        <button class="btn-sr-next" id="btnSrNext">次の週へ →</button>
         <button class="btn-sr-map" onclick="goToStageMap()">🗺 マップへ戻る</button>
       </div>
     </div>
@@ -888,9 +890,7 @@ GRADE_ORDER.forEach(g => {
 /* ========================================================
    STAGE CONFIG
 ======================================================== */
-const STAGE_SIZE  = 10;   // 問題数/ステージ
-const STAGE_TOTAL = 18;   // ステージ数/級 (180問 ÷ 10)
-const CHAPTER_SIZE = 6;   // ステージ数/チャプター
+const ROW_SIZE = 7;   // 1行 = 7問 = 1週間分
 
 /* ========================================================
    PROGRESS (localStorage)
@@ -904,16 +904,16 @@ function loadProgress() {
 function saveProgress(p) {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
 }
-function stageKey(grade, sNum) { return grade + '_s' + sNum; }
-function isStageCleared(grade, sNum) {
-  return !!loadProgress().cleared[stageKey(grade, sNum)];
+function stageKey(grade, idx) { return grade + '_' + idx; }
+function isStageCleared(grade, idx) {
+  return !!loadProgress().cleared[stageKey(grade, idx)];
 }
-function isStageSpeedCleared(grade, sNum) {
-  return loadProgress().cleared[stageKey(grade, sNum)] === 'speed';
+function isStageSpeedCleared(grade, idx) {
+  return loadProgress().cleared[stageKey(grade, idx)] === 'speed';
 }
-function markStageCleared(grade, sNum, isSpeed, earnedPts) {
+function markStageCleared(grade, idx, isSpeed, earnedPts) {
   const p = loadProgress();
-  const k = stageKey(grade, sNum);
+  const k = stageKey(grade, idx);
   if (p.cleared[k] !== 'speed') {
     p.cleared[k] = isSpeed ? 'speed' : true;
   }
@@ -925,23 +925,54 @@ function isGradeUnlocked(grade) {
   return true;
 }
 function isGradeComplete(grade) {
-  return gradeClearedCount(grade) >= STAGE_TOTAL;
+  const pp = GRADE_PASSAGES[grade];
+  if (!pp || !pp.length) return false;
+  return pp.every((_, i) => isStageCleared(grade, i));
 }
 function gradeClearedCount(grade) {
-  return Array.from({length: STAGE_TOTAL}, (_, i) => isStageCleared(grade, i))
-    .filter(Boolean).length;
+  const pp = GRADE_PASSAGES[grade];
+  if (!pp) return 0;
+  return pp.filter((_, i) => isStageCleared(grade, i)).length;
+}
+
+/* 行（週）ユーティリティ */
+function numRows(grade) {
+  return Math.ceil((GRADE_PASSAGES[grade]?.length || 0) / ROW_SIZE);
+}
+function rowSize(grade, rowIdx) {
+  const pp = GRADE_PASSAGES[grade];
+  const start = rowIdx * ROW_SIZE;
+  return Math.min(ROW_SIZE, (pp?.length || 0) - start);
+}
+function isRowCleared(grade, rowIdx) {
+  const pp = GRADE_PASSAGES[grade];
+  const start = rowIdx * ROW_SIZE;
+  const end   = Math.min(start + ROW_SIZE, pp.length);
+  for (let i = start; i < end; i++) {
+    if (!isStageCleared(grade, i)) return false;
+  }
+  return true;
+}
+function countRowCleared(grade, rowIdx) {
+  const start = rowIdx * ROW_SIZE;
+  const end   = start + rowSize(grade, rowIdx);
+  let n = 0;
+  for (let i = start; i < end; i++) { if (isStageCleared(grade, i)) n++; }
+  return n;
+}
+function rowsClearedCount(grade) {
+  const nr = numRows(grade);
+  let n = 0;
+  for (let r = 0; r < nr; r++) { if (isRowCleared(grade, r)) n++; }
+  return n;
 }
 
 /* ========================================================
    STATE
 ======================================================== */
 let currentGrade     = null;
-let currentStageNum  = 0;    // ステージ番号 (0-17)
-let currentQInStage  = 0;    // ステージ内問題番号 (0-9)
-let stageQuestions   = [];   // 現ステージの10問
-let stageScore       = 0;    // ステージ獲得PT
-let stageCorrect     = 0;    // ステージ正解数
-let stageMissed      = [];   // [{q, selectedKey}]
+let currentStageIdx  = null; // 問題インデックス (GRADE_PASSAGES[grade][idx])
+let stageAnsweredOK  = false; // 正解したか
 let timerSec         = 0;
 let timerInterval    = null;
 let answered         = false;
@@ -981,26 +1012,27 @@ function buildGradeMap() {
     if (!pp || !pp.length) return;
     const unlocked   = isGradeUnlocked(g);
     const complete   = isGradeComplete(g);
-    const cleared    = gradeClearedCount(g);
-    const total      = STAGE_TOTAL;
-    const pct        = Math.round((cleared / total) * 100);
+    const clearedW   = rowsClearedCount(g);
+    const totalW     = numRows(g);
+    const pct        = Math.round((clearedW / totalW) * 100);
 
     let statusText, cardClass;
     if (!unlocked) {
       statusText = '🔒 ロック中';
       cardClass  = 'grade-card locked';
     } else if (complete) {
-      statusText = '✓ クリア済み';
+      statusText = '✓ 全クリア！';
       cardClass  = 'grade-card complete';
-    } else if (cleared > 0) {
-      statusText = cleared + '/' + total + ' ステージ';
+    } else if (clearedW > 0) {
+      statusText = clearedW + '/' + totalW + ' 週クリア';
       cardClass  = 'grade-card in-progress';
     } else {
-      statusText = total + ' ステージ';
+      statusText = totalW + ' 週に挑戦！';
       cardClass  = 'grade-card';
     }
 
     const gradePts = calcGradePts(g);
+    const cleared = clearedW; // for pts display
     const card = document.createElement('div');
     card.className = cardClass;
     card.innerHTML = `
@@ -1034,33 +1066,38 @@ function buildStageMap() {
   const grade = currentGrade;
   $('stageMapGradeLabel').textContent = GRADE_LABEL[grade] || grade;
 
+  const pp        = GRADE_PASSAGES[grade];
   const container = $('stageChapters');
   container.innerHTML = '';
+  const nr = numRows(grade);
 
-  const numChapters = Math.ceil(STAGE_TOTAL / CHAPTER_SIZE);
-  const sp = loadProgress();
+  for (let r = 0; r < nr; r++) {
+    const rowCleared = isRowCleared(grade, r);
+    const rowLocked  = r > 0 && !isRowCleared(grade, r - 1);
 
-  for (let ci = 0; ci < numChapters; ci++) {
-    const chEl = document.createElement('div');
-    chEl.className = 'stage-chapter';
+    const rowEl = document.createElement('div');
+    rowEl.className = 'stage-row';
 
-    const titleEl = document.createElement('div');
-    titleEl.className = 'stage-chapter-title';
-    titleEl.textContent = 'Chapter ' + (ci + 1);
-    chEl.appendChild(titleEl);
+    // ヘッダー
+    const hdr = document.createElement('div');
+    hdr.className = 'stage-row-header';
+    hdr.innerHTML = `<span class="stage-row-label">週 ${r + 1}</span>` +
+      (rowCleared ? '<span class="row-clear-badge">⭐ 週クリア！</span>' : '');
+    rowEl.appendChild(hdr);
 
-    const gridEl = document.createElement('div');
-    gridEl.className = 'stage-dot-grid';
+    // ドットグリッド
+    const grid = document.createElement('div');
+    grid.className = 'stage-dot-grid';
 
-    const startS = ci * CHAPTER_SIZE;
-    const endS   = Math.min(startS + CHAPTER_SIZE, STAGE_TOTAL);
+    const start = r * ROW_SIZE;
+    const end   = Math.min(start + ROW_SIZE, pp.length);
 
-    for (let si = startS; si < endS; si++) {
-      const cleared  = isStageCleared(grade, si);
-      const speed    = isStageSpeedCleared(grade, si);
-      const prevOK   = si === 0 || isStageCleared(grade, si - 1);
-      const available = !cleared && prevOK;
-      const locked    = !cleared && !prevOK;
+    for (let i = start; i < end; i++) {
+      const cleared  = isStageCleared(grade, i);
+      const speed    = isStageSpeedCleared(grade, i);
+      const prevOK   = i === 0 || isStageCleared(grade, i - 1);
+      const available = !cleared && prevOK && !rowLocked;
+      const locked    = !cleared && (!prevOK || rowLocked);
 
       let dotClass = 'stage-dot';
       if (speed)          dotClass += ' speed';
@@ -1068,40 +1105,36 @@ function buildStageMap() {
       else if (available) dotClass += ' available';
       else                dotClass += ' locked';
 
-      let label = (si + 1).toString();
-      if (speed)    label = '⭐';
+      const dayNum = (i - start) + 1;  // 1〜7
+      let label = dayNum.toString();
+      if (speed)   label = '⭐';
       else if (cleared) label = '✓';
 
       const dot = document.createElement('button');
-      dot.className = dotClass;
+      dot.className   = dotClass;
       dot.textContent = label;
-      dot.disabled = locked;
-      dot.title = locked ? 'ロック中' :
-                  speed  ? 'スピードクリア済み' :
-                  cleared ? 'クリア済み (' + (sp.pts?.[stageKey(grade, si)] || 0) + 'pt)' :
-                  'ステージ ' + (si + 1);
+      dot.disabled    = locked;
+      dot.title = locked  ? 'ロック中（前の週をクリアしてね）' :
+                  speed   ? `${dayNum}日目 — 速読クリア！` :
+                  cleared ? `${dayNum}日目 — クリア済み` :
+                            `${dayNum}日目にチャレンジ`;
 
-      if (!locked) dot.addEventListener('click', () => startStage(si));
-      gridEl.appendChild(dot);
+      if (!locked) dot.addEventListener('click', () => startStage(i));
+      grid.appendChild(dot);
     }
 
-    chEl.appendChild(gridEl);
-    container.appendChild(chEl);
+    rowEl.appendChild(grid);
+    container.appendChild(rowEl);
   }
 }
 
 /* ========================================================
    START STAGE
 ======================================================== */
-function startStage(sNum) {
-  currentStageNum  = sNum;
-  currentQInStage  = 0;
-  stageScore       = 0;
-  stageCorrect     = 0;
-  stageMissed      = [];
-  const start      = sNum * STAGE_SIZE;
-  stageQuestions   = GRADE_PASSAGES[currentGrade].slice(start, start + STAGE_SIZE);
-  answered         = false;
+function startStage(idx) {
+  currentStageIdx = idx;
+  stageAnsweredOK = false;
+  answered        = false;
   showScreen('questionScreen');
   renderQuestion();
 }
@@ -1110,13 +1143,17 @@ function startStage(sNum) {
    RENDER QUESTION
 ======================================================== */
 function renderQuestion() {
-  const q  = stageQuestions[currentQInStage];
-  answered = false;
+  const q      = GRADE_PASSAGES[currentGrade][currentStageIdx];
+  answered     = false;
+  stageAnsweredOK = false;
 
   // HUD
-  $('hudQNum').textContent    = (currentQInStage + 1) + '/' + STAGE_SIZE;
-  $('hudGrade').textContent   = (currentStageNum + 1) + '/' + STAGE_TOTAL;
-  $('hudCleared').textContent = stageCorrect;
+  const rowNum   = Math.floor(currentStageIdx / ROW_SIZE);
+  const posInRow = currentStageIdx % ROW_SIZE;
+  const rowSz    = rowSize(currentGrade, rowNum);
+  $('hudQNum').textContent    = (posInRow + 1) + '/' + rowSz;
+  $('hudGrade').textContent   = '週' + (rowNum + 1);
+  $('hudCleared').textContent = countRowCleared(currentGrade, rowNum) + '/' + rowSz;
   $('hudPts').textContent     = getTotalQuizPts().toLocaleString();
 
   // Timer
@@ -1193,17 +1230,10 @@ function onAnswer(key) {
   answered = true;
   clearInterval(timerInterval);
 
-  const q         = stageQuestions[currentQInStage];
+  const q         = GRADE_PASSAGES[currentGrade][currentStageIdx];
   const isCorrect = key === q.answer.toLowerCase();
   const isSpeed   = timerSec <= q.target_time_sec;
-
-  // ステージスコア集計
-  if (isCorrect) {
-    stageCorrect++;
-    stageScore += 10 + (isSpeed ? 5 : 0);
-  } else {
-    stageMissed.push({ q, selectedKey: key });
-  }
+  stageAnsweredOK = isCorrect;
 
   // 選択肢を色分け
   document.querySelectorAll('.choice-btn').forEach(btn => {
@@ -1226,86 +1256,96 @@ function onAnswer(key) {
 
   if (isCorrect && isSpeed) showSpeedPopup();
 
+  // 正解なら即記録
+  if (isCorrect) {
+    const pts = 10 + (isSpeed ? 5 : 0);
+    markStageCleared(currentGrade, currentStageIdx, isSpeed, pts);
+    if (fbUser) syncQuizPtsToFirestore();
+  }
+
   // 復習ボタン
   $('reviewBtns').style.display = 'flex';
 
   // 次へボタン
-  const isLast = (currentQInStage === STAGE_SIZE - 1);
+  const rowNum  = Math.floor(currentStageIdx / ROW_SIZE);
+  const rowSz   = rowSize(currentGrade, rowNum);
   const btnNext = $('btnStageNext');
-  btnNext.textContent = isLast ? '結果を見る →' : '次の問題へ →';
-  btnNext.className   = 'btn-next';
+  if (isCorrect) {
+    if (isRowCleared(currentGrade, rowNum)) {
+      btnNext.textContent = '🎉 週クリア！';
+    } else {
+      btnNext.textContent = '次の問題へ →';
+    }
+    btnNext.className = 'btn-next';
+  } else {
+    btnNext.textContent = 'もう一度挑戦 →';
+    btnNext.className   = 'btn-next btn-retry';
+  }
   $('stageActions').style.display = 'flex';
 
-  // HUD 正解数を更新
-  $('hudCleared').textContent = stageCorrect;
+  // HUD 更新
+  $('hudCleared').textContent = countRowCleared(currentGrade, rowNum) + '/' + rowSz;
+  $('hudPts').textContent     = getTotalQuizPts().toLocaleString();
 }
 
 /* ========================================================
    STAGE NEXT
 ======================================================== */
 function stageNext() {
-  currentQInStage++;
-  if (currentQInStage >= STAGE_SIZE) {
-    showStageResult();
-  } else {
+  if (!stageAnsweredOK) {
+    // 不正解 → 同じ問題をやり直し
     answered = false;
     renderQuestion();
+    return;
+  }
+
+  const rowNum = Math.floor(currentStageIdx / ROW_SIZE);
+  if (isRowCleared(currentGrade, rowNum)) {
+    showRowClear(rowNum);
+    return;
+  }
+
+  // 行未クリア → 次の未クリア問題へ（または マップへ）
+  const rowStart = rowNum * ROW_SIZE;
+  const rowEnd   = Math.min(rowStart + ROW_SIZE, GRADE_PASSAGES[currentGrade].length);
+  const nextIdx  = currentStageIdx + 1;
+  if (nextIdx < rowEnd && !isStageCleared(currentGrade, nextIdx)) {
+    startStage(nextIdx);
+  } else {
+    goToStageMap();
   }
 }
 
-function showStageResult() {
-  const isPerfect = (stageCorrect === STAGE_SIZE);
+function showRowClear(rowNum) {
+  const gradeLabel = GRADE_LABEL[currentGrade] || currentGrade;
+  const rowSz      = rowSize(currentGrade, rowNum);
+  const rowPts     = Array.from({length: rowSz}, (_, i) => {
+    const p = loadProgress();
+    return (p.pts && p.pts[stageKey(currentGrade, rowNum * ROW_SIZE + i)]) || 0;
+  }).reduce((s, v) => s + v, 0);
 
-  // ステージをクリア済みに記録
-  markStageCleared(currentGrade, currentStageNum, isPerfect, stageScore);
-  if (fbUser) syncQuizPtsToFirestore();
+  $('srSub').textContent = gradeLabel + ' 週' + (rowNum + 1) + ' クリア！';
+  $('srPts').textContent = '+' + rowPts + 'pt';
 
-  // 結果画面の内容
-  $('srIcon').textContent  = isPerfect ? '⭐' : '✅';
-  $('srTitle').textContent = isPerfect ? 'パーフェクト！' : 'ステージクリア！';
-  $('srSub').textContent   = (GRADE_LABEL[currentGrade] || currentGrade) +
-                              ' ステージ ' + (currentStageNum + 1) + ' / ' + STAGE_TOTAL;
-  $('srScore').textContent = stageCorrect;
-  $('srPts').textContent   = '+' + stageScore + 'pt';
-
-  // 間違えた問題
-  const missedTitle = $('srMissedTitle');
-  const missedList  = $('srMissedList');
-  if (stageMissed.length === 0) {
-    missedTitle.style.display = 'none';
-    missedList.innerHTML = '';
-  } else {
-    missedTitle.style.display = 'block';
-    missedList.innerHTML = stageMissed.map(({ q, selectedKey }) => `
-      <div class="sr-missed-item">
-        <div class="sr-missed-passage">${escapeHtml(q.passage.slice(0, 100))}...</div>
-        <div class="sr-missed-q">${escapeHtml(q.question)}</div>
-        <div class="sr-missed-ans">
-          <span class="sr-wrong">✖ ${selectedKey.toUpperCase()}: ${escapeHtml(q['choice_' + selectedKey])}</span>
-          <span class="sr-correct">→ 正解 ${q.answer.toUpperCase()}: ${escapeHtml(q['choice_' + q.answer])}</span>
-        </div>
-      </div>`).join('');
-  }
-
-  // 次へボタン
   const btnNext = $('btnSrNext');
-  const nextStageNum = currentStageNum + 1;
+  const nextRowNum = rowNum + 1;
   if (isGradeComplete(currentGrade)) {
     btnNext.textContent = '🎉 級クリア！';
     btnNext.onclick = showGradeClear;
-  } else if (nextStageNum < STAGE_TOTAL) {
-    btnNext.textContent = '次のステージへ →';
-    btnNext.onclick = () => startStage(nextStageNum);
+    btnNext.style.display = '';
+  } else if (nextRowNum < numRows(currentGrade)) {
+    btnNext.textContent = '次の週へ →';
+    btnNext.onclick = () => {
+      const nextRowStart = nextRowNum * ROW_SIZE;
+      startStage(nextRowStart);
+    };
+    btnNext.style.display = '';
   } else {
     btnNext.style.display = 'none';
   }
 
   showScreen('stageResultScreen');
   buildGradeMap();
-}
-
-function retryStage() {
-  startStage(currentStageNum);
 }
 
 function goToStageMap() {
@@ -1326,7 +1366,7 @@ function exitQuiz() {
    TOGGLE 和訳 / 根拠
 ======================================================== */
 function toggleTranslation() {
-  const q   = stageQuestions[currentQInStage];
+  const q   = GRADE_PASSAGES[currentGrade][currentStageIdx];
   const box = $('translationBox');
   const btn = $('btnTranslation');
   const open = box.classList.toggle('show');
@@ -1335,7 +1375,7 @@ function toggleTranslation() {
 }
 
 function toggleEvidence() {
-  const q   = stageQuestions[currentQInStage];
+  const q   = GRADE_PASSAGES[currentGrade][currentStageIdx];
   const box = $('evidenceBox');
   const btn = $('btnEvidence');
   const open = box.classList.toggle('show');
@@ -1588,10 +1628,10 @@ function getTotalQuizPts() {
 }
 
 function calcGradePts(grade) {
-  const p = loadProgress();
+  const p  = loadProgress();
   if (!p.pts) return 0;
-  return Array.from({length: STAGE_TOTAL}, (_, i) => p.pts[stageKey(grade, i)] || 0)
-    .reduce((s, v) => s + v, 0);
+  const pp = GRADE_PASSAGES[grade] || [];
+  return pp.reduce((s, _, i) => s + (p.pts[stageKey(grade, i)] || 0), 0);
 }
 
 function openNicknameModal() {
@@ -1709,7 +1749,7 @@ function speakAsync(text) {
 let _listenPlayId = 0;
 
 async function startListenPlayback() {
-  const q = stageQuestions[currentQInStage];
+  const q = GRADE_PASSAGES[currentGrade]?.[currentStageIdx];
   if (!q) return;
 
   const myId = ++_listenPlayId;
@@ -1877,12 +1917,12 @@ document.querySelectorAll('#rankPeriodTabs .rank-tab').forEach(tab => {
 });
 
 $('btnSpeakPassage').addEventListener('click', () => {
-  const q = stageQuestions[currentQInStage];
+  const q = GRADE_PASSAGES[currentGrade]?.[currentStageIdx];
   if (q) speakText(q.passage, $('btnSpeakPassage'));
 });
 
 $('btnSpeakQuestion').addEventListener('click', () => {
-  const q = stageQuestions[currentQInStage];
+  const q = GRADE_PASSAGES[currentGrade]?.[currentStageIdx];
   if (q) speakText(q.question, $('btnSpeakQuestion'));
 });
 </script>
