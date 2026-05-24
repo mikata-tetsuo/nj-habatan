@@ -419,6 +419,22 @@
   }
   .btn-map:hover { color: var(--text); border-color: rgba(0,0,0,0.22); background: var(--surface); }
 
+  /* ===== SPARKLE EFFECT ===== */
+  .sparkle-container {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 999;
+    overflow: hidden;
+  }
+  .sp {
+    position: absolute; top: -40px; user-select: none;
+    animation: spDrop linear forwards;
+  }
+  @keyframes spDrop {
+    0%   { transform: translateY(0)      rotate(0deg)   scale(1);   opacity: 1; }
+    70%  { opacity: 1; }
+    100% { transform: translateY(110vh)  rotate(800deg) scale(0.5); opacity: 0; }
+  }
+
   /* ===== EXIT (fixed) ===== */
   .btn-exit {
     position: fixed; top: 14px; right: 14px; z-index: 100;
@@ -1415,6 +1431,7 @@ function showRowClear(rowNum) {
 
   showScreen('stageResultScreen');
   buildGradeMap();
+  triggerSparkles();
 }
 
 function goToStageMap() {
@@ -1506,6 +1523,31 @@ function showSpeedPopup() {
   void popup.offsetWidth;
   popup.classList.add('pop');
   setTimeout(() => popup.classList.remove('pop'), 1200);
+}
+
+/* ========================================================
+   SPARKLE EFFECT（週クリア演出）
+======================================================== */
+function triggerSparkles() {
+  const COLORS = ['#FBBF24','#F97316','#10B981','#8B5CF6','#EC4899','#60A5FA','#34D399','#F472B6'];
+  const SHAPES = ['⭐','✨','🌟','💫','🎉','🎊','★','◆','▲'];
+  const container = document.createElement('div');
+  container.className = 'sparkle-container';
+  document.body.appendChild(container);
+
+  for (let i = 0; i < 48; i++) {
+    const p = document.createElement('div');
+    p.className = 'sp';
+    p.textContent = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+    p.style.left            = (Math.random() * 110 - 5) + 'vw';
+    p.style.color           = COLORS[i % COLORS.length];
+    p.style.fontSize        = (11 + Math.random() * 20) + 'px';
+    p.style.animationDelay    = (Math.random() * 0.7) + 's';
+    p.style.animationDuration = (1.4 + Math.random() * 1.2) + 's';
+    container.appendChild(p);
+  }
+
+  setTimeout(() => container.remove(), 3500);
 }
 
 /* ========================================================
