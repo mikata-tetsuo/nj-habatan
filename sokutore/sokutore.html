@@ -669,6 +669,61 @@
   @keyframes rankShake {
     0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
   }
+  /* ===== NEWS ===== */
+  .bottom-btn-row { display: flex; gap: 10px; margin-top: 12px; }
+  .btn-news {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 12px; border-radius: 14px;
+    background: var(--surface); border: 1.5px solid var(--borderMd);
+    color: var(--text2); font-weight: 700; font-size: 0.88rem;
+    cursor: pointer; transition: all 0.2s; position: relative;
+  }
+  .btn-news:hover { border-color: var(--gold); color: var(--goldDark); background: rgba(232,160,32,0.05); }
+  .news-new-badge {
+    position: absolute; top: -6px; right: -6px;
+    background: #EF4444; color: #fff; border-radius: 10px;
+    font-size: 0.6rem; font-weight: 900; padding: 2px 6px; line-height: 1.4;
+    animation: newsPulse 1.5s infinite;
+  }
+  @keyframes newsPulse {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.15); }
+  }
+  .news-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 400; display: flex; align-items: flex-end;
+  }
+  .news-sheet {
+    background: var(--surface); border-radius: 24px 24px 0 0;
+    padding: 20px 20px 48px; width: 100%; max-height: 78vh; overflow-y: auto;
+    animation: sheetUp 0.28s cubic-bezier(0.22,1,0.36,1);
+  }
+  @keyframes sheetUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+  .news-sheet-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .news-sheet-title { font-size: 1.05rem; font-weight: 800; color: var(--text); }
+  .news-close {
+    padding: 5px 12px; border-radius: 8px;
+    border: 1px solid var(--borderMd); background: var(--surface2);
+    color: var(--text2); cursor: pointer; font-size: 0.85rem;
+  }
+  .news-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .news-item:last-child { border-bottom: none; }
+  .news-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .news-date { font-size: 0.72rem; color: var(--text3); }
+  .news-tag-new {
+    font-size: 0.6rem; font-weight: 900; background: #EF4444;
+    color: #fff; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.3px;
+  }
+  .news-item-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .news-item-body  { font-size: 0.83rem; color: var(--text2); line-height: 1.65; }
+
   .rank-btn-wrap { margin-top: 12px; }
   .btn-ranking {
     display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
@@ -745,8 +800,12 @@
       </button>
     </div>
     <div class="grade-map" id="gradeMapCards"></div>
-    <div class="rank-btn-wrap">
-      <button class="btn-ranking locked" id="btnOpenRanking">🥇 ランキングを見る</button>
+    <div class="bottom-btn-row">
+      <button class="btn-news" id="btnOpenNews" onclick="openNews()">
+        📢 新着情報
+        <span class="news-new-badge" id="newsNewBadge" style="display:none">NEW</span>
+      </button>
+      <button class="btn-ranking" id="btnOpenRanking">🥇 ランキング</button>
     </div>
   </div>
 
@@ -1630,10 +1689,97 @@ function triggerSparkles() {
 }
 
 /* ========================================================
+   NEWS（新着情報・更新履歴）
+======================================================== */
+const NEWS_ITEMS = [
+  {
+    date: '2026-05-24',
+    title: '🔊 効果音・英語読み上げ追加',
+    body: '正解・不正解時に効果音が鳴ります。回答後に問題文と正解選択肢を自動で英語読み上げ。',
+  },
+  {
+    date: '2026-05-24',
+    title: '❌ 不正解時の選択肢を2択に',
+    body: '「もう一度挑戦」と「次へ進む（後で復習）」から選べるようになりました。分散学習で効果アップ！',
+  },
+  {
+    date: '2026-05-24',
+    title: '🎊 週クリア演出（キラキラ＋ファンファーレ）',
+    body: '7問全部クリアすると絵文字が降り注ぎ、ファンファーレが鳴ります。',
+  },
+  {
+    date: '2026-05-24',
+    title: '🎨 マップUIリデザイン',
+    body: '週ごとのカード表示・曜日ラベル（月火水木金土日）・進捗バッジで見やすくなりました。',
+  },
+  {
+    date: '2026-05-24',
+    title: '📅 7問1週間システムに移行',
+    body: '1ドット＝1問、7問で1週クリア。毎日1問のハビット学習スタイルに対応。',
+  },
+  {
+    date: '2026-05-24',
+    title: '📚 5級・4級問題を全面刷新',
+    body: '5級は短文・会話文形式（20〜35語）に。4級は日常テーマに限定。より学習効果の高い問題に。',
+  },
+  {
+    date: '2026-05-24',
+    title: '⏱ 目標タイムを試験基準に調整',
+    body: '準2級以上を実際の英検の読む速さに合わせた目標時間に変更。準2: 40秒・2級: 45秒・準1: 50秒',
+  },
+];
+
+const NEWS_SEEN_KEY = 'sokutore_news_seen';
+
+function getNewsUnseenCount() {
+  const seen = localStorage.getItem(NEWS_SEEN_KEY) || '2000-01-01';
+  return NEWS_ITEMS.filter(n => n.date > seen).length;
+}
+
+function updateNewsBadge() {
+  const badge = $('newsNewBadge');
+  if (!badge) return;
+  const n = getNewsUnseenCount();
+  badge.style.display = n > 0 ? '' : 'none';
+}
+
+function openNews() {
+  const unseenCount = getNewsUnseenCount();
+  // 最新日を既読にする
+  const latestDate = NEWS_ITEMS.reduce((mx, n) => n.date > mx ? n.date : mx, '');
+  localStorage.setItem(NEWS_SEEN_KEY, latestDate);
+  updateNewsBadge();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'news-overlay';
+  overlay.innerHTML = `
+    <div class="news-sheet">
+      <div class="news-sheet-hdr">
+        <div class="news-sheet-title">📢 新着情報・更新履歴</div>
+        <button class="news-close">閉じる ✕</button>
+      </div>
+      ${NEWS_ITEMS.map((n, i) => `
+        <div class="news-item">
+          <div class="news-meta">
+            <span class="news-date">${n.date}</span>
+            ${i < unseenCount ? '<span class="news-tag-new">NEW</span>' : ''}
+          </div>
+          <div class="news-item-title">${n.title}</div>
+          <div class="news-item-body">${n.body}</div>
+        </div>
+      `).join('')}
+    </div>`;
+  overlay.querySelector('.news-close').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+/* ========================================================
    INIT
 ======================================================== */
 buildGradeMap();
 showScreen('gradeMapScreen');
+updateNewsBadge();
 
 /* ========================================================
    FIREBASE
@@ -1708,8 +1854,7 @@ function updateAuthUI() {
     $('authPtsWrap').style.display = 'none';
     fbNickname = null; fbStreak = 0; fbBonusPts = 0; fbQuizPts = 0;
   }
-  const rankBtn = $('btnOpenRanking');
-  if (rankBtn) rankBtn.classList.toggle('locked', !fbUser);
+  // ランキングはログイン不要で閲覧可（スコア登録にはログインが必要）
 }
 
 function getTodayJST() {
@@ -2080,19 +2225,15 @@ async function renderRankingScreen() {
         `<span class="rank-score">${scoreVal.toLocaleString()}pt</span></div>`;
     }).join('');
   } catch(e) {
-    listEl.innerHTML = '<div class="ranking-empty">読み込みに失敗しました 😢</div>';
-    console.error('Ranking:', e);
+    console.error('Ranking error:', e);
+    const isPermission = e.code === 'permission-denied' || (e.message||'').includes('permission');
+    listEl.innerHTML = isPermission
+      ? '<div class="ranking-empty">⚠️ Firestoreの読み取り権限がありません<br><small>Firebase Console → Firestore → ルールを確認してください</small></div>'
+      : `<div class="ranking-empty">読み込みに失敗しました 😢<br><small>${e.message || e.code || ''}</small></div>`;
   }
 }
 
 $('btnOpenRanking').addEventListener('click', () => {
-  if (!fbUser) {
-    const btn = $('btnOpenRanking');
-    btn.style.animation = 'none';
-    void btn.offsetWidth;
-    btn.style.animation = 'rankShake 0.4s ease';
-    return;
-  }
   showScreen('rankingScreen');
   renderRankingScreen();
 });
