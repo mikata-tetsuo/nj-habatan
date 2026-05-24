@@ -57,7 +57,7 @@ GRADE_SPECS = {
     "pre2": {
         "name": "英検準2級",
         "word_count": "130〜160語",
-        "target_time": 72,
+        "target_time": 40,
         "eiken_grade": "pre2",
         "sub_level": 1,
         "description": "高校中級レベル。科学・社会・文化などの一般的なトピック。",
@@ -66,7 +66,7 @@ GRADE_SPECS = {
     "pre2p": {
         "name": "英検準2級+（準2〜2級の橋渡し）",
         "word_count": "160〜190語",
-        "target_time": 85,
+        "target_time": 40,
         "eiken_grade": "pre2",
         "sub_level": 2,
         "description": "準2〜2級の橋渡しレベル。社会問題・ビジネス・科学等のやや高度な内容。",
@@ -75,7 +75,7 @@ GRADE_SPECS = {
     "2": {
         "name": "英検2級",
         "word_count": "180〜220語",
-        "target_time": 93,
+        "target_time": 45,
         "eiken_grade": "2",
         "sub_level": 1,
         "description": "高校卒業レベル。学術的な話題（心理・経済・環境・医療等）。",
@@ -84,7 +84,7 @@ GRADE_SPECS = {
     "pre1": {
         "name": "英検準1級",
         "word_count": "220〜260語",
-        "target_time": 115,
+        "target_time": 50,
         "eiken_grade": "pre1",
         "sub_level": 1,
         "description": "大学中級レベル。専門性の高いトピック（認知科学・政策・環境経済等）。",
