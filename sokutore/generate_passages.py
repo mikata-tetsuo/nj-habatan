@@ -29,21 +29,21 @@ except ImportError:
 GRADE_SPECS = {
     "5": {
         "name": "英検5級",
-        "word_count": "40〜60語",
-        "target_time": 28,
+        "word_count": "20〜35語",
+        "target_time": 15,
         "eiken_grade": "5",
         "sub_level": 1,
-        "description": "小学生レベル。日常的な話題（家族・食事・学校・ペット等）。",
-        "vocab": "基本単語のみ。be動詞・一般動詞・形容詞の単純な文。",
+        "description": "小学生〜中学初級レベル。超日常的な話題（家族・食事・学校・ペット・日課）。",
+        "vocab": "中学1年レベルの最基本語彙のみ。be動詞・一般動詞の現在形・過去形のみ。難しい単語は絶対に使わない。",
     },
     "4": {
         "name": "英検4級",
-        "word_count": "70〜100語",
-        "target_time": 42,
+        "word_count": "50〜70語",
+        "target_time": 30,
         "eiken_grade": "4",
         "sub_level": 1,
-        "description": "中学生レベル。学校行事・旅行・趣味・地域の話題等。",
-        "vocab": "中学基本語彙。現在完了・受動態が自然に使われる程度。",
+        "description": "中学生レベル。学校・旅行・趣味・スポーツ・食べ物・動物・地域の話題。AIや環境問題・ビジネスは使わない。",
+        "vocab": "中学基本語彙のみ。専門用語・抽象概念・難語彙は一切使わない。",
     },
     "3": {
         "name": "英検3級",
@@ -147,6 +147,41 @@ PROMPT = """\
 - テーマはあくまでもヒント。自然な英文になるなら多少ずれてもよい
 """
 
+PROMPT_5 = """\
+英検5級レベルの超簡単な読解問題を1問作成してください。
+
+## 形式（以下の2種類をランダムに選んで使うこと）
+A) 3文程度の短い英文（日常場面の説明文）
+B) 2人の短い会話文（A: 〜  B: 〜 形式）
+
+## 仕様
+- 語数: 20〜35語
+- テーマヒント: {theme}
+- テーマ例: 家族・食事・学校・ペット・日課・趣味・天気・買い物・スポーツ（超日常的なものだけ）
+- 語彙: 中学1年の最基本語彙のみ（難しい単語は絶対に使わない）
+- 文法: be動詞・一般動詞の現在形・過去形・疑問文のみ
+- 質問: 「What / Who / Where / When does〜?」レベルの簡単な内容確認問題
+
+## 出力形式（JSONのみ。説明文・コードブロック不要）
+{{
+  "passage": "英文（20〜35語）",
+  "japanese_translation": "日本語訳（原文に忠実に）",
+  "question": "英語の問題文（What / Who / Where 等で始まる）",
+  "choice_a": "選択肢A（2〜5語程度の短い答え）",
+  "choice_b": "選択肢B",
+  "choice_c": "選択肢C",
+  "choice_d": "選択肢D",
+  "answer": "正解（a / b / c / d のいずれか1文字・小文字）",
+  "reading_point": "日本語でのヒント（例：「〜という部分に注目！」）",
+  "evidence_text": "答えの根拠となる本文の一節（英語）"
+}}
+
+## 制約
+- 難しい単語・専門用語・抽象的な概念は絶対に使わない
+- 選択肢も短くシンプルに（名詞句・短文）
+- answer は小文字1文字（a / b / c / d）
+"""
+
 
 # ------------------------------------------------------------------ ユーティリティ
 def load_excel(path: str) -> list[dict]:
@@ -195,7 +230,10 @@ def parse_json(text: str) -> dict | None:
 def generate_one(client: anthropic.Anthropic, grade_key: str, theme: str,
                  next_id: int) -> dict | None:
     spec = GRADE_SPECS[grade_key]
-    prompt = PROMPT.format(theme=theme, **spec)
+    if grade_key == "5":
+        prompt = PROMPT_5.format(theme=theme)
+    else:
+        prompt = PROMPT.format(theme=theme, **spec)
 
     try:
         response = client.messages.create(
@@ -242,6 +280,8 @@ def main():
                         help="テーマを固定したい場合に指定（省略時はローテーション）")
     parser.add_argument("--output", default="英検速読トレーナー_DB_v1.xlsx",
                         help="出力先 Excel ファイル")
+    parser.add_argument("--replace", action="store_true",
+                        help="指定した級の既存データを削除してから生成・保存する")
     args = parser.parse_args()
 
     grades = list(GRADE_SPECS.keys()) if args.grade == "all" else [args.grade]
@@ -260,12 +300,35 @@ def main():
     output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
     existing = load_excel(output_path)
 
+    if args.replace:
+        before = len(existing)
+        existing = [d for d in existing if str(d.get("eiken_grade","")).strip() not in grades
+                    or (len(grades) > 1 and str(d.get("eiken_grade","")).strip() not in grades)]
+        # gradeがpre2p(sub_level=2)の場合は eiken_grade=pre2 のsub_level=2を削除
+        def should_remove(d):
+            g_val = str(d.get("eiken_grade","")).strip()
+            sl    = str(d.get("sub_level","")).strip()
+            for gk in grades:
+                spec = GRADE_SPECS[gk]
+                if g_val == spec["eiken_grade"] and sl == str(spec["sub_level"]):
+                    return True
+            return False
+        existing = [d for d in load_excel(output_path) if not should_remove(d)]
+        print(f"[replace] {before - len(existing)}件削除 (残:{len(existing)}件)")
+
+    # IDを振り直す（全データ連番）
+
     new_passages: list[dict] = []
     theme_iter = itertools.cycle([args.theme] if args.theme else THEMES)
     def to_int(v):
         try: return int(v)
         except: return 0
     next_id = max((to_int(d.get("id", 0)) for d in existing), default=-1) + 1
+    if args.replace:
+        # 既存データのIDを0から振り直す
+        for i, d in enumerate(existing):
+            d["id"] = i
+        next_id = len(existing)
 
     for grade_key in grades:
         print(f"\n=== {GRADE_SPECS[grade_key]['name']} ({args.count}問) ===")
