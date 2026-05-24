@@ -8,6 +8,7 @@
 *.xlsx
 *.xls
 *.json
+!manifest.json
 *.zip
 *.csv
 

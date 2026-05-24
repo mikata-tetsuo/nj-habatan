@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>速トレ｜英検速読トレーナー</title>
+<link rel="apple-touch-icon" href="sokutore.png">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="速トレ">
+<meta name="theme-color" content="#1E3A8A">
 <style>
   /* ===== CSS変数 ===== */
   :root {
@@ -744,17 +750,17 @@
   .rank-tab.active { background:rgba(249,202,36,0.12); border-color:#f9ca24; color:#f9ca24; }
   .ranking-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px 12px; box-shadow:0 2px 10px rgba(0,0,0,0.06); }
   .ranking-list { max-height:65vh; overflow-y:auto; }
-  .rank-row { display:flex; align-items:center; gap:8px; padding:9px 4px; border-bottom:1px solid var(--border); }
-  .rank-row.rank-me { background:rgba(249,202,36,0.07); border-radius:8px; padding:9px 8px; }
-  .rank-num { font-size:1rem; font-weight:800; min-width:28px; text-align:center; color:var(--text3); }
+  .rank-row { display:flex; align-items:center; gap:12px; padding:14px 6px; border-bottom:1px solid var(--border); }
+  .rank-row.rank-me { background:rgba(249,202,36,0.07); border-radius:10px; padding:14px 10px; }
+  .rank-num { font-size:1.5rem; font-weight:800; min-width:36px; text-align:center; color:var(--text3); }
   .rank-num.top1 { color:#f9ca24; }
   .rank-num.top2 { color:#9CA3AF; }
   .rank-num.top3 { color:#B45309; }
-  .rank-avatar { width:28px; height:28px; border-radius:50%; object-fit:cover; background:var(--surface2); flex-shrink:0; }
-  .rank-name { flex:1; font-weight:600; font-size:0.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); }
-  .rank-score { font-weight:800; color:#f9ca24; font-size:0.9rem; white-space:nowrap; }
-  .ranking-empty { text-align:center; padding:40px 0; color:var(--text3); font-size:0.9rem; line-height:2; }
-  .ranking-loading { text-align:center; padding:32px 0; color:var(--text3); font-size:0.9rem; }
+  .rank-avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; background:var(--surface2); flex-shrink:0; }
+  .rank-name { flex:1; font-weight:600; font-size:1.1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); }
+  .rank-score { font-weight:800; color:#f9ca24; font-size:1.1rem; white-space:nowrap; }
+  .ranking-empty { text-align:center; padding:40px 0; color:var(--text3); font-size:1rem; line-height:2; }
+  .ranking-loading { text-align:center; padding:32px 0; color:var(--text3); font-size:1rem; }
   .ranking-login-hint { text-align:center; padding:14px; background:rgba(249,202,36,0.06); border-radius:12px; margin-top:12px; font-size:0.83rem; color:var(--text2); }
 
   /* ===== TICKER ===== */
@@ -778,53 +784,51 @@
   /* ===== AUTH HEADER 2 ===== */
   .auth-header2 {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 14px; padding: 11px 14px; margin-bottom: 16px;
+    border-radius: 14px; padding: 10px 12px; margin-bottom: 16px;
     box-shadow: 0 1px 6px rgba(0,0,0,0.05);
   }
-  .auth-top-row {
-    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  .auth-top-row { display: none; } /* 旧2行レイアウト非表示 */
+  .auth-user-row2 {
+    display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
   }
   .auth-streak-chip {
-    display: inline-flex; align-items: center; gap: 3px;
+    display: inline-flex; align-items: center; flex-shrink: 0;
     background: rgba(232,160,32,0.13); border: 1px solid rgba(232,160,32,0.38);
     color: var(--goldDark); border-radius: 99px;
-    padding: 3px 12px; font-size: 0.78rem; font-weight: 700;
-  }
-  .auth-user-row2 {
-    display: flex; align-items: center; gap: 10px;
+    padding: 4px 10px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;
   }
   .auth-name-wrap {
     display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
   }
   .auth-name2 {
-    font-size: 1rem; font-weight: 700; color: var(--text);
+    font-size: 0.95rem; font-weight: 700; color: var(--text);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    max-width: 150px;
   }
   .btn-edit-name {
-    background: none; border: none; cursor: pointer; font-size: 1.05rem;
+    background: none; border: none; cursor: pointer; font-size: 1rem;
     padding: 2px 4px; border-radius: 6px; transition: background 0.2s; flex-shrink: 0;
   }
   .btn-edit-name:hover { background: rgba(0,0,0,0.07); }
   .btn-logout {
-    padding: 5px 12px; border-radius: 8px; flex-shrink: 0;
+    padding: 5px 10px; border-radius: 8px; flex-shrink: 0;
     border: 1px solid var(--borderMd); background: var(--surface2);
-    color: var(--text2); cursor: pointer; font-size: 0.8rem; font-weight: 600;
-    transition: all 0.2s;
+    color: var(--text2); cursor: pointer; font-size: 0.78rem; font-weight: 600;
+    transition: all 0.2s; white-space: nowrap;
   }
   .btn-logout:hover { border-color: #EF4444; color: #EF4444; background: rgba(239,68,68,0.06); }
 
   /* ===== HOME HERO ===== */
   .home-hero {
-    display: flex; align-items: center; gap: 14px; margin-bottom: 10px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 10px; margin-bottom: 10px; text-align: center;
   }
   .home-icon { flex-shrink: 0; }
   .home-title-text {}
   .home-app-name {
-    font-size: 2rem; font-weight: 900; line-height: 1.1;
+    font-size: 2.2rem; font-weight: 900; line-height: 1.1;
     background: linear-gradient(90deg, #E8A020, #F97316);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
   }
   .home-app-sub { font-size: 0.8rem; color: var(--text2); margin-top: 2px; }
 
@@ -885,19 +889,16 @@
       </div>
       <!-- ログイン後 -->
       <div id="authUserSection" style="display:none; width:100%">
-        <div class="auth-top-row">
+        <div class="auth-user-row2">
           <div class="auth-streak-chip" id="authStreakChip" style="display:none">
             <span id="authStreakChipText">1日連続ログイン中🔥</span>
           </div>
-          <div style="flex:1"></div>
-          <button class="btn-logout" id="btnLogout">ログアウト</button>
-        </div>
-        <div class="auth-user-row2">
-          <img id="authAvatar" class="auth-avatar" src="" alt="" style="display:none">
+          <img id="authAvatar" class="auth-avatar" src="" alt="" style="display:none; width:30px; height:30px; border-radius:50%; flex-shrink:0;">
           <div class="auth-name-wrap">
             <span class="auth-name2" id="authName">ユーザー</span>
             <button class="btn-edit-name" id="btnEditName" title="ニックネームを変更">✏️</button>
           </div>
+          <button class="btn-logout" id="btnLogout">ログアウト</button>
         </div>
       </div>
     </div>
@@ -905,7 +906,7 @@
     <!-- APP HERO -->
     <div class="home-hero">
       <div class="home-icon">
-        <img src="sokutore.png" alt="速トレ" width="62" height="62" style="border-radius:14px; display:block;">
+        <img src="sokutore.png" alt="速トレ" width="68" height="68" style="border-radius:16px; display:block; box-shadow:0 4px 16px rgba(30,58,138,0.25);">
       </div>
       <div class="home-title-text">
         <div class="home-app-name">速トレ</div>

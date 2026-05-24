@@ -1,0 +1,21 @@
+{
+  "name": "速トレ｜英語速読トレーナー",
+  "short_name": "速トレ",
+  "description": "英検速読トレーナー",
+  "start_url": "./sokutore.html",
+  "display": "standalone",
+  "background_color": "#EEE9E1",
+  "theme_color": "#1E3A8A",
+  "icons": [
+    {
+      "src": "sokutore.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "sokutore.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
