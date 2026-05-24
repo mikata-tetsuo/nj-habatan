@@ -155,48 +155,96 @@
 
   /* ===== STAGE DOT GRID (7/行) ===== */
   .stage-chapters { padding: 4px 0; }
-  .stage-row { margin-bottom: 16px; }
+
+  /* 行カード */
+  .stage-row {
+    margin-bottom: 10px;
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 12px 12px 14px;
+    border: 1.5px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .stage-row.row-done {
+    border-color: rgba(16,185,129,0.45);
+    background: rgba(16,185,129,0.04);
+  }
+  .stage-row.row-locked {
+    opacity: 0.55;
+  }
   .stage-row-header {
     display: flex; align-items: center; gap: 8px;
-    margin-bottom: 7px;
+    margin-bottom: 8px;
   }
   .stage-row-label {
-    font-size: 0.78rem; font-weight: 700; color: var(--text3);
-    text-transform: uppercase; letter-spacing: 1px; min-width: 36px;
+    font-size: 0.88rem; font-weight: 900; color: var(--text2);
+    min-width: 32px;
+  }
+  .row-progress-badge {
+    font-size: 0.72rem; font-weight: 700; color: var(--text3);
+    background: var(--surface2); border-radius: 20px; padding: 2px 8px;
   }
   .row-clear-badge {
-    font-size: 0.72rem; font-weight: 700; color: var(--goldDark);
-    background: rgba(232,160,32,0.12); border: 1px solid rgba(232,160,32,0.35);
-    border-radius: 20px; padding: 2px 8px; letter-spacing: 0.3px;
+    font-size: 0.72rem; font-weight: 800; color: #059669;
+    background: rgba(16,185,129,0.13); border: 1px solid rgba(16,185,129,0.4);
+    border-radius: 20px; padding: 2px 9px;
   }
+
+  /* 曜日ラベル行 */
+  .stage-day-labels {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+    margin-bottom: 5px;
+  }
+  .stage-day-label {
+    text-align: center; font-size: 0.62rem; font-weight: 700;
+    color: var(--text3); letter-spacing: 0.3px;
+  }
+
+  /* ドット */
   .stage-dot-grid {
     display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
   }
   .stage-dot {
     aspect-ratio: 1; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 0.82rem;
+    font-weight: 800; font-size: 1rem;
     border: 2px solid var(--borderMd);
     background: var(--surface2); color: var(--text3);
     cursor: default; transition: transform 0.18s, box-shadow 0.18s;
-    min-height: 36px;
+    min-height: 44px;
   }
+  /* 未挑戦・ロック */
+  .stage-dot.locked {
+    opacity: 0.25;
+    background: var(--surface2);
+  }
+  /* 挑戦可能 */
   .stage-dot.available {
-    background: linear-gradient(135deg, #FBBF24, #F97316);
-    border-color: var(--goldDark); color: #fff; cursor: pointer;
-    animation: stagePulse 2s infinite;
+    background: linear-gradient(145deg, #FBBF24, #F97316);
+    border-color: #E08A10; color: #fff; cursor: pointer;
+    box-shadow: 0 0 0 4px rgba(249,115,22,0.18), 0 4px 14px rgba(249,115,22,0.4);
+    animation: dotBounce 1.8s ease-in-out infinite;
   }
+  @keyframes dotBounce {
+    0%,100% { transform: translateY(0)   scale(1);    box-shadow: 0 0 0 4px rgba(249,115,22,0.18), 0 4px 14px rgba(249,115,22,0.38); }
+    50%      { transform: translateY(-4px) scale(1.07); box-shadow: 0 0 0 8px rgba(249,115,22,0.10), 0 8px 22px rgba(249,115,22,0.45); }
+  }
+  /* クリア済み */
   .stage-dot.cleared {
-    background: #10B981; border-color: #059669; color: #fff; cursor: pointer;
+    background: linear-gradient(145deg, #34D399, #10B981);
+    border-color: #059669; color: #fff; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(16,185,129,0.35);
   }
+  /* スピードクリア */
   .stage-dot.speed {
-    background: linear-gradient(135deg, #FBBF24, #F97316);
-    border-color: var(--goldDark); color: #1a1a2e; cursor: pointer;
+    background: linear-gradient(145deg, #FDE68A, #FBBF24, #F59E0B);
+    border-color: #D97706; color: #78350F; cursor: pointer;
+    box-shadow: 0 3px 12px rgba(251,191,36,0.55);
   }
-  .stage-dot.locked { opacity: 0.28; }
-  .stage-dot.available:hover,
-  .stage-dot.cleared:hover,
-  .stage-dot.speed:hover { transform: scale(1.1); box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+  .stage-dot.available:hover { transform: scale(1.12); animation: none; box-shadow: 0 0 0 6px rgba(249,115,22,0.22), 0 6px 20px rgba(249,115,22,0.5); }
+  .stage-dot.cleared:hover  { transform: scale(1.12); box-shadow: 0 5px 18px rgba(16,185,129,0.45); }
+  .stage-dot.speed:hover    { transform: scale(1.12); box-shadow: 0 5px 18px rgba(251,191,36,0.6); }
 
   /* ===== STAGE RESULT ===== */
   .stage-result-wrap { padding: 8px 0 24px; }
@@ -1062,6 +1110,8 @@ function backToGradeMap() {
   showScreen('gradeMapScreen');
 }
 
+const DAY_LABELS = ['月','火','水','木','金','土','日'];
+
 function buildStageMap() {
   const grade = currentGrade;
   $('stageMapGradeLabel').textContent = GRADE_LABEL[grade] || grade;
@@ -1074,16 +1124,33 @@ function buildStageMap() {
   for (let r = 0; r < nr; r++) {
     const rowCleared = isRowCleared(grade, r);
     const rowLocked  = r > 0 && !isRowCleared(grade, r - 1);
+    const clearedCnt = countRowCleared(grade, r);
+    const rowSz      = rowSize(grade, r);
 
     const rowEl = document.createElement('div');
-    rowEl.className = 'stage-row';
+    rowEl.className = 'stage-row' +
+      (rowCleared ? ' row-done' : '') +
+      (rowLocked  ? ' row-locked' : '');
 
-    // ヘッダー
+    // ヘッダー（週ラベル + 進捗バッジ or クリアバッジ）
     const hdr = document.createElement('div');
     hdr.className = 'stage-row-header';
-    hdr.innerHTML = `<span class="stage-row-label">週 ${r + 1}</span>` +
-      (rowCleared ? '<span class="row-clear-badge">⭐ 週クリア！</span>' : '');
+    const progressBadge = rowCleared
+      ? `<span class="row-clear-badge">🌟 週クリア！</span>`
+      : `<span class="row-progress-badge">${clearedCnt}/${rowSz}</span>`;
+    hdr.innerHTML = `<span class="stage-row-label">📅 週${r + 1}</span>${progressBadge}`;
     rowEl.appendChild(hdr);
+
+    // 曜日ラベル行
+    const dayLabels = document.createElement('div');
+    dayLabels.className = 'stage-day-labels';
+    for (let d = 0; d < rowSz; d++) {
+      const lbl = document.createElement('div');
+      lbl.className   = 'stage-day-label';
+      lbl.textContent = DAY_LABELS[d];
+      dayLabels.appendChild(lbl);
+    }
+    rowEl.appendChild(dayLabels);
 
     // ドットグリッド
     const grid = document.createElement('div');
@@ -1093,9 +1160,9 @@ function buildStageMap() {
     const end   = Math.min(start + ROW_SIZE, pp.length);
 
     for (let i = start; i < end; i++) {
-      const cleared  = isStageCleared(grade, i);
-      const speed    = isStageSpeedCleared(grade, i);
-      const prevOK   = i === 0 || isStageCleared(grade, i - 1);
+      const cleared   = isStageCleared(grade, i);
+      const speed     = isStageSpeedCleared(grade, i);
+      const prevOK    = i === 0 || isStageCleared(grade, i - 1);
       const available = !cleared && prevOK && !rowLocked;
       const locked    = !cleared && (!prevOK || rowLocked);
 
@@ -1105,19 +1172,21 @@ function buildStageMap() {
       else if (available) dotClass += ' available';
       else                dotClass += ' locked';
 
-      const dayNum = (i - start) + 1;  // 1〜7
-      let label = dayNum.toString();
-      if (speed)   label = '⭐';
-      else if (cleared) label = '✓';
+      const dayNum = (i - start) + 1;
+      let label;
+      if (speed)          label = '⭐';
+      else if (cleared)   label = '✓';
+      else if (available) label = '▶';
+      else                label = dayNum.toString();
 
       const dot = document.createElement('button');
       dot.className   = dotClass;
       dot.textContent = label;
       dot.disabled    = locked;
-      dot.title = locked  ? 'ロック中（前の週をクリアしてね）' :
-                  speed   ? `${dayNum}日目 — 速読クリア！` :
-                  cleared ? `${dayNum}日目 — クリア済み` :
-                            `${dayNum}日目にチャレンジ`;
+      dot.title = locked  ? '🔒 前の週をクリアしてね' :
+                  speed   ? `${dayNum}日目 ⭐ 速読クリア済み` :
+                  cleared ? `${dayNum}日目 ✓ クリア済み` :
+                            `${dayNum}日目に挑戦！`;
 
       if (!locked) dot.addEventListener('click', () => startStage(i));
       grid.appendChild(dot);
