@@ -3810,7 +3810,7 @@ function showQuestion() {
     qWordEl.style.cssText = '';
     qWordEl.textContent = q.word.en;
   } else {
-    const parts = q.word.ja.split('\n');
+    const parts = q.word.ja.split(/\n|　{2,}/);
     if (parts.length >= 2) {
       qWordEl.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:0.4em;';
       qWordEl.innerHTML = '<span>' + parts[0] + '</span>' +
@@ -3833,7 +3833,7 @@ function showQuestion() {
     btn.className = 'choice-btn';
     btn.dataset.wordId = c.id;
     if (dir === 'en2ja') {
-      const parts = c.ja.split('\n');
+      const parts = c.ja.split(/\n|　{2,}/);
       if (parts.length >= 2) {
         btn.style.flexDirection = 'column';
         btn.innerHTML = '<span>' + parts[0] + '</span>' +
@@ -4111,7 +4111,7 @@ function showResult() {
         '<span class="en">' + w.en + '</span>' +
         '<button class="miss-speak-btn" title="発音を聞く">🔊</button>' +
         '<span class="ja">' + (w.ja.includes('\n')
-          ? w.ja.split('\n')[0] + '<br><small style="font-weight:400;color:#718096;font-size:0.85em;">' + w.ja.split('\n').slice(1).join('<br>') + '</small>'
+          ? w.ja.split(/\n|　{2,}/)[0] + '<br><small style="font-weight:400;color:#718096;font-size:0.85em;">' + w.ja.split(/\n|　{2,}/).slice(1).join('<br>') + '</small>'
           : w.ja) + '</span>';
       d.querySelector('.miss-speak-btn').addEventListener('click', e => {
         e.stopPropagation();
@@ -4935,7 +4935,7 @@ function showPracticeCard(dir) {
   [enEl, jaEl].forEach(el => { el.classList.remove('slide-in','slide-in-left'); void el.offsetWidth; el.classList.add(cls); });
 
   enEl.textContent = w.en;
-  const jaParts = w.ja.split('\n');
+  const jaParts = w.ja.split(/\n|　{2,}/);
   if (jaParts.length >= 2) {
     jaEl.style.flexDirection = 'column';
     jaEl.innerHTML =
