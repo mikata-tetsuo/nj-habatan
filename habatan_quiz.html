@@ -1725,6 +1725,7 @@
       </div>
       <br>
       <button class="btn-news" id="btnNews">🆕 新着情報</button>
+      <button id="btnMute" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;opacity:0.7;" title="サウンドのオン/オフ">🔊</button>
     </div>
 
     <div id="userCountTeaser" style="display:none;text-align:center;margin:-8px 0 12px;"><span style="background:linear-gradient(90deg,#f59e0b,#ef4444);color:#fff;font-size:0.8rem;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:0.05em;" id="userCountTeaserText"></span></div>
@@ -2547,8 +2548,10 @@ function speakJa(text) {
 
 // ===== SOUND =====
 const AC = new (window.AudioContext || window.webkitAudioContext)();
+let _muted = localStorage.getItem('habitanMute') === '1';
 
 function playTone(freq, type, duration, vol, freqEnd) {
+  if (_muted) return;
   const osc = AC.createOscillator();
   const gain = AC.createGain();
   osc.connect(gain); gain.connect(AC.destination);
@@ -5566,6 +5569,15 @@ function renderNewsModal() {
     </div>
   `).join('');
 }
+
+const _muteBtn = document.getElementById('btnMute');
+function _updateMuteBtn() { _muteBtn.textContent = _muted ? '🔇' : '🔊'; }
+_updateMuteBtn();
+_muteBtn.addEventListener('click', () => {
+  _muted = !_muted;
+  localStorage.setItem('habitanMute', _muted ? '1' : '0');
+  _updateMuteBtn();
+});
 
 document.getElementById('btnNews').addEventListener('click', () => {
   renderNewsModal();
