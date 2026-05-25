@@ -1711,6 +1711,7 @@
         <img id="authAvatar" class="auth-avatar" src="" alt="">
         <span id="authName" class="auth-name"></span>
         <button id="btnEditNickname" class="btn-edit-nickname" title="ニックネームを変更">✏️</button>
+        <button id="btnInviteEntry" class="btn-edit-nickname" title="招待コードを入力" style="display:none;">🏫</button>
         <button id="btnLogout" class="btn-logout">ログアウト</button>
       </div>
     </div>
@@ -5623,6 +5624,8 @@ function updateAuthUI() {
     totalVal.textContent = total.toLocaleString();
     totalEl.style.display = 'flex';
     updateTestCardScore();
+    // 招待コードボタン：塾生未登録のときだけ表示
+    document.getElementById('btnInviteEntry').style.display = fbIsStudent ? 'none' : 'inline-block';
     // ランキングカード：ログイン済み → 通常表示
     document.getElementById('cardRanking').classList.remove('locked');
     document.getElementById('rankingCardDesc').textContent = 'みんなのスコアをチェックしよう！目指せ兵庫県、単語ナンバー1！';
@@ -5781,6 +5784,7 @@ async function submitInviteCode(skip) {
 
 document.getElementById('btnInviteSubmit').addEventListener('click', () => submitInviteCode(false));
 document.getElementById('btnInviteSkip').addEventListener('click',   () => submitInviteCode(true));
+document.getElementById('btnInviteEntry').addEventListener('click',  () => showInviteModal());
 document.getElementById('inviteInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitInviteCode(false); });
 
 document.getElementById('btnNicknameSave').addEventListener('click', saveNickname);
