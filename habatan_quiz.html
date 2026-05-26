@@ -4629,6 +4629,13 @@ function showChallengeMap() {
     block.appendChild(row);
     container.appendChild(block);
   }
+
+  // 次のステージへ自動スクロール
+  setTimeout(() => {
+    const targetDot = container.querySelector('.stage-dot.event-target')
+                    || container.querySelector('.stage-dot.current');
+    if (targetDot) targetDot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 250);
 }
 
 // ===== ステージ開始 =====
