@@ -557,13 +557,23 @@
   .event-map-screen .map-header { background: rgba(220,38,38,0.15); border-bottom: 1px solid rgba(252,129,129,0.3); }
   .event-map-screen .map-lv-title::before { content: '⚔️ '; }
   .stage-dot.event-target {
-    border-color: #fc8181 !important; color: #fc8181 !important;
-    background: rgba(252,129,129,0.15) !important;
+    border-color: #22d3ee !important; color: #22d3ee !important;
+    background: rgba(34,211,238,0.15) !important;
     animation: pulseEvent 1s ease-in-out infinite !important;
+    position: relative;
+  }
+  .stage-dot.event-target::before {
+    content: '▼ ここから！';
+    position: absolute;
+    top: -20px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.52rem; font-weight: 800;
+    color: #22d3ee; white-space: nowrap;
+    pointer-events: none;
   }
   @keyframes pulseEvent {
-    0%,100% { box-shadow: 0 0 0 0 rgba(252,129,129,0.7); transform: scale(1); }
-    50%      { box-shadow: 0 0 0 8px rgba(252,129,129,0); transform: scale(1.06); }
+    0%,100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.7); transform: scale(1); }
+    50%      { box-shadow: 0 0 0 8px rgba(34,211,238,0); transform: scale(1.06); }
   }
 
   /* ===== 討伐トースト ===== */
