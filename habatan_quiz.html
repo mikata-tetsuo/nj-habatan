@@ -3565,8 +3565,7 @@ async function renderTicker() {
     try {
       const wKey = getPeriodKey('weekly');
       const dKey = getPeriodKey('daily');
-      const snap = await fbDb.collection('rankings_overall')
-        .orderBy('score', 'desc').limit(200).get();
+      const snap = await fbDb.collection('rankings_overall').get();
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
       const wItems = docs.filter(d => d.w_key === wKey && (d.w_score||0) > 0)
@@ -6153,16 +6152,17 @@ async function renderRankingScreen() {
                   : rankingMode === 'challenge' ? 'rankings_challenge'
                   : 'rankings_test';
     const prevWKey = getPrevWeekKey();
-    const [snap, prevSnap] = await Promise.all([
-      fbDb.collection(colName).orderBy('score','desc').limit(200).get(),
-      fbDb.collection(colName).orderBy('w_score','desc').limit(10).get()
-    ]);
-    let items = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    // orderBy削除 → JS側でソート（インデックス不要）
+    const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+    const snap = await Promise.race([fbDb.collection(colName).get(), timeoutP]);
+    const allItems = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    let items = allItems;
 
     // 先週の週間上位3名を取得
     const prevChamps = new Map();
-    prevSnap.docs
-      .filter(d => d.data().w_key === prevWKey && (d.data().w_score||0) > 0)
+    allItems
+      .filter(d => d.w_key === prevWKey && (d.w_score||0) > 0)
+      .sort((a,b) => (b.w_score||0)-(a.w_score||0))
       .slice(0, 3)
       .forEach((d, i) => prevChamps.set(d.id, i + 1));
 
