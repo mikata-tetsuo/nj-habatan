@@ -3276,8 +3276,9 @@ const BOSS_TEST  = new URLSearchParams(location.search).get('bosstest') === '1';
 async function loadBossTotal() {
   if (typeof fbDb === 'undefined' || !fbDb) return 0;
   try {
-    const doc = await fbDb.collection('boss_events').doc(BOSS_EVENT_ID).get();
-    return doc.exists ? (doc.data().total || 0) : 0;
+    const snap = await fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
+      .collection('contributions').get();
+    return snap.docs.reduce((sum, d) => sum + (d.data().count || 0), 0);
   } catch(e) { return 0; }
 }
 
@@ -3412,10 +3413,12 @@ async function loadBossContribRanking() {
   try {
     const snap = await Promise.race([
       fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
-        .collection('contributions').orderBy('count','desc').limit(20).get(),
+        .collection('contributions').get(),
       timeoutP
     ]);
-    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const items = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.count || 0) - (a.count || 0));
     renderContribList(items, meEl, listEl);
   } catch(e) {
     console.error('Boss contrib ranking:', e);
@@ -3467,9 +3470,6 @@ async function addBossContrib() {
       count: prev + 1,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
-    // HP合計も更新
-    const eventRef = fbDb.collection('boss_events').doc(BOSS_EVENT_ID);
-    await eventRef.set({ total: firebase.firestore.FieldValue.increment(1) }, { merge: true });
     trackEvent('boss_damage', { event_id: BOSS_EVENT_ID });
   } catch(e) { console.error('Boss contrib:', e); }
 }
