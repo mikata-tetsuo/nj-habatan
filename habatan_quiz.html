@@ -3671,6 +3671,19 @@ document.getElementById('bossGoBtn').addEventListener('click', () => {
   const d = activeBtn.dataset.bossdiff;
   if (d === 'ji') { chJiMode = true; } else { chJiMode = false; currentDifficulty = d; }
   chLevel = 1;
+
+  // en2ja 全クリ済みなら ja2en に自動切替
+  const words = chGetWords(1);
+  const totalStages = Math.ceil(words.length / CH_STAGE);
+  const en2jaProg = chGetProg()[chProgKey(1, 'en2ja')];
+  let en2jaAllCleared = !!en2jaProg;
+  for (let i = 0; i < totalStages && en2jaAllCleared; i++) {
+    const s = en2jaProg && en2jaProg.stages && en2jaProg.stages[i];
+    if (!(s === true || (s && s.cleared))) en2jaAllCleared = false;
+  }
+  const targetDir = en2jaAllCleared ? 'ja2en' : 'en2ja';
+  document.querySelectorAll('input[name="chDirection"]').forEach(r => { r.checked = r.value === targetDir; });
+
   renderChallengeLevelScreen();
   showScreen('challengeMapScreen');
   showChallengeMap(1);
