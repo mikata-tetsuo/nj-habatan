@@ -3408,9 +3408,13 @@ async function loadBossContribRanking() {
   const meEl   = document.getElementById('bossContribMe');
   if (!listEl) return;
   if (typeof fbDb === 'undefined' || !fbDb) { renderContribList([], meEl, listEl); return; }
+  const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
   try {
-    const snap = await fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
-      .collection('contributions').orderBy('count','desc').limit(20).get();
+    const snap = await Promise.race([
+      fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
+        .collection('contributions').orderBy('count','desc').limit(20).get(),
+      timeoutP
+    ]);
     const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderContribList(items, meEl, listEl);
   } catch(e) {
