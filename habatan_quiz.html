@@ -576,6 +576,42 @@
     50%      { box-shadow: 0 0 0 8px rgba(34,211,238,0); transform: scale(1.06); }
   }
 
+  /* ===== ボスクリアカード ===== */
+  .boss-clear-card {
+    background: linear-gradient(135deg, rgba(249,202,36,0.18), rgba(240,147,43,0.1));
+    border: 2px solid rgba(249,202,36,0.6);
+    border-radius: 18px; padding: 20px 16px; text-align: center; margin-bottom: 16px;
+  }
+  .boss-clear-title {
+    font-size: 1.6rem; font-weight: 900; color: #f9ca24; letter-spacing: 2px;
+    animation: clearGlow 1.6s ease-in-out infinite;
+  }
+  @keyframes clearGlow {
+    0%,100% { text-shadow: 0 0 8px rgba(249,202,36,0.5); }
+    50%      { text-shadow: 0 0 24px rgba(249,202,36,1), 0 0 40px rgba(249,202,36,0.5); }
+  }
+  .boss-clear-sub { color: #e2e8f0; font-size: 0.88rem; margin: 6px 0 16px; }
+  .boss-clear-bonus-btn {
+    width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #f9ca24, #f0932b);
+    color: #1a1a2e; font-size: 1rem; font-weight: 900; letter-spacing: 1px;
+    animation: bonusPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes bonusPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(249,202,36,0.6); }
+    50%      { box-shadow: 0 0 0 10px rgba(249,202,36,0); }
+  }
+  .boss-clear-bonus-btn:disabled { animation: none; background: rgba(255,255,255,0.1); color: #a0aec0; cursor: default; }
+  .boss-clear-bonus-msg { font-size: 0.78rem; color: #68d391; margin-top: 8px; }
+  .boss-hp-bar.hp-cleared {
+    background: linear-gradient(90deg, #f9ca24, #f0932b) !important;
+    animation: hpClearGlow 1.8s ease-in-out infinite;
+  }
+  @keyframes hpClearGlow {
+    0%,100% { box-shadow: 0 2px 8px rgba(249,202,36,0.4); }
+    50%      { box-shadow: 0 2px 24px rgba(249,202,36,0.9); }
+  }
+
   /* ===== 討伐トースト ===== */
   .boss-toast {
     position: fixed; top: 50%; left: 50%;
@@ -2431,6 +2467,14 @@
         </div>
       </div>
 
+      <!-- ボスクリアカード（クリア時のみ表示） -->
+      <div class="boss-clear-card" id="bossClearCard" style="display:none;">
+        <div class="boss-clear-title">🎉 BOSS CLEARED!! 🎉</div>
+        <div class="boss-clear-sub">みんなで忽那先生を倒した！おめでとう！🏅</div>
+        <button class="boss-clear-bonus-btn" id="btnGetClearBonus">🎁 クリアボーナス +500pt を受け取る！</button>
+        <div class="boss-clear-bonus-msg" id="bossClearBonusMsg"></div>
+      </div>
+
       <!-- 貢献度ランキング -->
       <div class="boss-contrib-card">
         <div class="boss-contrib-label">⚔️ 今週の討伐ランキング</div>
@@ -3342,8 +3386,11 @@ function saveGrade(grade) {
 
 async function renderBossEventScreen() {
   const current = await loadBossTotal();
+  const isCleared = current >= BOSS_GOAL;
   const pct     = Math.min(current / BOSS_GOAL * 100, 100);
-  document.getElementById('bossHpBar').style.width = pct + '%';
+  const hpBar = document.getElementById('bossHpBar');
+  hpBar.style.width = pct + '%';
+  if (isCleared) hpBar.classList.add('hp-cleared');
   document.getElementById('bossHpCurrent').textContent = current;
   document.getElementById('bossSerif').textContent = getBossSerif(current, BOSS_GOAL);
   document.getElementById('bossCharaPanel').style.backgroundPosition = getBossPanelPos(current, BOSS_GOAL);
@@ -3364,7 +3411,13 @@ async function renderBossEventScreen() {
 
   const goBtn = document.getElementById('bossGoBtn');
   const mode = getBossMode();
-  if (mode === 'pre') {
+  if (isCleared) {
+    // クリア済み → クリアカード表示・討伐ボタン非表示
+    document.getElementById('bossClearCard').style.display = 'block';
+    document.getElementById('bossDiffCard').style.display = 'none';
+    goBtn.style.display = 'none';
+    setupBossClearBonusBtn();
+  } else if (mode === 'pre') {
     const daysLeft = Math.ceil((BOSS_START - new Date()) / (1000 * 60 * 60 * 24));
     goBtn.textContent = `🗓 イベント開始まで あと ${daysLeft} 日！`;
     goBtn.style.background = 'rgba(249,202,36,0.12)';
@@ -3389,7 +3442,6 @@ async function renderBossEventScreen() {
     goBtn.style = '';
   }
 
-
   // 予告モードは難易度・ランキングを非表示
   const diffCard    = document.getElementById('bossDiffCard');
   const contribCard = document.querySelector('.boss-contrib-card');
@@ -3397,7 +3449,7 @@ async function renderBossEventScreen() {
     if (diffCard)    diffCard.style.display = 'none';
     if (contribCard) contribCard.style.display = 'none';
   } else {
-    if (diffCard)    diffCard.style.display = 'block';
+    if (!isCleared && diffCard) diffCard.style.display = 'block';
     if (contribCard) contribCard.style.display = 'block';
     loadBossContribRanking();
   }
@@ -3484,14 +3536,98 @@ async function addBossContrib() {
   } catch(e) { console.error('Boss contrib:', e); }
 }
 
+// ===== クリアボーナス =====
+const BOSS_CLEAR_BONUS = 500; // 参加者全員クリアボーナスpt
+
+async function setupBossClearBonusBtn() {
+  const btn = document.getElementById('btnGetClearBonus');
+  const msg = document.getElementById('bossClearBonusMsg');
+  if (!btn) return;
+  if (!fbUser || !fbDb) {
+    btn.textContent = '🔒 ログインして受け取る';
+    btn.disabled = true;
+    return;
+  }
+  try {
+    const ref = fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
+      .collection('contributions').doc(fbUser.uid);
+    const doc = await ref.get();
+    if (!doc.exists) {
+      btn.textContent = '今回は未参加（次のイベントで！）';
+      btn.disabled = true;
+    } else if (doc.data().clearBonusGranted) {
+      btn.textContent = `✅ +${BOSS_CLEAR_BONUS}pt 受け取り済み！`;
+      btn.disabled = true;
+    } else {
+      btn.onclick = async () => {
+        btn.disabled = true;
+        btn.textContent = '⏳ 受け取り中...';
+        try {
+          await giveBossClearBonus();
+          btn.textContent = `✅ +${BOSS_CLEAR_BONUS}pt 受け取り完了！🎉`;
+          if (msg) msg.textContent = 'ランキングに反映されました！';
+        } catch(e) {
+          btn.disabled = false;
+          btn.textContent = `🎁 クリアボーナス +${BOSS_CLEAR_BONUS}pt を受け取る！`;
+          console.error('Clear bonus:', e);
+        }
+      };
+    }
+  } catch(e) { console.error('Clear bonus check:', e); }
+}
+
+async function giveBossClearBonus() {
+  if (!fbUser || !fbDb) return;
+  const contribRef = fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
+    .collection('contributions').doc(fbUser.uid);
+
+  // ボーナスpt → users.totalBonusPoints に加算
+  await fbDb.collection('users').doc(fbUser.uid).set(
+    { totalBonusPoints: firebase.firestore.FieldValue.increment(BOSS_CLEAR_BONUS) },
+    { merge: true }
+  );
+  fbBonusPts += BOSS_CLEAR_BONUS;
+  await updateOverallRanking();
+
+  // 上位5名なら自分にバッジ付与（セルフ方式）
+  await grantMyBadgeIfTop5();
+
+  // 付与済みフラグ
+  await contribRef.set({ clearBonusGranted: true }, { merge: true });
+}
+
+async function grantMyBadgeIfTop5() {
+  if (!fbUser || !fbDb) return;
+  try {
+    const snap = await fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
+      .collection('contributions').get();
+    const top5ids = snap.docs
+      .map(d => ({ id: d.id, count: d.data().count || 0 }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+      .map(d => d.id);
+    if (top5ids.includes(fbUser.uid)) {
+      const expiry = new Date('2026-06-08T23:59:59+09:00').toISOString();
+      await fbDb.collection('users').doc(fbUser.uid).set(
+        { eventBadge: { label: '⚔️ 討伐者', expiry } },
+        { merge: true }
+      );
+    }
+  } catch(e) { console.error('Badge grant:', e); }
+}
+
 // イベント終了後、上位5名にバッジを付与（管理者が手動実行 or Cloud Functions）
 async function grantEventBadges() {
   if (!fbDb) return;
   const snap = await fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
-    .collection('contributions').orderBy('count','desc').limit(5).get();
+    .collection('contributions').get();
+  const top5 = snap.docs
+    .map(d => ({ id: d.id, count: d.data().count || 0 }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
   const expiry = new Date('2026-06-08T23:59:59+09:00').toISOString();
-  for (const doc of snap.docs) {
-    await fbDb.collection('users').doc(doc.id).set({
+  for (const d of top5) {
+    await fbDb.collection('users').doc(d.id).set({
       eventBadge: { label: '⚔️ 討伐者', expiry }
     }, { merge: true });
   }
