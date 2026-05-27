@@ -3398,15 +3398,26 @@ async function renderBossEventScreen() {
   const grade   = loadGrade();
   const loggedIn = typeof fbUser !== 'undefined' && fbUser;
   const unlocked = loggedIn ? (GRADE_DIFF_UNLOCK[grade] || []) : [];
+  // アンロック済みの中で最も難しいものをデフォルト選択（全ボタンをactiveにしない）
+  const diffOrder = ['ji','beginner','normal','expert'];
+  const defaultDiff = [...unlocked].sort((a,b) => diffOrder.indexOf(b) - diffOrder.indexOf(a))[0] || null;
   document.querySelectorAll('.boss-diff-btn').forEach(btn => {
     const d = btn.dataset.bossdiff;
     if (unlocked.includes(d)) {
       btn.classList.remove('locked');
-      btn.classList.add('active');
+      // 現在activeなボタンが有効ならそのまま、なければデフォルトを選択
+      const hasActiveUnlocked = !!document.querySelector('.boss-diff-btn.active:not(.locked)');
+      if (!hasActiveUnlocked && d === defaultDiff) btn.classList.add('active');
+      else if (!unlocked.includes(btn.dataset.bossdiff)) btn.classList.remove('active');
     } else {
       btn.classList.add('locked');
       btn.classList.remove('active');
     }
+    // onclick で上書き（addEventListener 累積を防ぐ）
+    btn.onclick = unlocked.includes(d) ? () => {
+      document.querySelectorAll('.boss-diff-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    } : null;
   });
 
   const goBtn = document.getElementById('bossGoBtn');
@@ -3454,13 +3465,6 @@ async function renderBossEventScreen() {
     loadBossContribRanking();
   }
 
-  // 難易度選択
-  document.querySelectorAll('.boss-diff-btn:not(.locked)').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.boss-diff-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    });
-  });
 }
 
 // ===== 貢献度ランキング =====
@@ -3567,19 +3571,32 @@ async function setupBossClearBonusBtn() {
           btn.textContent = `✅ +${BOSS_CLEAR_BONUS}pt 受け取り完了！🎉`;
           if (msg) msg.textContent = 'ランキングに反映されました！';
         } catch(e) {
-          btn.disabled = false;
-          btn.textContent = `🎁 クリアボーナス +${BOSS_CLEAR_BONUS}pt を受け取る！`;
-          console.error('Clear bonus:', e);
+          if (e.message === 'already_granted') {
+            btn.textContent = `✅ +${BOSS_CLEAR_BONUS}pt 受け取り済み！`;
+          } else {
+            btn.disabled = false;
+            btn.textContent = `🎁 クリアボーナス +${BOSS_CLEAR_BONUS}pt を受け取る！`;
+            console.error('Clear bonus:', e);
+          }
         }
       };
     }
-  } catch(e) { console.error('Clear bonus check:', e); }
+  } catch(e) {
+    console.error('Clear bonus check:', e);
+    if (btn) { btn.disabled = true; btn.textContent = '⚠️ 読み込みエラー（再度開いてください）'; }
+  }
 }
 
 async function giveBossClearBonus() {
-  if (!fbUser || !fbDb) return;
+  if (!fbUser || !fbDb) throw new Error('ログインが必要です');
   const contribRef = fbDb.collection('boss_events').doc(BOSS_EVENT_ID)
     .collection('contributions').doc(fbUser.uid);
+
+  // 二重取り防止：付与済みフラグを先に立てる
+  const contribDoc = await contribRef.get();
+  if (!contribDoc.exists) throw new Error('未参加');
+  if (contribDoc.data().clearBonusGranted) throw new Error('already_granted');
+  await contribRef.set({ clearBonusGranted: true }, { merge: true });
 
   // ボーナスpt → users.totalBonusPoints に加算
   await fbDb.collection('users').doc(fbUser.uid).set(
@@ -3591,9 +3608,6 @@ async function giveBossClearBonus() {
 
   // 上位5名なら自分にバッジ付与（セルフ方式）
   await grantMyBadgeIfTop5();
-
-  // 付与済みフラグ
-  await contribRef.set({ clearBonusGranted: true }, { merge: true });
 }
 
 async function grantMyBadgeIfTop5() {
@@ -3701,7 +3715,8 @@ async function renderTicker() {
     try {
       const wKey = getPeriodKey('weekly');
       const dKey = getPeriodKey('daily');
-      const snap = await fbDb.collection('rankings_overall').get();
+      const _tickerTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000));
+      const snap = await Promise.race([fbDb.collection('rankings_overall').get(), _tickerTimeout]);
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
       const wItems = docs.filter(d => d.w_key === wKey && (d.w_score||0) > 0)
