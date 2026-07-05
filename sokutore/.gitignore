@@ -15,6 +15,14 @@
 # 環境変数（APIキー等）
 .env
 
+# 過去問（著作物・絶対に公開しない）
+eiken_kakomon/
+*.pdf
+
+# 生成キャッシュ・ログ
+__pycache__/
+*.log
+
 # システム
 .DS_Store
 Thumbs.db
