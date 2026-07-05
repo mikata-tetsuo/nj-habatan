@@ -2248,6 +2248,7 @@ $('btnNicknameSkip').addEventListener('click', () => { $('nicknameModal').style.
 
 $('btnGoogleLogin').addEventListener('click', () => {
   const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
   fbAuth.signInWithPopup(provider).catch(e => {
     console.error('Login popup:', e);
     // ポップアップが使えない環境（ホーム画面アプリ・アプリ内ブラウザ等）はリダイレクト方式で再試行
