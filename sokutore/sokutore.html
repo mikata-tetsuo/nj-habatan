@@ -1127,11 +1127,13 @@ const PASSAGES = [{"id":1,"type":"reading","eiken_grade":"5","sub_level":1,"pass
    CONFIG
 ======================================================== */
 const POINT_CONFIG = {
-  correct:    10,
-  speedBonus:  5,
-  combo3:      3,
-  combo5:      5,
+  correct: { '5':150, '4':200, '3':250, 'pre2':300, 'pre2p':350, '2':400, 'pre1':500, '1':600 },
+  speedRatio: 0.5,
 };
+function calcQuizPts(grade, isSpeed) {
+  const base = POINT_CONFIG.correct[grade] || 200;
+  return base + (isSpeed ? Math.round(base * POINT_CONFIG.speedRatio) : 0);
+}
 
 const GRADE_LABEL = {
   '5':    '5級',
@@ -1557,10 +1559,10 @@ function onAnswer(key) {
 
   // 正解なら即記録
   if (isCorrect) {
-    const pts = 10 + (isSpeed ? 5 : 0);
+    const pts = calcQuizPts(currentGrade, isSpeed);
     markStageCleared(currentGrade, currentStageIdx, isSpeed, pts);
     updateTotalPtsDisplay();
-    if (fbUser) syncQuizPtsToFirestore();
+    if (fbUser) { syncQuizPtsToFirestore(); markSokutoreTaskDone(); }
   }
 
   // 復習ボタン
@@ -2021,6 +2023,12 @@ function getTodayJST() {
     + String(jst.getMonth() + 1).padStart(2, '0') + '-'
     + String(jst.getDate()).padStart(2, '0');
 }
+function getYesterdayJST() {
+  const d = new Date();
+  const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9 * 60) * 60 * 1e3);
+  jst.setDate(jst.getDate() - 1);
+  return jst.getFullYear() + '-' + String(jst.getMonth() + 1).padStart(2, '0') + '-' + String(jst.getDate()).padStart(2, '0');
+}
 
 function calcLoginBonus(streak) {
   const table = [50, 70, 100, 120, 140, 160, 200, 220, 240, 300];
@@ -2100,6 +2108,33 @@ $('btnBonusClose').addEventListener('click', () => {
   $('loginBonusModal').style.display = 'none';
 });
 
+async function markSokutoreTaskDone() {
+  if (!fbUser) return;
+  const today = getTodayJST();
+  const localKey = 'sokutore_daily_' + fbUser.uid;
+  if (localStorage.getItem(localKey) === today) return;
+  localStorage.setItem(localKey, today);
+  try {
+    const ref = fbDb.collection('users').doc(fbUser.uid);
+    const doc = await ref.get();
+    const data = doc.data() || {};
+    const daily = data.daily || {};
+    const sameDay = daily.date === today;
+    if (sameDay && daily.sokutore) return;
+    const updates = { 'daily.date': today, 'daily.sokutore': true };
+    if (!sameDay) updates['daily.habatan'] = false;
+    const habatanDone = sameDay && !!daily.habatan;
+    if (habatanDone) {
+      const yesterday = getYesterdayJST();
+      const streak = data.lastPlayDate === yesterday ? (data.playStreak || 0) + 1 : 1;
+      updates['daily.completed'] = true;
+      updates.playStreak = streak;
+      updates.maxPlayStreak = Math.max(data.maxPlayStreak || 0, streak);
+      updates.lastPlayDate = today;
+    }
+    await ref.set(updates, { merge: true });
+  } catch(e) { localStorage.removeItem(localKey); console.error('Daily task:', e); }
+}
 async function syncQuizPtsToFirestore() {
   if (!fbUser) return;
   const pts = getTotalQuizPts();
