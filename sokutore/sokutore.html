@@ -852,18 +852,49 @@
     animation: newsPulse 1.5s infinite;
   }
 
-  /* ===== TOTAL PTS CARD ===== */
+  /* ===== TOTAL PTS CARD（コンパクト） ===== */
   .total-pts-card {
-    background: #FFFBF0; border: 2px solid rgba(232,160,32,0.28);
-    border-radius: 18px; padding: 16px 20px 18px; margin-bottom: 18px;
-    text-align: center; box-shadow: 0 2px 12px rgba(232,160,32,0.1);
+    background: #FFFBF0; border: 1.5px solid rgba(232,160,32,0.28);
+    border-radius: 14px; padding: 8px 16px; margin-bottom: 10px;
+    display: flex; align-items: baseline; justify-content: center; gap: 10px;
+    box-shadow: 0 1px 6px rgba(232,160,32,0.08);
   }
-  .total-pts-label { font-size: 0.75rem; color: var(--text3); font-weight: 600; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .total-pts-label { font-size: 0.78rem; color: var(--text3); font-weight: 600; letter-spacing: 0.6px; }
   .total-pts-num {
-    font-size: 3.4rem; font-weight: 900; line-height: 1;
-    color: var(--gold); letter-spacing: -1px;
+    font-size: 1.7rem; font-weight: 900; line-height: 1;
+    color: var(--gold); letter-spacing: -0.5px;
   }
-  .total-pts-suffix { font-size: 1.1rem; font-weight: 700; color: var(--goldDark); margin-left: 3px; }
+  .total-pts-suffix { font-size: 0.85rem; font-weight: 700; color: var(--goldDark); margin-left: 2px; }
+
+  /* ===== はばトレ連携バナー ===== */
+  .promo-banner {
+    display: block; text-decoration: none; cursor: pointer;
+    background: linear-gradient(135deg, rgba(34,211,238,0.12), rgba(59,130,246,0.16));
+    border: 2px solid rgba(34,211,238,0.55);
+    border-radius: 16px; padding: 12px 14px; margin-bottom: 18px;
+    transition: transform 0.15s, box-shadow 0.2s;
+    animation: promoPulse 2.4s ease-in-out infinite;
+  }
+  .promo-banner:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(34,211,238,0.25); }
+  @keyframes promoPulse {
+    0%,100% { border-color: rgba(34,211,238,0.55); }
+    50%      { border-color: rgba(59,130,246,0.75); }
+  }
+  .promo-title {
+    font-size: 0.8rem; font-weight: 700; color: #0e7490;
+    display: flex; align-items: center; gap: 5px; margin-bottom: 3px;
+  }
+  .promo-body { font-size: 0.98rem; font-weight: 900; color: #0369a1; margin-bottom: 7px; }
+  .promo-body b { color: #d97706; font-size: 1.15rem; }
+  .promo-cta-row { display: flex; gap: 8px; }
+  .promo-cta {
+    flex: 1; text-align: center; font-size: 0.78rem; font-weight: 700;
+    padding: 7px 6px; border-radius: 9px; text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .promo-cta:hover { opacity: 0.85; }
+  .promo-cta.habatan { background: #2563EB; color: #fff; }
+  .promo-cta.hp { background: rgba(255,255,255,0.85); color: #0e7490; border: 1px solid rgba(34,211,238,0.5); }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
@@ -928,9 +959,17 @@
 
     <!-- 総合ポイント -->
     <div class="total-pts-card">
-      <div class="total-pts-label">総合ポイント</div>
-      <div>
-        <span class="total-pts-num" id="totalPtsNum">0</span><span class="total-pts-suffix">pt</span>
+      <span class="total-pts-label">総合ポイント</span>
+      <span><span class="total-pts-num" id="totalPtsNum">0</span><span class="total-pts-suffix">pt</span></span>
+    </div>
+
+    <!-- はばトレ連携バナー -->
+    <div class="promo-banner">
+      <div class="promo-title">🚀 はばトレ連携キャンペーン</div>
+      <div class="promo-body">速トレ → はばトレ の順でプレイすると、はばトレのポイント <b>+10%</b>！</div>
+      <div class="promo-cta-row">
+        <a class="promo-cta habatan" href="../habatan_quiz.html">🕊 はばトレを開く</a>
+        <a class="promo-cta hp" href="https://akashi-nakatani-juku.jp/kentei/sokutore/" target="_blank" rel="noopener">🌐 くわしくはHPへ</a>
       </div>
     </div>
 
@@ -1561,7 +1600,7 @@ function onAnswer(key) {
     const pts = 10 + (isSpeed ? 5 : 0);
     markStageCleared(currentGrade, currentStageIdx, isSpeed, pts);
     updateTotalPtsDisplay();
-    if (fbUser) syncQuizPtsToFirestore();
+    if (fbUser) { syncQuizPtsToFirestore(); markSokutoreDaily(); }
   }
 
   // 復習ボタン
@@ -1836,6 +1875,11 @@ function triggerSparkles() {
    NEWS（新着情報・更新履歴）
 ======================================================== */
 const NEWS_ITEMS = [
+  {
+    date: '2026-07-05',
+    title: '🚀 はばトレ連携スタート！',
+    body: '速トレ → はばトレ の順でプレイすると、その日のはばトレ獲得ポイントが+10%にアップ！速トレで1問正解するだけでOK。長文も単語も、毎日ちょっとずつ鍛えよう💪',
+  },
   {
     date: '2026-07-05',
     title: '📚 準1級の英文を実際の英検レベルに調整',
@@ -2124,6 +2168,32 @@ async function syncQuizPtsToFirestore() {
     updateTotalPtsDisplay();
     submitToSokutoreRanking();
   } catch(e) { console.error('SyncQuizPts:', e); }
+}
+
+/* はばトレ連携：今日速トレをやったフラグ（はばトレ側で+10%バフ発動に使用） */
+let _dailyMarkedDate = null;
+async function markSokutoreDaily() {
+  if (!fbUser) return;
+  const today = getTodayJST();
+  if (_dailyMarkedDate === today) return;
+  _dailyMarkedDate = today;
+  try {
+    const ref = fbDb.collection('users').doc(fbUser.uid);
+    const doc = await ref.get();
+    const daily = (doc.data() || {}).daily || {};
+    if (daily.date === today && daily.sokutore) return;
+    const sameDay = daily.date === today;
+    if (doc.exists) {
+      const updates = { 'daily.date': today, 'daily.sokutore': true };
+      if (!sameDay) updates['daily.habatan'] = false;
+      await ref.update(updates);
+    } else {
+      await ref.set({ daily: { date: today, sokutore: true, habatan: false } }, { merge: true });
+    }
+  } catch(e) {
+    console.error('DailyMark:', e);
+    _dailyMarkedDate = null;
+  }
 }
 
 function getTotalQuizPts() {
