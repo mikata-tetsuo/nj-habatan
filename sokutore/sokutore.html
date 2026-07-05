@@ -894,6 +894,22 @@
   .promo-cta.habatan { background: #2563EB; color: #fff; }
   .promo-cta.hp { background: rgba(255,255,255,0.85); color: #0e7490; border: 1px solid rgba(34,211,238,0.5); }
 
+  /* ===== 難易度トグル ===== */
+  .diff-toggle { display: flex; gap: 6px; margin-bottom: 6px; }
+  .diff-btn {
+    flex: 1; padding: 8px 4px; border-radius: 10px;
+    border: 1.5px solid var(--borderMd); background: var(--surface);
+    color: var(--text3); font-weight: 700; font-size: 0.8rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .diff-btn.active[data-diff="beginner"] { border-color: #10B981; color: #059669; background: rgba(16,185,129,0.08); }
+  .diff-btn.active[data-diff="normal"]   { border-color: var(--gold); color: var(--goldDark); background: rgba(232,160,32,0.08); }
+  .diff-btn.active[data-diff="expert"]   { border-color: #EF4444; color: #DC2626; background: rgba(239,68,68,0.08); }
+  .diff-note {
+    text-align: center; font-size: 0.68rem; color: var(--text3);
+    margin-bottom: 12px;
+  }
+
   /* ===== アプリ切り替えFAB ===== */
   .app-switch-fab {
     position: fixed; right: 14px; bottom: 18px; z-index: 150;
@@ -990,6 +1006,12 @@
       <button class="mode-toggle-btn active" id="btnModeReading" onclick="setMode('reading')">📖 読解モード</button>
       <button class="mode-toggle-btn listen" id="btnModeListening" onclick="setMode('listening')">🎧 リスニングモード</button>
     </div>
+    <div class="diff-toggle" id="diffToggle">
+      <button class="diff-btn" data-diff="beginner" onclick="setDiffMode('beginner')">🐣 ビギナー</button>
+      <button class="diff-btn active" data-diff="normal" onclick="setDiffMode('normal')">🙂 ノーマル</button>
+      <button class="diff-btn" data-diff="expert" onclick="setDiffMode('expert')">🔥 エキスパート</button>
+    </div>
+    <div class="diff-note">目標時間・音声スピードが変わります（獲得ポイントはどのモードも同じ）</div>
     <div class="listen-options" id="listenOptions" style="display:none">
       <button class="listen-choices-toggle on" id="btnToggleChoices" onclick="toggleListenChoices()">
         <span id="listenChoicesIcon">👁</span> 選択肢を表示
@@ -1313,6 +1335,27 @@ let _currentSpeakBtn = null;
 let listenMode       = false;
 let listenShowChoices = true;
 
+/* 難易度モード（ポイントは全モード共通） */
+const DIFF_MODES = {
+  beginner: { label: 'ビギナー',     time: 1.5, rate: 0.7  },
+  normal:   { label: 'ノーマル',     time: 1.0, rate: 0.85 },
+  expert:   { label: 'エキスパート', time: 0.7, rate: 1.0  },
+};
+let diffMode = localStorage.getItem('sokutore_diff') || 'normal';
+if (!DIFF_MODES[diffMode]) diffMode = 'normal';
+function setDiffMode(m) {
+  diffMode = m;
+  localStorage.setItem('sokutore_diff', m);
+  document.querySelectorAll('#diffToggle .diff-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.diff === m));
+}
+function effTargetTime(q) {
+  return Math.max(5, Math.round(q.target_time_sec * DIFF_MODES[diffMode].time));
+}
+function effSpeechRate() {
+  return DIFF_MODES[diffMode].rate;
+}
+
 /* ========================================================
    UTILS
 ======================================================== */
@@ -1515,8 +1558,8 @@ function renderQuestion() {
   // Timer
   clearInterval(timerInterval);
   timerSec = 0;
-  updateTimerDisplay(q.target_time_sec);
-  timerInterval = setInterval(() => { timerSec++; updateTimerDisplay(q.target_time_sec); }, 1000);
+  updateTimerDisplay(effTargetTime(q));
+  timerInterval = setInterval(() => { timerSec++; updateTimerDisplay(effTargetTime(q)); }, 1000);
 
   // Passage
   $('passageBox').innerHTML = escapeHtml(q.passage);
@@ -1589,7 +1632,7 @@ function onAnswer(key) {
 
   const q         = GRADE_PASSAGES[currentGrade][currentStageIdx];
   const isCorrect = key === q.answer.toLowerCase();
-  const isSpeed   = timerSec <= q.target_time_sec;
+  const isSpeed   = timerSec <= effTargetTime(q);
   stageAnsweredOK = isCorrect;
 
   // 選択肢を色分け
@@ -1898,6 +1941,11 @@ function triggerSparkles() {
 const NEWS_ITEMS = [
   {
     date: '2026-07-05',
+    title: '🐣🔥 難易度モード登場！',
+    body: 'ビギナー・ノーマル・エキスパートの3モードを追加！目標時間と音声のスピードが変わります。獲得ポイントはどのモードでも同じなので、自分に合ったペースでOK♪',
+  },
+  {
+    date: '2026-07-05',
     title: '🚀 はばトレ連携スタート！',
     body: '速トレ → はばトレ の順でプレイすると、その日のはばトレ獲得ポイントが+10%にアップ！速トレで1問正解するだけでOK。長文も単語も、毎日ちょっとずつ鍛えよう💪',
   },
@@ -1999,6 +2047,7 @@ function openNews() {
 buildGradeMap();
 showScreen('gradeMapScreen');
 updateNewsBadge();
+setDiffMode(diffMode);
 
 /* ========================================================
    FIREBASE
@@ -2350,7 +2399,7 @@ function speakText(text, btn) {
   }
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = 'en-US';
-  utter.rate = 0.85;
+  utter.rate = effSpeechRate();
   const voice = getEnVoice();
   if (voice) utter.voice = voice;
   utter.onend   = () => { setSpeakBtnState(btn, false); _currentSpeakBtn = null; };
@@ -2407,7 +2456,7 @@ function speakAsync(text) {
     speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang  = 'en-US';
-    utter.rate  = 0.85;
+    utter.rate  = effSpeechRate();
     const voice = getEnVoice();
     if (voice) utter.voice = voice;
     utter.onend   = () => resolve();
