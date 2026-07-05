@@ -3,7 +3,7 @@
   "short_name": "速トレ",
   "description": "英検速読トレーナー",
   "start_url": "./sokutore.html",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#EEE9E1",
   "theme_color": "#1E3A8A",
   "icons": [
