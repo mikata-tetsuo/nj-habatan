@@ -894,6 +894,43 @@
   .promo-cta.habatan { background: #2563EB; color: #fff; }
   .promo-cta.hp { background: rgba(255,255,255,0.85); color: #0e7490; border: 1px solid rgba(34,211,238,0.5); }
 
+  /* ===== TYPING MODE ===== */
+  .mode-toggle-btn { font-size: 0.84rem; padding: 10px 4px; }
+  .mode-toggle-btn.active.typing {
+    background: linear-gradient(135deg,rgba(16,185,129,0.08),rgba(16,185,129,0.15));
+    border-color: #10B981; color: #059669;
+  }
+  .typing-mode-active .timer-card,
+  .typing-mode-active .passage-ctrl,
+  .typing-mode-active #passageBox,
+  .typing-mode-active .question-row,
+  .typing-mode-active #choicesDiv { display: none; }
+  .typing-area { margin-bottom: 14px; }
+  .typing-progress { font-weight: 800; color: var(--text2); margin-bottom: 4px; text-align: center; }
+  .typing-status { text-align: center; color: var(--text3); font-size: 0.83rem; margin-bottom: 10px; }
+  .typing-input {
+    width: 100%; padding: 13px 14px; font-size: 1rem; margin: 12px 0 10px;
+    border: 2px solid var(--borderMd); border-radius: 12px;
+    background: var(--surface); color: var(--text); outline: none;
+  }
+  .typing-input:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+  .typing-diff { margin-top: 12px; }
+  .typing-words {
+    background: var(--surface2); border-radius: 10px; padding: 12px 14px;
+    line-height: 2; font-size: 0.95rem; border: 1px solid var(--border);
+  }
+  .tw-ok { color: #059669; font-weight: 600; }
+  .tw-ng { color: #DC2626; letter-spacing: 1px; }
+  .typing-ok { color: #059669; font-weight: 800; margin-bottom: 6px; text-align: center; }
+  .typing-ng { color: #DC2626; font-weight: 700; margin-bottom: 6px; font-size: 0.85rem; text-align: center; }
+  .typing-reveal {
+    background: rgba(232,160,32,0.1); border: 1.5px dashed var(--gold);
+    border-radius: 10px; padding: 10px 12px; color: var(--goldDark); font-weight: 600;
+  }
+  .typing-btn-row { display: flex; gap: 10px; }
+  .typing-btn-row .btn-next { flex: 2; padding: 12px; font-size: 1rem; }
+  .typing-btn-row .btn-map { flex: 1; padding: 12px; }
+
   /* ===== 難易度トグル ===== */
   .diff-toggle { display: flex; gap: 6px; margin-bottom: 6px; }
   .diff-btn {
@@ -1003,8 +1040,9 @@
 
     <!-- MODE TOGGLE -->
     <div class="mode-toggle">
-      <button class="mode-toggle-btn active" id="btnModeReading" onclick="setMode('reading')">📖 読解モード</button>
-      <button class="mode-toggle-btn listen" id="btnModeListening" onclick="setMode('listening')">🎧 リスニングモード</button>
+      <button class="mode-toggle-btn active" id="btnModeReading" onclick="setMode('reading')">📖 読解</button>
+      <button class="mode-toggle-btn listen" id="btnModeListening" onclick="setMode('listening')">🎧 リスニング</button>
+      <button class="mode-toggle-btn typing" id="btnModeTyping" onclick="setMode('typing')">✍️ 入力</button>
     </div>
     <div class="diff-toggle" id="diffToggle">
       <button class="diff-btn" data-diff="beginner" onclick="setDiffMode('beginner')">🐣 ビギナー</button>
@@ -1072,6 +1110,21 @@
     <div class="listen-play-bar">
       <div class="listen-audio-status idle" id="listenStatus">🎧 再生ボタンで音声を開始</div>
       <button class="btn-listen-play" id="btnListenPlay" onclick="startListenPlayback()">▶ 再生する</button>
+    </div>
+
+    <!-- Typing mode area -->
+    <div class="typing-area" id="typingArea" style="display:none">
+      <div class="typing-progress" id="typingProgress">ぶん 1 / 1</div>
+      <div class="typing-status">🎧 音声を聞いて、聞こえた英文をキーボードで入力しよう</div>
+      <button class="btn-listen-play" id="btnTypingPlay" onclick="typingPlay()">🔊 もう一度聞く</button>
+      <div class="typing-diff" id="typingDiff"></div>
+      <div id="typingInputRow">
+        <input type="text" id="typingInput" class="typing-input" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" placeholder="ここに英文を入力してEnter">
+        <div class="typing-btn-row">
+          <button class="btn-next" onclick="typingSubmit()">こたえあわせ ✓</button>
+          <button class="btn-map" onclick="typingShowAnswer()">答えを見る</button>
+        </div>
+      </div>
     </div>
 
     <!-- Passage -->
@@ -1335,7 +1388,10 @@ let timerInterval    = null;
 let answered         = false;
 let _currentSpeakBtn = null;
 let listenMode       = false;
+let typingMode       = false;
 let listenShowChoices = true;
+let typingSentences  = [];
+let typingIdx        = 0;
 
 /* 難易度モード（ポイントは全モード共通） */
 const DIFF_MODES = {
@@ -1596,20 +1652,120 @@ function renderQuestion() {
   $('btnTranslation').classList.remove('open');
   $('btnEvidence').classList.remove('open');
 
-  // Listening mode
+  // Mode-specific setup
   const qScreen = $('questionScreen');
+  qScreen.classList.toggle('listen-mode-active', listenMode);
+  qScreen.classList.toggle('typing-mode-active', typingMode);
+  $('typingArea').style.display = typingMode ? 'block' : 'none';
   if (listenMode) {
-    qScreen.classList.add('listen-mode-active');
     $('choicesDiv').classList.toggle('choices-hidden', !listenShowChoices);
     $('listenStatus').textContent = '🎧 再生ボタンで音声を開始';
     $('listenStatus').className = 'listen-audio-status idle';
     $('btnListenPlay').disabled = false;
     $('btnListenPlay').textContent = '▶ 再生する';
     setTimeout(startListenPlayback, 600);
+  } else if (typingMode) {
+    clearInterval(timerInterval);
+    startTyping(q);
   } else {
-    qScreen.classList.remove('listen-mode-active');
     $('choicesDiv').classList.remove('choices-hidden');
   }
+}
+
+/* ========================================================
+   TYPING MODE（ディクテーション）
+======================================================== */
+function splitSentences(text) {
+  return String(text).replace(/\s+/g, ' ').trim()
+    .split(/(?<=[.!?])\s+/).filter(t => t.trim().length > 0);
+}
+function normTyping(t) {
+  return String(t).toLowerCase()
+    .replace(/['\u2019]/g, '')
+    .replace(/[^a-z0-9 ]+/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+function startTyping(q) {
+  typingSentences = splitSentences(q.passage);
+  typingIdx = 0;
+  $('typingDiff').innerHTML = '';
+  $('typingInput').value = '';
+  $('typingInputRow').style.display = 'block';
+  updateTypingProgress();
+  setTimeout(typingPlay, 600);
+}
+function updateTypingProgress() {
+  $('typingProgress').textContent = 'ぶん ' + Math.min(typingIdx + 1, typingSentences.length) + ' / ' + typingSentences.length;
+}
+function typingPlay() {
+  const t = typingSentences[typingIdx];
+  if (t) { stopSpeech(); speakAsync(t); }
+}
+function typingShowAnswer() {
+  const t = typingSentences[typingIdx];
+  if (!t) return;
+  $('typingDiff').innerHTML = '<div class="typing-reveal">💡 ' + escapeHtml(t) + '</div>';
+  $('typingInput').focus();
+}
+function renderTypingDiff(user, target, ok) {
+  const twRaw = String(target).trim().split(/\s+/);
+  const uw    = normTyping(user).split(' ');
+  let html = ok
+    ? '<div class="typing-ok">⭕ せいかい！</div>'
+    : '<div class="typing-ng">✖ おしい！ ●●● の ばしょが ちがうよ</div>';
+  html += '<div class="typing-words">' + twRaw.map((w, i) => {
+    const hit = normTyping(w) === (uw[i] || '');
+    if (ok || hit) return '<span class="tw-ok">' + escapeHtml(w) + '</span>';
+    return '<span class="tw-ng">' + '●'.repeat(Math.min(8, Math.max(2, normTyping(w).length))) + '</span>';
+  }).join(' ') + '</div>';
+  $('typingDiff').innerHTML = html;
+}
+function typingSubmit() {
+  const target = typingSentences[typingIdx];
+  if (!target) return;
+  const user = $('typingInput').value;
+  if (!user.trim()) { $('typingInput').focus(); return; }
+  const ok = normTyping(user) === normTyping(target);
+  renderTypingDiff(user, target, ok);
+  if (ok) {
+    typingIdx++;
+    if (typingIdx >= typingSentences.length) {
+      typingComplete();
+      return;
+    }
+    playSound('correct');
+    $('typingInput').value = '';
+    updateTypingProgress();
+    setTimeout(typingPlay, 900);
+  } else {
+    playSound('wrong');
+    $('typingInput').focus();
+  }
+}
+function typingComplete() {
+  playSound('clear');
+  stageAnsweredOK = true;
+  $('typingInputRow').style.display = 'none';
+
+  const pts = calcQuizPts(currentGrade, false);
+  markStageCleared(currentGrade, currentStageIdx, false, pts);
+  updateTotalPtsDisplay();
+  if (fbUser) { syncQuizPtsToFirestore(); markSokutoreDaily(); }
+
+  const fb = $('feedbackDiv');
+  fb.className = 'feedback show correct-fb';
+  $('feedbackIcon').textContent = '🎉';
+  $('feedbackMsg').textContent  = 'ぜんぶ入力できた！ +' + pts + 'pt';
+  $('reviewBtns').style.display = 'flex';
+
+  const rowNum  = Math.floor(currentStageIdx / ROW_SIZE);
+  const btnNext = $('btnStageNext');
+  btnNext.textContent = isRowCleared(currentGrade, rowNum) ? '🎉 週クリア！' : '次の問題へ →';
+  btnNext.className   = 'btn-next';
+  $('stageActions').style.display = 'flex';
+
+  $('hudCleared').textContent = countRowCleared(currentGrade, rowNum) + '/' + rowSize(currentGrade, rowNum);
+  $('hudPts').textContent     = getTotalQuizPts().toLocaleString();
 }
 
 /* ========================================================
@@ -1947,6 +2103,11 @@ function triggerSparkles() {
    NEWS（新着情報・更新履歴）
 ======================================================== */
 const NEWS_ITEMS = [
+  {
+    date: '2026-07-06',
+    title: '✍️ 入力モード（ディクテーション）登場！',
+    body: '英文を耳で聞いて、キーボードで打ち込む新モード！1文ずつ音声を聞いて入力→全文打てたらクリア。リスニング×スペリング×タイピングをまとめて鍛えられます。まちがえた場所は●●●で表示されるので、何度でも聞き直してチャレンジ！',
+  },
   {
     date: '2026-07-05',
     title: '🧒 小学生向け 6級・7級 登場！',
@@ -2449,8 +2610,10 @@ if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !=
 ======================================================== */
 function setMode(mode) {
   listenMode = (mode === 'listening');
-  $('btnModeReading').classList.toggle('active', !listenMode);
+  typingMode = (mode === 'typing');
+  $('btnModeReading').classList.toggle('active', !listenMode && !typingMode);
   $('btnModeListening').classList.toggle('active', listenMode);
+  $('btnModeTyping').classList.toggle('active', typingMode);
   $('listenOptions').style.display = listenMode ? 'flex' : 'none';
 }
 
@@ -2649,6 +2812,10 @@ document.querySelectorAll('#rankPeriodTabs .rank-tab').forEach(tab => {
     rankingPeriod = tab.dataset.period;
     renderRankingScreen();
   });
+});
+
+$('typingInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); typingSubmit(); }
 });
 
 $('btnSpeakPassage').addEventListener('click', () => {
