@@ -1167,13 +1167,11 @@ const PASSAGES = [{"id":0,"type":"reading","eiken_grade":"3","sub_level":1,"pass
    CONFIG
 ======================================================== */
 const POINT_CONFIG = {
-  correct: { '5':150, '4':200, '3':250, 'pre2':300, 'pre2p':350, '2':400, 'pre1':500, '1':600 },
-  speedRatio: 0.5,
+  correct:    10,
+  speedBonus:  5,
+  combo3:      3,
+  combo5:      5,
 };
-function calcQuizPts(grade, isSpeed) {
-  const base = POINT_CONFIG.correct[grade] || 200;
-  return base + (isSpeed ? Math.round(base * POINT_CONFIG.speedRatio) : 0);
-}
 
 const GRADE_LABEL = {
   '5':    '5級',
@@ -1599,7 +1597,7 @@ function onAnswer(key) {
 
   // 正解なら即記録
   if (isCorrect) {
-    const pts = calcQuizPts(currentGrade, isSpeed);
+    const pts = 10 + (isSpeed ? 5 : 0);
     markStageCleared(currentGrade, currentStageIdx, isSpeed, pts);
     updateTotalPtsDisplay();
     if (fbUser) { syncQuizPtsToFirestore(); markSokutoreDaily(); }
@@ -2078,12 +2076,6 @@ function getTodayJST() {
     + String(jst.getMonth() + 1).padStart(2, '0') + '-'
     + String(jst.getDate()).padStart(2, '0');
 }
-function getYesterdayJST() {
-  const d = new Date();
-  const jst = new Date(d.getTime() + (d.getTimezoneOffset() + 9 * 60) * 60 * 1e3);
-  jst.setDate(jst.getDate() - 1);
-  return jst.getFullYear() + '-' + String(jst.getMonth() + 1).padStart(2, '0') + '-' + String(jst.getDate()).padStart(2, '0');
-}
 
 function calcLoginBonus(streak) {
   const table = [50, 70, 100, 120, 140, 160, 200, 220, 240, 300];
@@ -2188,22 +2180,12 @@ async function markSokutoreDaily() {
   try {
     const ref = fbDb.collection('users').doc(fbUser.uid);
     const doc = await ref.get();
-    const data = doc.data() || {};
-    const daily = data.daily || {};
+    const daily = (doc.data() || {}).daily || {};
     if (daily.date === today && daily.sokutore) return;
     const sameDay = daily.date === today;
     if (doc.exists) {
       const updates = { 'daily.date': today, 'daily.sokutore': true };
       if (!sameDay) updates['daily.habatan'] = false;
-      const habatanDone = sameDay && !!daily.habatan;
-      if (habatanDone) {
-        const yesterday = getYesterdayJST();
-        const streak = data.lastPlayDate === yesterday ? (data.playStreak || 0) + 1 : 1;
-        updates['daily.completed'] = true;
-        updates.playStreak = streak;
-        updates.maxPlayStreak = Math.max(data.maxPlayStreak || 0, streak);
-        updates.lastPlayDate = today;
-      }
       await ref.update(updates);
     } else {
       await ref.set({ daily: { date: today, sokutore: true, habatan: false } }, { merge: true });
@@ -2248,8 +2230,23 @@ $('btnNicknameSave').addEventListener('click', saveNickname);
 $('btnNicknameSkip').addEventListener('click', () => { $('nicknameModal').style.display = 'none'; });
 
 $('btnGoogleLogin').addEventListener('click', () => {
-  fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => console.error(e));
+  const provider = new firebase.auth.GoogleAuthProvider();
+  fbAuth.signInWithPopup(provider).catch(e => {
+    console.error('Login popup:', e);
+    // ポップアップが使えない環境（ホーム画面アプリ・アプリ内ブラウザ等）はリダイレクト方式で再試行
+    const retryCodes = [
+      'auth/popup-blocked',
+      'auth/operation-not-supported-in-this-environment',
+      'auth/internal-error',
+      'auth/web-storage-unsupported',
+    ];
+    if (e && retryCodes.includes(e.code)) {
+      fbAuth.signInWithRedirect(provider).catch(e2 => console.error('Login redirect:', e2));
+    }
+  });
 });
+// リダイレクト方式から戻ってきたときのログイン結果を取り込む
+fbAuth.getRedirectResult().catch(e => console.error('RedirectResult:', e));
 
 // ログアウト
 $('btnLogout').addEventListener('click', () => {
