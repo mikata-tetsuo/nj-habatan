@@ -893,6 +893,20 @@
   .promo-cta:hover { opacity: 0.85; }
   .promo-cta.habatan { background: #2563EB; color: #fff; }
   .promo-cta.hp { background: rgba(255,255,255,0.85); color: #0e7490; border: 1px solid rgba(34,211,238,0.5); }
+
+  /* ===== アプリ切り替えFAB ===== */
+  .app-switch-fab {
+    position: fixed; right: 14px; bottom: 18px; z-index: 150;
+    display: none; align-items: center; gap: 7px;
+    padding: 9px 16px 9px 10px; border-radius: 99px;
+    background: var(--surface); border: 2px solid #2563EB;
+    color: #2563EB; font-weight: 800; font-size: 0.85rem;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+    text-decoration: none; transition: transform 0.15s, box-shadow 0.2s;
+  }
+  .app-switch-fab img { width: 26px; height: 26px; border-radius: 7px; display: block; }
+  .app-switch-fab.show { display: flex; }
+  .app-switch-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37,99,235,0.4); }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
@@ -1152,6 +1166,11 @@
 <!-- 終了ボタン（fixed） -->
 <button class="btn-exit" id="btnExit" onclick="exitQuiz()">✕ 終了</button>
 
+<!-- はばトレ切り替えFAB（ホーム画面のみ表示） -->
+<a class="app-switch-fab show" id="appSwitchFab" href="../habatan_quiz.html">
+  <img src="../habatore.png" alt="">🕊 はばトレへ
+</a>
+
 <!-- スピードポップアップ -->
 <div class="speed-popup" id="speedPopup">⚡ スピードボーナス！</div>
 
@@ -1304,6 +1323,8 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
   $('btnExit').classList.toggle('show', id === 'questionScreen');
+  const fab = $('appSwitchFab');
+  if (fab) fab.classList.toggle('show', id === 'gradeMapScreen');
   window.scrollTo(0, 0);
 }
 function formatTime(sec) {
