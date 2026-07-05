@@ -2239,6 +2239,7 @@ async function saveNickname() {
     fbNickname = val;
     updateAuthUI();
     $('nicknameModal').style.display = 'none';
+    submitToSokutoreRanking(); // ランキングの表示名も即更新
   } catch(e) { console.error('Nickname:', e); }
 }
 $('nicknameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveNickname(); });
