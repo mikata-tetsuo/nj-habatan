@@ -286,6 +286,15 @@
   window.addEventListener('focus', function(){
     try { if (typeof fbUser !== 'undefined' && fbUser) checkSokutoreBuff(); } catch(e) {}
   });
+  // 「戻る」でのbfcache復元時もバフを再確認（リロード不要に）
+  window.addEventListener('pageshow', function(){
+    try {
+      if (typeof fbUser !== 'undefined' && fbUser) {
+        checkSokutoreBuff();
+        setTimeout(checkSokutoreBuff, 2000);
+      }
+    } catch(e) {}
+  });
   if (typeof showScreen === 'function') {
     var _orig = showScreen;
     showScreen = function(id){
