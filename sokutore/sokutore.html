@@ -1313,6 +1313,48 @@ function loadProgress() {
 }
 function saveProgress(p) {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+  try { scheduleProgressUpload(p); } catch(e) {}
+}
+
+/* 進捗のFirestore同期（sokutore_v2 <-> users/{uid}.sokutoreProgress） */
+let _progUpT = null;
+function scheduleProgressUpload(p) {
+  if (typeof fbUser === 'undefined' || !fbUser || typeof fbDb === 'undefined') return;
+  clearTimeout(_progUpT);
+  _progUpT = setTimeout(async () => {
+    try {
+      const str = JSON.stringify(p || loadProgress());
+      if (str.length > 900000) { console.warn('ProgUp: too large, skip'); return; }
+      await fbDb.collection('users').doc(fbUser.uid).set({ sokutoreProgress: str }, { merge: true });
+    } catch(e) { console.error('ProgUp:', e); }
+  }, 2000);
+}
+async function mergeProgressFromCloud(user) {
+  try {
+    const doc = await fbDb.collection('users').doc(user.uid).get();
+    const remoteStr = (doc.data() || {}).sokutoreProgress;
+    const local = loadProgress();
+    if (!remoteStr) {
+      if (Object.keys(local.cleared || {}).length) scheduleProgressUpload(local);
+      return;
+    }
+    const remote = JSON.parse(remoteStr);
+    const merged = Object.assign({}, local, { cleared: {}, pts: {} });
+    const rank = v => v === 'speed' ? 2 : (v ? 1 : 0);
+    new Set([...Object.keys(local.cleared || {}), ...Object.keys(remote.cleared || {})]).forEach(k => {
+      const a = (local.cleared || {})[k], b = (remote.cleared || {})[k];
+      const best = rank(a) >= rank(b) ? a : b;
+      if (best) merged.cleared[k] = best;
+    });
+    new Set([...Object.keys(local.pts || {}), ...Object.keys(remote.pts || {})]).forEach(k => {
+      const v = Math.max((local.pts || {})[k] || 0, (remote.pts || {})[k] || 0);
+      if (v > 0) merged.pts[k] = v;
+    });
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(merged));
+    if (JSON.stringify(merged) !== remoteStr) scheduleProgressUpload(merged);
+    buildGradeMap();
+    updateTotalPtsDisplay();
+  } catch(e) { console.error('ProgSync:', e); }
 }
 function stageKey(grade, idx) { return grade + '_' + idx; }
 function isStageCleared(grade, idx) {
@@ -2240,6 +2282,7 @@ fbAuth.onAuthStateChanged(async user => {
   fbUser = user;
   if (user) {
     await loadUserData(user);
+    await mergeProgressFromCloud(user);
     updateAuthUI();
     checkLoginBonus(user);
     syncQuizPtsToFirestore();
