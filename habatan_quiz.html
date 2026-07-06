@@ -150,7 +150,7 @@
 (function(){
   if (typeof showQuestion !== 'function') return;
   var box = null, inp = null, fb = null, slotsEl = null;
-  var target = '', letters = '', typed = '', savedTL = null;
+  var target = '', letters = '', typed = '', savedTL = null, savedST = null;
 
   function lettersOnly(t){ return String(t).toLowerCase().replace(/[^a-z0-9]/g,''); }
   function buildTarget(en){
@@ -247,11 +247,18 @@
       inp.disabled = false;
       inp.value = '';
       renderSlots();
-      // 文字数に応じて制限時間を調整（3秒＋1文字0.9秒・最低6秒）
+      // 文字数連動の制限時間（2秒＋1文字0.7秒）×難易度係数。スピードしきい値は50%で神速対応
       try {
-        if (typeof TIME_LIMIT !== 'undefined' && TIME_LIMIT > 0) {
+        if (typeof TIME_LIMIT !== 'undefined' && TIME_LIMIT > 0 && TIME_LIMIT < 900) {
           if (savedTL === null) savedTL = TIME_LIMIT;
-          TIME_LIMIT = Math.max(6, Math.round(3 + letters.length * 0.9));
+          if (savedST === null && typeof SPEED_THRESHOLD !== 'undefined') savedST = SPEED_THRESHOLD;
+          var factor = 1;
+          try {
+            var d = DIFFICULTIES[currentDifficulty];
+            if (d && !d.noTimer && d.timeLimit) factor = d.timeLimit / 4;
+          } catch(e2) {}
+          TIME_LIMIT = Math.max(4, Math.round((2 + letters.length * 0.7) * factor));
+          if (typeof SPEED_THRESHOLD !== 'undefined') SPEED_THRESHOLD = Math.max(2, Math.round(TIME_LIMIT * 5) / 10);
         }
       } catch(e) {}
       setTimeout(function(){ inp.focus(); }, 80);
@@ -260,6 +267,7 @@
       choices.style.display = '';
       try {
         if (savedTL !== null && typeof TIME_LIMIT !== 'undefined') { TIME_LIMIT = savedTL; savedTL = null; }
+        if (savedST !== null && typeof SPEED_THRESHOLD !== 'undefined') { SPEED_THRESHOLD = savedST; savedST = null; }
       } catch(e) {}
     }
   };
