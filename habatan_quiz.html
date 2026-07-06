@@ -150,7 +150,7 @@
 (function(){
   if (typeof showQuestion !== 'function') return;
   var box = null, inp = null, fb = null, slotsEl = null;
-  var target = '', letters = '', typed = '', savedTL = null, savedST = null;
+  var target = '', letters = '', typed = '', savedTL = null, savedST = null, inputLocked = false;
 
   function lettersOnly(t){ return String(t).toLowerCase().replace(/[^a-z0-9]/g,''); }
   function buildTarget(en){
@@ -186,7 +186,7 @@
     document.addEventListener('keydown', function(e){
       if (isTouch) return;
       if (!isTyping()) return;
-      if (!box || box.style.display === 'none' || inp.disabled) return;
+      if (!box || box.style.display === 'none' || inputLocked) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       var gs = document.getElementById('gameScreen');
       if (!gs || !gs.classList.contains('active')) return;
@@ -227,7 +227,7 @@
   }
 
   function onInput(){
-    if (typeof answered !== 'undefined' && answered) { inp.value = typed; return; }
+    if (inputLocked || (typeof answered !== 'undefined' && answered)) { inp.value = ''; return; }
     var v = lettersOnly(inp.value);
     if (letters.indexOf(v) === 0) {
       typed = v;
@@ -252,15 +252,16 @@
   function complete(){
     var q = questions[current];
     fb.innerHTML = '<span class="ct-ok">&#11093; ' + q.word.en + '</span>';
-    inp.disabled = true;
+    inputLocked = true;
     fire(true, q);
   }
   function pass(){
     if (typeof answered !== 'undefined' && answered) return;
     var q = questions[current];
     fb.innerHTML = '<span class="ct-ng">&#10006; こたえ: <b>' + q.word.en + '</b></span>';
-    inp.disabled = true;
+    inputLocked = true;
     fire(false, q);
+    if (isTouch) inp.focus();
   }
 
   var _origShowQ = showQuestion;
@@ -276,7 +277,7 @@
       choices.style.display = 'none';
       box.style.display = 'block';
       fb.innerHTML = '';
-      inp.disabled = false;
+      inputLocked = false;
       inp.value = '';
       renderSlots();
       // 文字数連動の制限時間（2秒＋1文字0.7秒）×難易度係数。スピードしきい値は50%で神速対応
