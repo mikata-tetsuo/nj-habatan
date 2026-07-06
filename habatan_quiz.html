@@ -166,7 +166,8 @@
     box = document.createElement('div');
     box.id = 'chTypeBox';
     box.innerHTML = '<div class="ct-slots" id="ctSlots"></div>' +
-      '<input type="text" id="chTypeInput" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" placeholder="ここに入力（正しい文字だけ進める！）">' +
+      '<input type="text" id="chTypeInput" pattern="[a-zA-Z0-9]*" lang="en" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" placeholder="ここに入力（正しい文字だけ進める！）">' +
+      '<div id="chTypeHint" style="display:none;text-align:center;color:#64748b;font-size:.85rem;font-weight:700;padding:8px 0;">⌨️ そのままキーボードで入力！（日本語入力オフ不要）</div>' +
       '<div id="chTypeFb"></div>' +
       '<div class="ct-row"><button id="chTypePass">わからない</button></div>';
     choices.parentNode.insertBefore(box, choices.nextSibling);
@@ -176,6 +177,37 @@
     box.querySelector('#chTypePass').onclick = pass;
     inp.addEventListener('input', onInput);
     inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') e.preventDefault(); });
+    // PC（物理キーボード）は入力欄なしでキーを直接拾う → IMEが発動しない
+    isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if (!isTouch) {
+      inp.style.display = 'none';
+      box.querySelector('#chTypeHint').style.display = 'block';
+    }
+    document.addEventListener('keydown', function(e){
+      if (isTouch) return;
+      if (!isTyping()) return;
+      if (!box || box.style.display === 'none' || inp.disabled) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      var gs = document.getElementById('gameScreen');
+      if (!gs || !gs.classList.contains('active')) return;
+      if (typeof answered !== 'undefined' && answered) return;
+      if (/^[a-zA-Z0-9]$/.test(e.key)) {
+        e.preventDefault();
+        tryChar(e.key.toLowerCase());
+      }
+    }, true);
+  }
+  var isTouch = false;
+  function tryChar(c){
+    if (letters[typed.length] === c) {
+      typed += c;
+      renderSlots();
+      if (typed === letters) complete();
+    } else {
+      slotsEl.classList.remove('ct-shake');
+      void slotsEl.offsetWidth;
+      slotsEl.classList.add('ct-shake');
+    }
   }
 
   function renderSlots(){
@@ -261,7 +293,7 @@
           if (typeof SPEED_THRESHOLD !== 'undefined') SPEED_THRESHOLD = Math.max(2, Math.round(TIME_LIMIT * 5) / 10);
         }
       } catch(e) {}
-      setTimeout(function(){ inp.focus(); }, 80);
+      if (isTouch) setTimeout(function(){ inp.focus(); }, 80);
     } else {
       if (box) box.style.display = 'none';
       choices.style.display = '';
