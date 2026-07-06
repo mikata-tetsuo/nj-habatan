@@ -131,82 +131,136 @@
 })();
 </script> <style>
 #chTypeBox{display:none;margin-top:14px;}
-#chTypeInput{width:100%;box-sizing:border-box;padding:14px;font-size:1.1rem;border:2px solid #cbd5e1;border-radius:12px;outline:none;background:#fff;color:#111827;}
+.ct-slots{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:12px;min-height:48px;}
+.ct-slot{min-width:30px;height:46px;border-bottom:3px solid #94a3b8;font-size:1.45rem;font-weight:900;display:flex;align-items:center;justify-content:center;color:#0f172a;background:#f8fafc;border-radius:8px 8px 0 0;padding:0 2px;}
+.ct-slot.done{color:#059669;border-color:#10b981;background:#ecfdf5;}
+.ct-slot.sep{border:none;background:none;min-width:12px;color:#94a3b8;font-size:1rem;}
+.ct-shake{animation:ctShake .18s;}
+@keyframes ctShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+#chTypeInput{width:100%;box-sizing:border-box;padding:12px;font-size:1.05rem;border:2px solid #cbd5e1;border-radius:12px;outline:none;background:#fff;color:#111827;text-align:center;}
 #chTypeInput:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.15);}
-#chTypeFb{min-height:42px;text-align:center;font-weight:800;padding:9px 0;font-size:1.05rem;}
+#chTypeFb{min-height:38px;text-align:center;font-weight:800;padding:8px 0;font-size:1.05rem;}
 #chTypeFb .ct-ok{color:#059669;}
 #chTypeFb .ct-ng{color:#dc2626;}
-.ct-row{display:flex;gap:10px;}
-#chTypeGo{flex:2;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;font-size:1rem;cursor:pointer;}
-#chTypePass{flex:1;padding:13px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#64748b;font-weight:700;cursor:pointer;}
+.ct-row{display:flex;gap:10px;margin-top:6px;}
+#chTypePass{flex:1;padding:12px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#64748b;font-weight:700;cursor:pointer;}
 </style><script>
-/* チャレンジ「タイピング（日→英）」方向: 選択肢を隠しキーボード入力で回答。
-   判定後は該当ボタンをプログラム的にクリックして既存エンジン（スコア/コンボ/タイマー/進捗）をそのまま利用 */
+/* チャレンジ「タイピング（日→英）」寿司打方式:
+   □で文字数を表示・正しい文字だけ入力可・打ち切ったら自動正解・制限時間は文字数連動 */
 (function(){
   if (typeof showQuestion !== 'function') return;
-  var box = null, inp = null, fb = null;
-  function tNorm(t){ return String(t).toLowerCase().replace(/['\u2019.]/g,'').replace(/\s+/g,' ').trim(); }
-  function acceptSet(en){
-    var o = {}; o[tNorm(en)] = 1;
-    o[tNorm(String(en).replace(/\([^)]*\)/g,' '))] = 1;
-    var m = String(en).match(/\(([^)]*)\)/); if (m) o[tNorm(m[1])] = 1;
-    delete o['']; return o;
+  var box = null, inp = null, fb = null, slotsEl = null;
+  var target = '', letters = '', typed = '', savedTL = null;
+
+  function lettersOnly(t){ return String(t).toLowerCase().replace(/[^a-z0-9]/g,''); }
+  function buildTarget(en){
+    var base = String(en).replace(/\([^)]*\)/g, ' ').trim();
+    if (!lettersOnly(base)) base = String(en);
+    return base.toLowerCase();
   }
   function isTyping(){ return (window._direction || 'en2ja') === 'typing'; }
+
   function ensureBox(){
     if (box) return;
     var choices = document.getElementById('choices');
     box = document.createElement('div');
     box.id = 'chTypeBox';
-    box.innerHTML = '<input type="text" id="chTypeInput" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" placeholder="えいごを入力してEnter">' +
+    box.innerHTML = '<div class="ct-slots" id="ctSlots"></div>' +
+      '<input type="text" id="chTypeInput" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" placeholder="ここに入力（正しい文字だけ進める！）">' +
       '<div id="chTypeFb"></div>' +
-      '<div class="ct-row"><button id="chTypeGo">こたえる</button><button id="chTypePass">わからない</button></div>';
+      '<div class="ct-row"><button id="chTypePass">わからない</button></div>';
     choices.parentNode.insertBefore(box, choices.nextSibling);
     inp = box.querySelector('#chTypeInput');
-    fb  = box.querySelector('#chTypeFb');
-    box.querySelector('#chTypeGo').onclick = submit;
+    fb = box.querySelector('#chTypeFb');
+    slotsEl = box.querySelector('#ctSlots');
     box.querySelector('#chTypePass').onclick = pass;
-    inp.addEventListener('keydown', function(e){
-      if (e.key === 'Enter') { e.preventDefault(); submit(); }
-    });
+    inp.addEventListener('input', onInput);
+    inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') e.preventDefault(); });
   }
+
+  function renderSlots(){
+    var html = '';
+    var li = 0;
+    for (var i = 0; i < target.length; i++) {
+      var c = target[i];
+      if (/[a-z0-9]/.test(c)) {
+        var done = li < typed.length;
+        html += '<div class="ct-slot' + (done ? ' done' : '') + '">' + (done ? c : '&#9633;') + '</div>';
+        li++;
+      } else {
+        html += '<div class="ct-slot sep">' + (c === ' ' ? '&nbsp;' : c) + '</div>';
+      }
+    }
+    slotsEl.innerHTML = html;
+  }
+
+  function onInput(){
+    if (typeof answered !== 'undefined' && answered) { inp.value = typed; return; }
+    var v = lettersOnly(inp.value);
+    if (letters.indexOf(v) === 0) {
+      typed = v;
+      inp.value = typed;
+      renderSlots();
+      if (typed === letters) complete();
+    } else {
+      inp.value = typed;
+      slotsEl.classList.remove('ct-shake');
+      void slotsEl.offsetWidth;
+      slotsEl.classList.add('ct-shake');
+    }
+  }
+
   function fire(ok, q){
     var btns = Array.prototype.slice.call(document.querySelectorAll('#choices .choice-btn'));
-    var target = ok
+    var t = ok
       ? btns.filter(function(b){ return b.dataset.wordId == String(q.word.id); })[0]
       : btns.filter(function(b){ return b.dataset.wordId != String(q.word.id); })[0];
-    fb.innerHTML = ok
-      ? '<span class="ct-ok">⭕ ' + q.word.en + '</span>'
-      : '<span class="ct-ng">✖ こたえ: <b>' + q.word.en + '</b></span>';
-    inp.disabled = true;
-    if (target) target.click();
+    if (t) t.click();
   }
-  function submit(){
-    if (typeof answered !== 'undefined' && answered) return;
+  function complete(){
     var q = questions[current];
-    var u = tNorm(inp.value);
-    if (!u) { inp.focus(); return; }
-    fire(!!acceptSet(q.word.en)[u], q);
+    fb.innerHTML = '<span class="ct-ok">&#11093; ' + q.word.en + '</span>';
+    inp.disabled = true;
+    fire(true, q);
   }
   function pass(){
     if (typeof answered !== 'undefined' && answered) return;
-    fire(false, questions[current]);
+    var q = questions[current];
+    fb.innerHTML = '<span class="ct-ng">&#10006; こたえ: <b>' + q.word.en + '</b></span>';
+    inp.disabled = true;
+    fire(false, q);
   }
+
   var _origShowQ = showQuestion;
   showQuestion = function(){
     _origShowQ.apply(this, arguments);
     var choices = document.getElementById('choices');
     if (isTyping()) {
       ensureBox();
+      var q = questions[current];
+      target = buildTarget(q.word.en);
+      letters = lettersOnly(target);
+      typed = '';
       choices.style.display = 'none';
       box.style.display = 'block';
       fb.innerHTML = '';
       inp.disabled = false;
       inp.value = '';
+      renderSlots();
+      // 文字数に応じて制限時間を調整（3秒＋1文字0.9秒・最低6秒）
+      try {
+        if (typeof TIME_LIMIT !== 'undefined' && TIME_LIMIT > 0) {
+          if (savedTL === null) savedTL = TIME_LIMIT;
+          TIME_LIMIT = Math.max(6, Math.round(3 + letters.length * 0.9));
+        }
+      } catch(e) {}
       setTimeout(function(){ inp.focus(); }, 80);
-    } else if (box) {
-      box.style.display = 'none';
+    } else {
+      if (box) box.style.display = 'none';
       choices.style.display = '';
+      try {
+        if (savedTL !== null && typeof TIME_LIMIT !== 'undefined') { TIME_LIMIT = savedTL; savedTL = null; }
+      } catch(e) {}
     }
   };
 })();
