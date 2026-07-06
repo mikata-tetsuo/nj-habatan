@@ -218,4 +218,73 @@
     if (e.key === 'Enter') { e.preventDefault(); answeredThis ? next() : judge(false); }
   });
 })();
-</script> <style id="bossBonusHideTemp">/* ボス討伐クリアボーナス一時非表示（次回イベント後にこの<style>ブロックごと削除して再表示） */ #bossClearCard,#homeBossBonusNotice,#homeBonusBanner{display:none !important;}</style> </body> </html>
+</script> <style id="bossBonusHideTemp">/* ボス討伐クリアボーナス一時非表示（次回イベント後にこの<style>ブロックごと削除して再表示） */ #bossClearCard,#homeBossBonusNotice,#homeBonusBanner{display:none !important;}</style> <script>
+/* チャレンジ進捗のFirestore同期（habitanChallenge <-> users/{uid}.challengeProgress） */
+(function(){
+  if (typeof chSaveProg !== 'function' || typeof chGetProg !== 'function') return;
+  var _origChSave = chSaveProg;
+  var _upT = null;
+
+  function scheduleUpload(prog){
+    if (typeof fbUser === 'undefined' || !fbUser || !fbDb) return;
+    clearTimeout(_upT);
+    _upT = setTimeout(function(){
+      try {
+        var str = JSON.stringify(prog || chGetProg());
+        if (str.length > 900000) { console.warn('ChProgUp: too large, skip'); return; }
+        fbDb.collection('users').doc(fbUser.uid).set({ challengeProgress: str }, { merge: true })
+          .catch(function(e){ console.error('ChProgUp:', e); });
+      } catch(e){ console.error('ChProgUp:', e); }
+    }, 2000);
+  }
+
+  chSaveProg = function(prog){
+    _origChSave(prog);
+    scheduleUpload(prog);
+  };
+
+  function mergeProg(a, b){
+    var out = JSON.parse(JSON.stringify(a || {}));
+    for (var k in b) {
+      if (!out[k]) { out[k] = b[k]; continue; }
+      var os = out[k].stages = out[k].stages || {};
+      var bs = b[k].stages || {};
+      for (var si in bs) {
+        var x = os[si], y = bs[si];
+        if (!x) { os[si] = y; continue; }
+        os[si] = {
+          cleared: !!(x.cleared || y.cleared),
+          bestPts: Math.max(x.bestPts || 0, y.bestPts || 0),
+          perfect: !!(x.perfect || y.perfect),
+          speedPerfect: !!(x.speedPerfect || y.speedPerfect)
+        };
+      }
+      var om = out[k].summaries = out[k].summaries || {};
+      var bm = b[k].summaries || {};
+      for (var sj in bm) if (!om[sj]) om[sj] = bm[sj];
+    }
+    return out;
+  }
+
+  async function mergeFromCloud(user){
+    try {
+      var doc = await fbDb.collection('users').doc(user.uid).get();
+      var remoteStr = (doc.data() || {}).challengeProgress;
+      var local = chGetProg();
+      if (!remoteStr) {
+        if (Object.keys(local).length) scheduleUpload(local);
+        return;
+      }
+      var remote = JSON.parse(remoteStr);
+      var merged = mergeProg(local, remote);
+      _origChSave(merged);
+      if (JSON.stringify(merged) !== remoteStr) scheduleUpload(merged);
+      if (typeof syncChallengePtsToFirestore === 'function') syncChallengePtsToFirestore();
+    } catch(e){ console.error('ChProgSync:', e); }
+  }
+
+  if (typeof fbAuth !== 'undefined') {
+    fbAuth.onAuthStateChanged(function(user){ if (user) mergeFromCloud(user); });
+  }
+})();
+</script> </body> </html>
