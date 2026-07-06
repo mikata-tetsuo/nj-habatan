@@ -947,6 +947,16 @@
     margin-bottom: 12px;
   }
 
+  /* ===== バフトースト ===== */
+  .buff-toast {
+    position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%) translateY(20px);
+    background: rgba(15,23,42,0.92); color: #fff; font-weight: 700; font-size: 0.85rem;
+    padding: 11px 18px; border-radius: 99px; z-index: 500; opacity: 0;
+    transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.3); max-width: 90vw; text-align: center;
+  }
+  .buff-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
   /* ===== アプリ切り替えFAB ===== */
   .app-switch-fab {
     position: fixed; right: 14px; bottom: 18px; z-index: 150;
@@ -1864,8 +1874,11 @@ function onAnswer(key) {
     const pts = calcQuizPts(currentGrade, isSpeed);
     markStageCleared(currentGrade, currentStageIdx, isSpeed, pts);
     updateTotalPtsDisplay();
-    if (fbUser) { syncQuizPtsToFirestore(); markSokutoreDaily(); }
+    if (fbUser) syncQuizPtsToFirestore();
   }
+  // はばトレバフ用フラグは正誤問わず記録（1問プレイでOK）
+  if (fbUser) markSokutoreDaily();
+  else showBuffHintOnce();
 
   // 復習ボタン
   $('reviewBtns').style.display = 'flex';
@@ -2470,7 +2483,7 @@ async function markSokutoreDaily() {
     const doc = await ref.get();
     const data = doc.data() || {};
     const daily = data.daily || {};
-    if (daily.date === today && daily.sokutore) return;
+    if (daily.date === today && daily.sokutore) { showBuffToast('🔥 はばトレバフ 準備完了！今日のはばトレpt +10%'); return; }
     const sameDay = daily.date === today;
     if (doc.exists) {
       const updates = { 'daily.date': today, 'daily.sokutore': true };
@@ -2488,10 +2501,26 @@ async function markSokutoreDaily() {
     } else {
       await ref.set({ daily: { date: today, sokutore: true, habatan: false } }, { merge: true });
     }
+    showBuffToast('🔥 はばトレバフ 準備完了！今日のはばトレpt +10%');
   } catch(e) {
     console.error('DailyMark:', e);
     _dailyMarkedDate = null;
   }
+}
+
+let _buffHintShown = false;
+function showBuffHintOnce() {
+  if (_buffHintShown) return;
+  _buffHintShown = true;
+  showBuffToast('💡 Googleログインすると、はばトレ+10%バフがつくよ！');
+}
+function showBuffToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'buff-toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 30);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3500);
 }
 
 function getTotalQuizPts() {

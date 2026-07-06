@@ -272,4 +272,28 @@
     }
   };
 })();
+</script> <script>
+/* 速トレバフの判定リトライ: 書き込みレイテンシで初回チェックを取りこぼしても拾う */
+(function(){
+  if (typeof checkSokutoreBuff !== 'function') return;
+  if (typeof fbAuth !== 'undefined') {
+    fbAuth.onAuthStateChanged(function(u){
+      if (!u) return;
+      setTimeout(checkSokutoreBuff, 3000);
+      setTimeout(checkSokutoreBuff, 10000);
+    });
+  }
+  window.addEventListener('focus', function(){
+    try { if (typeof fbUser !== 'undefined' && fbUser) checkSokutoreBuff(); } catch(e) {}
+  });
+  if (typeof showScreen === 'function') {
+    var _orig = showScreen;
+    showScreen = function(id){
+      _orig.apply(this, arguments);
+      try {
+        if (id === 'challengeLevelScreen' && typeof fbUser !== 'undefined' && fbUser) checkSokutoreBuff();
+      } catch(e) {}
+    };
+  }
+})();
 </script> </body> </html>
