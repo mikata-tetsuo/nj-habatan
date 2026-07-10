@@ -338,4 +338,59 @@
     };
   }
 })();
+</script>
+<script>
+// ===== 日次スナップショット（学習推移の記録／将来の成績相関分析用） =====
+// users/{uid}.history.{YYYY-MM-DD} に「その日時点の累積指標」を1日1回保存する。
+// 既存のusers書き込み権限で完結＝Firestoreルール変更不要（共用プロジェクトへの巻き添えなし）。
+// 既存コードは一切改変せず、onAuthStateChangedを追加登録して相乗りする。
+(function () {
+  function chClearedSummary() {
+    let cleared = 0, perfect = 0, speedPerfect = 0;
+    try {
+      const p = chGetProg();
+      for (const k in p) {
+        const st = p[k] && p[k].stages;
+        if (!st) continue;
+        for (const idx in st) {
+          if (st[idx].cleared)      cleared++;
+          if (st[idx].perfect)      perfect++;
+          if (st[idx].speedPerfect) speedPerfect++;
+        }
+      }
+    } catch (e) {}
+    return { cleared, perfect, speedPerfect };
+  }
+
+  async function saveDailySnapshot(user) {
+    if (!user) return;
+    const today = getTodayJST();
+    const localKey = 'habatanSnap_' + user.uid;
+    if (localStorage.getItem(localKey) === today) return; // 同端末・同日は書かない
+    localStorage.setItem(localKey, today);
+    try {
+      const ref  = fbDb.collection('users').doc(user.uid);
+      const doc  = await ref.get();
+      const data = doc.data() || {};
+      if (data.history && data.history[today]) return;    // 別端末で記録済み
+      const ch = chClearedSummary();
+      let reviewCount = 0;
+      try { reviewCount = rvLoad().length; } catch (e) {}
+      const snap = {
+        pts:                chGetTotalScore(),  // 累積チャレンジpt
+        clearedStages:      ch.cleared,         // クリア済みステージ数
+        perfectStages:      ch.perfect,
+        speedPerfectStages: ch.speedPerfect,
+        reviewCount:        reviewCount,        // 復習リスト語数
+        loginStreak:        data.loginStreak || 0,
+        playStreak:         data.playStreak  || 0,
+        isStudent:          !!data.isStudent,
+        ts:                 new Date().toISOString()
+      };
+      await ref.set({ history: { [today]: snap } }, { merge: true });
+    } catch (e) { console.error('DailySnap:', e); }
+  }
+
+  fbAuth.onAuthStateChanged(user => { if (user) saveDailySnapshot(user); });
+})();
 </script> </body> </html>
