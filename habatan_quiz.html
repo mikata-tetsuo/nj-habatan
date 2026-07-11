@@ -394,5 +394,5 @@
   fbAuth.onAuthStateChanged(user => { if (user) saveDailySnapshot(user); });
 })();
 </script>
-<script>window._escH=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",""":"&quot;","'":"&#39;"}[c];});};</script>
+<script>window._escH=function(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");};</script>
 </body> </html>
