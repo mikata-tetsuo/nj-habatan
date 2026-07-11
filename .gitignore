@@ -3,6 +3,7 @@
 *.json
 !manifest.json
 !**/manifest.json
+!firebase.json
 *.zip
 
 # Excelファイル（容量大・非公開）

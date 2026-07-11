@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ═══ はばトレ（稼働中）═══
+    // https://mikata-tetsuo.github.io/nj-habatan/habatan_quiz.html
+    // 同じ nakatajuku プロジェクトを共用しているため、ここのルールが はばトレ にも適用される
+
+    // ユーザー情報（ニックネーム・塾生フラグ・ポイント・バッジ・学習履歴）
+    // 自分のdocは全操作可。他人のdocは討伐バッジ(eventBadge)の付与のみ許可。
+    // ※他人docの read は不可＝history(学習ログ)/isStudent/将来のstudentNo 等の個人情報を保護
+    // ※write を本人限定にせず eventBadge だけ他者更新を許すのは、ボス討伐で top5 の
+    //   他ユーザーdocに .doc(d.id).set({eventBadge},{merge:true}) を書く既存機能のため
+    match /users/{uid} {
+      allow read:   if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && (
+        request.auth.uid == uid
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['eventBadge'])
+      );
+      allow delete: if false;
+    }
+
+    // ランキング（ティッカーは未ログインでも表示するため読み取りは公開）
+    match /rankings_test/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /rankings_challenge/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /rankings_overall/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // 速トレ（英検速読トレーナー）ランキング
+    match /sokutore_rankings/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ユーザー数などの統計
+    match /meta/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // ボスイベント（イベント定義は読み取りのみ、貢献度は本人のみ書き込み）
+    match /boss_events/{eventId} {
+      allow read: if true;
+      allow write: if false;
+      match /contributions/{uid} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // ═══ nj-kentei（運用終了・Supabase版へ移行済みのためロックダウン維持）═══
+    // applications / settings / counters / mail を含め、
+    // 上に明示していないコレクションはすべてデフォルト拒否
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
