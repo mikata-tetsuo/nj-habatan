@@ -717,4 +717,36 @@
 })();
 </script>
 
+<script>
+// ===== サマー・タイピングチャレンジ アプリ内告知（ティッカー＋新着情報） =====
+// 既存のCHANGELOG/TICKER_STATICに末尾から追記し、renderTickerを再実行するだけ。本体無改変。
+(function(){
+  var EVT_END = new Date('2026-08-23T23:59:59+09:00');
+  var EVT_START = new Date('2026-07-20T00:00:00+09:00');
+  try {
+    // 新着情報モーダル
+    if (typeof CHANGELOG !== 'undefined') {
+      CHANGELOG.unshift({
+        date: '2026.07.15',
+        label: 'サマー・タイピングチャレンジ ⌨️🎁',
+        items: [
+          '【イベント】7/20（月）〜8/23（日）サマー・タイピングチャレンジ開催！期間中のNJ総合pt（はばトレ＋速トレの合計）の獲得量で競うランキングレース',
+          '【賞品】1〜3位：Bluetoothキーボード🎹 ／ 4〜10位：コカチケ1枚🥤（塾生限定・表彰は教室で）',
+          '【参加方法】ホームのイベントバナーから「塾生番号の登録」＋「タイピング10ステージクリア」で参加資格GET',
+          '【ヒント】速トレを先にプレイすると、はばトレptが+10%。夏休みは毎日コツコツが最強です'
+        ]
+      });
+    }
+    // ティッカー
+    if (typeof TICKER_STATIC !== 'undefined' && new Date() <= EVT_END) {
+      var msg = new Date() < EVT_START
+        ? '7/20スタート！サマー・タイピングチャレンジ — 上位3名にBluetoothキーボード🎁 ホームのバナーをタップ！'
+        : 'サマー・タイピングチャレンジ開催中！NJ総合ptを稼いで景品をゲットしよう🎁';
+      TICKER_STATIC.unshift({ icon: '⌨️', text: msg });
+      if (typeof renderTicker === 'function') renderTicker();
+    }
+  } catch(e) {}
+})();
+</script>
+
 </body> </html>
