@@ -492,14 +492,14 @@
     var ticker = document.getElementById('newsTicker');
     if (!ticker || !ticker.parentNode) return;
     var mode = evtMode();
-    var sub = mode === 'pre'    ? '7/20スタート！タップして参加準備（塾生番号の登録はこちら）'
+    var sub = mode === 'pre'    ? '⏰ 開幕まであと' + daysUntilStart() + '日！タップして参加準備（塾生番号の登録はこちら）'
             : mode === 'active' ? '開催中！タップで順位チェック🏆 上位3名にキーボード！'
             :                     'イベント終了！タップで結果を見る';
     var d = document.createElement('div');
     d.id = 'evt26Banner';
     d.className = 'evt26-banner';
     d.innerHTML = '<span style="font-size:1.5rem;">⌨️</span>' +
-      '<div class="evt26-b-main"><div class="evt26-b-title">サマー・タイピングチャレンジ</div>' +
+      '<div class="evt26-b-main"><div class="evt26-b-title">' + (mode === 'pre' ? '【7/20開幕】' : '') + 'サマー・タイピングチャレンジ</div>' +
       '<div class="evt26-b-sub">' + sub + '</div></div><span style="font-size:1.1rem;">▶</span>';
     d.addEventListener('click', openEvt);
     ticker.parentNode.insertBefore(d, ticker.nextSibling);
