@@ -548,7 +548,9 @@
         '<div style="font-size:.82rem;font-weight:700;line-height:1.7;">🥇🥈🥉 1〜3位：Bluetoothキーボード<br>🥤 4〜6位：コカチケ3枚 ／ 7〜10位：コカチケ1枚</div>' +
         '<div class="evt26-note">表彰は教室で行います。アプリ上の発表はニックネームのみ。</div></div>' +
         '<div class="evt26-card" id="evt26Qual"></div>' +
-        '<div class="evt26-card"><h4 id="evt26RankTitle">🏆 イベントランキング</h4><div id="evt26Rank"><div class="evt26-empty">読み込み中…</div></div></div>' +
+        '<div class="evt26-card"><h4 id="evt26RankTitle">🏆 イベントランキング</h4>' +
+        '<div class="evt26-note" style="margin:0 0 8px;">⭐＝参加資格 達成者（賞品対象）。賞品の順位は⭐の塾生を上から数えます</div>' +
+        '<div id="evt26Rank"><div class="evt26-empty">読み込み中…</div></div></div>' +
         '<div class="evt26-note">・賞品の受け取りには塾生番号の登録とタイピング累計' + REQ_STAGES + 'ステージクリアが必要です（順位表には塾生以外も表示されます）<br>' +
         '・登録した番号は賞品のお渡しと学習サポートの目的以外には使用しません<br>' +
         '・不正なポイント獲得が確認された場合は対象外となります</div>' +
@@ -569,6 +571,16 @@
 
   // ---- 資格進捗カード ----
   var myComiruSaved = null; // null=未取得 / true / false
+  var myEvtQWritten = false;
+  async function ensureEvtQFlag(){
+    try {
+      if (myEvtQWritten) return;
+      if (typeof fbUser === 'undefined' || !fbUser || !fbDb) return;
+      if (myComiruSaved !== true || typingCleared() < REQ_STAGES) return;
+      await fbDb.collection('rankings_overall').doc(fbUser.uid).set({ evtQ: true }, { merge: true });
+      myEvtQWritten = true;
+    } catch(e) {}
+  }
   function renderQual(){
     var el = document.getElementById('evt26Qual');
     if (!el) return;
@@ -604,6 +616,7 @@
       document.getElementById('evt26NumRow').style.display = 'flex';
       edit.style.display = 'none';
     });
+    ensureEvtQFlag();
   }
 
   async function loadMyComiru(){
@@ -674,6 +687,7 @@
           if (!ex) { ex = { id: doc.id, name: '', pts: 0 }; totals.set(doc.id, ex); }
           ex.pts += (d.score || 0);
           if (!ex.name && d.displayName) ex.name = d.displayName;
+          if (d.evtQ) ex.q = true;
         });
       };
       addAll(res[1]); addAll(res[2]);
@@ -681,7 +695,7 @@
       totals.forEach(function(v){
         var base = snap[v.id] || 0;
         var evtPts = v.pts - base;
-        if (evtPts > 0) items.push({ id: v.id, name: v.name, pts: evtPts });
+        if (evtPts > 0) items.push({ id: v.id, name: v.name, pts: evtPts, q: !!v.q });
       });
       items.sort(function(a, b){ return b.pts - a.pts; });
       renderList(box, items.slice(0, 20), null);
@@ -705,7 +719,7 @@
       var cls = rank <= 3 ? 'zone-kb' : rank <= 10 ? 'zone-cola' : '';
       if (uid && it.id === uid) cls += ' me';
       html += '<li class="' + cls + '"><span class="rk">' + (rank <= 3 ? medals[rank - 1] : rank + '位') + '</span>' +
-        '<span class="nm">' + esc(it.name || '名前はまだない') + '</span>' +
+        '<span class="nm">' + (it.q ? '⭐ ' : '') + esc(it.name || '名前はまだない') + '</span>' +
         '<span class="pt">' + Number(it.pts).toLocaleString() + 'pt</span></li>';
     });
     html += '</ul>';
@@ -718,6 +732,7 @@
     glowTyping();
     if (typeof fbAuth !== 'undefined') {
       fbAuth.onAuthStateChanged(function(user){ loadMyComiru().then(function(){
+        ensureEvtQFlag();
         if (ovl && ovl.style.display !== 'none') renderQual();
       }); });
     }
