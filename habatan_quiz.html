@@ -737,6 +737,18 @@
   function boot(){
     injectBanner();
     glowTyping();
+    if (typeof showScreen === 'function') {
+      var _evtOrigShow = showScreen;
+      showScreen = function(id){
+        _evtOrigShow.apply(this, arguments);
+        try {
+          if (id === 'challengeLevelScreen') {
+            setTimeout(function(){ window.scrollTo(0, 0); }, 30);
+            glowTyping();
+          }
+        } catch(e) {}
+      };
+    }
     if (typeof fbAuth !== 'undefined') {
       fbAuth.onAuthStateChanged(function(user){ loadMyComiru().then(function(){
         ensureEvtQFlag();
