@@ -2917,5 +2917,121 @@ $('btnSpeakQuestion').addEventListener('click', () => {
   if (q) speakText(q.question, $('btnSpeakQuestion'));
 });
 </script>
+<script>
+// ===== モード別ボーナスpt（読解・リスニング・入力をそれぞれ独立して稼げる） =====
+// 既存のcleared/pts（ステージ地図の✓⭐・アンロック判定）は一切変更しない。
+// 「リスニング／入力で初めて正解」した時だけ、別枠のボーナスptを加算する。
+// 読解（デフォルトモード）は既存の仕組みのまま＝二重加算しない。
+// 獲得ptはスピード無しの基準pt（calcQuizPts(grade,false)）で統一＝モード間の格差を作らない。
+(function(){
+  var MB_KEY = 'sokutore_modebonus_v1';
+
+  function loadModeBonus(){
+    try { var v = JSON.parse(localStorage.getItem(MB_KEY) || '{"listen":{},"typing":{}}'); if(!v.listen)v.listen={}; if(!v.typing)v.typing={}; return v; }
+    catch(e){ return { listen:{}, typing:{} }; }
+  }
+  function saveModeBonus(mb){
+    localStorage.setItem(MB_KEY, JSON.stringify(mb));
+    scheduleModeBonusUpload(mb);
+  }
+  function sumObj(o){ return Object.values(o||{}).reduce(function(s,v){return s+(v||0);}, 0); }
+  function modeBonusTotal(){ var mb = loadModeBonus(); return sumObj(mb.listen) + sumObj(mb.typing); }
+  function modeBonusForGrade(grade){
+    var mb = loadModeBonus(), sum = 0, prefix = grade + '_';
+    ['listen','typing'].forEach(function(mode){
+      Object.keys(mb[mode]).forEach(function(k){ if (k.indexOf(prefix) === 0) sum += mb[mode][k]; });
+    });
+    return sum;
+  }
+  function awardModeBonus(mode, grade, idx, pts){
+    var mb = loadModeBonus();
+    var k = grade + '_' + idx;
+    if (mb[mode][k]) return false;
+    mb[mode][k] = pts;
+    saveModeBonus(mb);
+    return true;
+  }
+
+  var _mbUpT = null;
+  function scheduleModeBonusUpload(mb){
+    if (typeof fbUser === 'undefined' || !fbUser || typeof fbDb === 'undefined') return;
+    clearTimeout(_mbUpT);
+    _mbUpT = setTimeout(function(){
+      try {
+        var str = JSON.stringify(mb || loadModeBonus());
+        if (str.length > 900000) return;
+        fbDb.collection('users').doc(fbUser.uid).set({ sokutoreModeBonus: str }, { merge: true }).catch(function(){});
+      } catch(e) {}
+    }, 2000);
+  }
+
+  async function mergeModeBonusFromCloud(){
+    if (typeof fbUser === 'undefined' || !fbUser || typeof fbDb === 'undefined') return;
+    try {
+      var doc = await fbDb.collection('users').doc(fbUser.uid).get();
+      var raw = doc.data() && doc.data().sokutoreModeBonus;
+      if (!raw) return;
+      var cloud = JSON.parse(raw);
+      var local = loadModeBonus();
+      ['listen','typing'].forEach(function(mode){
+        var c = cloud[mode] || {};
+        Object.keys(c).forEach(function(k){
+          if (!local[mode][k] || c[k] > local[mode][k]) local[mode][k] = c[k];
+        });
+      });
+      localStorage.setItem(MB_KEY, JSON.stringify(local));
+      if (typeof updateTotalPtsDisplay === 'function') updateTotalPtsDisplay();
+    } catch(e) {}
+  }
+
+  // ---- onAnswer（読解／リスニングの4択）をラップ：リスニング正解時のみボーナス ----
+  if (typeof onAnswer === 'function') {
+    var _origOnAnswer = onAnswer;
+    onAnswer = function(key){
+      var grade = currentGrade, idx = currentStageIdx;
+      var q = (typeof GRADE_PASSAGES !== 'undefined' && GRADE_PASSAGES[grade]) ? GRADE_PASSAGES[grade][idx] : null;
+      var willBeCorrect = !!(q && key === q.answer.toLowerCase());
+      var isListening = !!listenMode;
+      _origOnAnswer(key);
+      if (willBeCorrect && isListening && typeof calcQuizPts === 'function') {
+        var pts = calcQuizPts(grade, false);
+        if (awardModeBonus('listen', grade, idx, pts)) {
+          if (typeof updateTotalPtsDisplay === 'function') updateTotalPtsDisplay();
+          if (typeof fbUser !== 'undefined' && fbUser && typeof syncQuizPtsToFirestore === 'function') syncQuizPtsToFirestore();
+        }
+      }
+    };
+  }
+
+  // ---- typingComplete（入力モード）をラップ：完了時にボーナス ----
+  if (typeof typingComplete === 'function') {
+    var _origTypingComplete = typingComplete;
+    typingComplete = function(){
+      var grade = currentGrade, idx = currentStageIdx;
+      var pts = (typeof calcQuizPts === 'function') ? calcQuizPts(grade, false) : 0;
+      _origTypingComplete();
+      if (awardModeBonus('typing', grade, idx, pts)) {
+        if (typeof updateTotalPtsDisplay === 'function') updateTotalPtsDisplay();
+        if (typeof fbUser !== 'undefined' && fbUser && typeof syncQuizPtsToFirestore === 'function') syncQuizPtsToFirestore();
+      }
+    };
+  }
+
+  // ---- 合計pt・グレード別ptにボーナスを合算（HUD・ランキング送信・グレードカード表示） ----
+  if (typeof getTotalQuizPts === 'function') {
+    var _origGetTotalQuizPts = getTotalQuizPts;
+    getTotalQuizPts = function(){ return _origGetTotalQuizPts() + modeBonusTotal(); };
+  }
+  if (typeof calcGradePts === 'function') {
+    var _origCalcGradePts = calcGradePts;
+    calcGradePts = function(grade){ return _origCalcGradePts(grade) + modeBonusForGrade(grade); };
+  }
+
+  if (typeof fbAuth !== 'undefined') {
+    fbAuth.onAuthStateChanged(function(user){ if (user) mergeModeBonusFromCloud(); });
+  }
+})();
+</script>
+
 </body>
 </html>
