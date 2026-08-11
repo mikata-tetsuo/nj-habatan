@@ -795,5 +795,34 @@
   } catch(e) {}
 })();
 </script>
+<script>
+// ===== 匿名認証：静かにデータを溜める＋Googleログインで昇格 =====
+// 未ログインでも匿名UIDで学習ログ(進捗・日次スナップ)を記録。UIは何も出さない。
+// 気に入った子がGoogleログインすると、localStorage経由で進捗が引き継がれ全機能が開く。
+// 既存コードは無改変。グローバル関数をラップして匿名時の挙動だけ差し込む。
+(function () {
+  function isAnon() { return !!(fbAuth.currentUser && fbAuth.currentUser.isAnonymous); }
+
+  // 匿名の間は「ニックネーム設定」「招待コード」モーダルを自動表示しない（静かに記録）
+  var _nick = openNicknameModal;
+  openNicknameModal = function (isEdit) {
+    if (!isEdit && isAnon()) return; // 自動表示のみ抑制。✏️編集(isEdit=true)は通す
+    return _nick.apply(this, arguments);
+  };
+  var _inv = showInviteModal;
+  showInviteModal = function () { if (isAnon()) return; return _inv.apply(this, arguments); };
+
+  // ランキング投稿は非匿名(Googleログイン)のみ＝匿名の"名無し"投稿・汚染を防ぐ
+  var _sc = submitChallengeScore;
+  submitChallengeScore = function () { if (isAnon()) return; return _sc.apply(this, arguments); };
+  var _sr = submitScoreToRanking;
+  submitScoreToRanking = function () { if (isAnon()) return; return _sr.apply(this, arguments); };
+
+  // 未ログインなら匿名サインイン（上記ラップを全て仕込んだ後に発火させる）
+  fbAuth.onAuthStateChanged(function (u) {
+    if (!u) fbAuth.signInAnonymously().catch(function (e) { console.error('anonAuth:', e); });
+  });
+})();
+</script>
 
 </body> </html>
