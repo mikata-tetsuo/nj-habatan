@@ -247,9 +247,16 @@
     border-color: #D97706; color: #78350F; cursor: pointer;
     box-shadow: 0 3px 12px rgba(251,191,36,0.55);
   }
+  /* 答えを見て正解（ptなし・進行はOK） */
+  .stage-dot.seen {
+    background: linear-gradient(145deg, #93C5FD, #60A5FA);
+    border-color: #3B82F6; color: #1E3A8A; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(96,165,250,0.4);
+  }
   .stage-dot.available:hover { transform: scale(1.12); animation: none; box-shadow: 0 0 0 6px rgba(249,115,22,0.22), 0 6px 20px rgba(249,115,22,0.5); }
   .stage-dot.cleared:hover  { transform: scale(1.12); box-shadow: 0 5px 18px rgba(16,185,129,0.45); }
   .stage-dot.speed:hover    { transform: scale(1.12); box-shadow: 0 5px 18px rgba(251,191,36,0.6); }
+  .stage-dot.seen:hover     { transform: scale(1.12); box-shadow: 0 5px 18px rgba(96,165,250,0.5); }
 
   /* ===== STAGE RESULT ===== */
   .stage-result-wrap { padding: 8px 0 24px; }
@@ -1367,30 +1374,45 @@ async function mergeProgressFromCloud(user) {
   } catch(e) { console.error('ProgSync:', e); }
 }
 function stageKey(grade, idx) { return grade + '_' + idx; }
-// 「不正解／ヒントで答えを見た」問題は、その日のうちの正解はpt獲得なし（進捗・クリアは通常通り）。
-// 翌日以降に再挑戦して正解すれば満点pt。答えを覚えてすぐ稼ぐ抜け道を防ぎつつ、学習目的の再挑戦は妨げない。
+// 「不正解／ヒントで答えを見た」問題は、その日のうちの正解はpt獲得なし（進捗＝クリア扱いは付くが、
+// マップ上は△「seen」表示でpt未獲得と分かる）。翌日以降に再挑戦して正解すれば満点pt＋⭐/✓表示になる。
+// 答えを覚えてすぐ稼ぐ抜け道を防ぎつつ、学習目的の再挑戦・次の問題への進行は妨げない。
+// 同じ問題を今日5回連続で外したら、それ以上の連打（総当たり）はできないようにする。
 function markAnswerSeenToday(key) {
   const p = loadProgress();
   if (!p.wrongDate) p.wrongDate = {};
-  p.wrongDate[key] = getTodayJST();
+  if (!p.wrongCount) p.wrongCount = {};
+  const today = getTodayJST();
+  if (p.wrongDate[key] !== today) p.wrongCount[key] = 0; // 日付が変わっていたら連続カウントをリセット
+  p.wrongDate[key] = today;
+  p.wrongCount[key] = (p.wrongCount[key] || 0) + 1;
   saveProgress(p);
 }
 function isPtsBlockedToday(key) {
   const p = loadProgress();
   return !!(p.wrongDate && p.wrongDate[key] === getTodayJST());
 }
+function wrongStreakToday(key) {
+  const p = loadProgress();
+  if (!p.wrongDate || p.wrongDate[key] !== getTodayJST()) return 0;
+  return (p.wrongCount && p.wrongCount[key]) || 0;
+}
+const MAX_WRONG_STREAK = 5;
 function isStageCleared(grade, idx) {
   return !!loadProgress().cleared[stageKey(grade, idx)];
 }
 function isStageSpeedCleared(grade, idx) {
   return loadProgress().cleared[stageKey(grade, idx)] === 'speed';
 }
-function markStageCleared(grade, idx, isSpeed, earnedPts) {
+function isStageSeen(grade, idx) {
+  return loadProgress().cleared[stageKey(grade, idx)] === 'seen';
+}
+function markStageCleared(grade, idx, isSpeed, earnedPts, blocked) {
   const p = loadProgress();
   const k = stageKey(grade, idx);
-  if (p.cleared[k] !== 'speed') {
-    p.cleared[k] = isSpeed ? 'speed' : true;
-  }
+  const rank = v => v === 'speed' ? 3 : v === true ? 2 : v === 'seen' ? 1 : 0;
+  const newState = blocked ? 'seen' : (isSpeed ? 'speed' : true);
+  if (rank(newState) > rank(p.cleared[k])) p.cleared[k] = newState;
   if (!p.pts) p.pts = {};
   if ((p.pts[k] || 0) < (earnedPts || 0)) p.pts[k] = earnedPts || 0;
   saveProgress(p);
@@ -1614,12 +1636,14 @@ function buildStageMap() {
     for (let i = start; i < end; i++) {
       const cleared   = isStageCleared(grade, i);
       const speed     = isStageSpeedCleared(grade, i);
+      const seen      = isStageSeen(grade, i);
       const prevOK    = i === 0 || isStageCleared(grade, i - 1);
       const available = !cleared && prevOK && !rowLocked;
       const locked    = !cleared && (!prevOK || rowLocked);
 
       let dotClass = 'stage-dot';
       if (speed)          dotClass += ' speed';
+      else if (seen)      dotClass += ' seen';
       else if (cleared)   dotClass += ' cleared';
       else if (available) dotClass += ' available';
       else                dotClass += ' locked';
@@ -1627,6 +1651,7 @@ function buildStageMap() {
       const dayNum = (i - start) + 1;
       let label;
       if (speed)          label = '⭐';
+      else if (seen)      label = '△';
       else if (cleared)   label = '✓';
       else if (available) label = '▶';
       else                label = dayNum.toString();
@@ -1637,6 +1662,7 @@ function buildStageMap() {
       dot.disabled    = locked;
       dot.title = locked  ? '🔒 前の週をクリアしてね' :
                   speed   ? `${dayNum}日目 ⭐ 速読クリア済み` :
+                  seen    ? `${dayNum}日目 △ 正解したけどpt獲得は明日から（答えを見たため）` :
                   cleared ? `${dayNum}日目 ✓ クリア済み` :
                             `${dayNum}日目に挑戦！`;
 
@@ -1814,14 +1840,14 @@ function typingComplete() {
 
   const blocked = isPtsBlockedToday(stageKey(currentGrade, currentStageIdx));
   const pts = blocked ? 0 : calcQuizPts(currentGrade, false);
-  markStageCleared(currentGrade, currentStageIdx, false, pts);
+  markStageCleared(currentGrade, currentStageIdx, false, pts, blocked);
   updateTotalPtsDisplay();
   if (fbUser) { syncQuizPtsToFirestore(); markSokutoreDaily(); }
 
   const fb = $('feedbackDiv');
   fb.className = 'feedback show correct-fb';
   $('feedbackIcon').textContent = '🎉';
-  $('feedbackMsg').textContent  = 'ぜんぶ入力できた！' + (pts > 0 ? ' +' + pts + 'pt' : '');
+  $('feedbackMsg').textContent  = 'ぜんぶ入力できた！' + (pts > 0 ? ' +' + pts + 'pt' : blocked ? '（pt獲得は明日から △）' : '');
   $('reviewBtns').style.display = 'flex';
 
   const rowNum  = Math.floor(currentStageIdx / ROW_SIZE);
@@ -1857,6 +1883,7 @@ function onAnswer(key) {
   const q         = GRADE_PASSAGES[currentGrade][currentStageIdx];
   const isCorrect = key === q.answer.toLowerCase();
   const isSpeed   = timerSec <= effTargetTime(q);
+  const sKey      = stageKey(currentGrade, currentStageIdx);
   stageAnsweredOK = isCorrect;
 
   // 選択肢を色分け
@@ -1866,29 +1893,37 @@ function onAnswer(key) {
     else if (btn.dataset.key === key && !isCorrect) btn.classList.add('wrong');
   });
 
+  const blocked = isPtsBlockedToday(sKey); // 今日すでにこの問題で不正解／ヒントを見たか
+  let lockedOut = false;
+
   // フィードバック
   const fb = $('feedbackDiv');
   if (isCorrect) {
     fb.className = 'feedback show correct-fb';
     $('feedbackIcon').textContent = '⭕';
-    $('feedbackMsg').textContent  = isSpeed ? '正解！⚡ スピード！' : '正解！';
+    $('feedbackMsg').textContent  = blocked
+      ? '正解！（今日はもう答えを見たからpt獲得はまた明日 △）'
+      : (isSpeed ? '正解！⚡ スピード！' : '正解！');
   } else {
     fb.className = 'feedback show wrong-fb';
     $('feedbackIcon').textContent = '✖';
-    $('feedbackMsg').textContent  = '不正解… 正解は ' + q.answer.toUpperCase() + ' でした';
-    markAnswerSeenToday(stageKey(currentGrade, currentStageIdx));
+    markAnswerSeenToday(sKey);
+    const streak = wrongStreakToday(sKey);
+    lockedOut = streak >= MAX_WRONG_STREAK;
+    $('feedbackMsg').textContent = lockedOut
+      ? '不正解が続いたので、この問題は今日はここまで。正解は ' + q.answer.toUpperCase() + ' でした'
+      : '不正解… 正解は ' + q.answer.toUpperCase() + ' でした';
   }
 
   // 効果音
-  if (isCorrect && isSpeed) { playSound('speed'); showSpeedPopup(); }
-  else if (isCorrect)       { playSound('correct'); }
-  else                      { playSound('wrong'); }
+  if (isCorrect && isSpeed && !blocked) { playSound('speed'); showSpeedPopup(); }
+  else if (isCorrect)                   { playSound('correct'); }
+  else                                   { playSound('wrong'); }
 
-  // 正解なら即記録（今日すでに不正解で答えを見ていたらpt獲得なし。クリア扱いは通常通り）
+  // 正解なら即記録（今日すでに答えを見ていたらpt獲得なし＝マップは△表示。クリア扱い・進行は通常通り）
   if (isCorrect) {
-    const blocked = isPtsBlockedToday(stageKey(currentGrade, currentStageIdx));
     const pts = blocked ? 0 : calcQuizPts(currentGrade, isSpeed);
-    markStageCleared(currentGrade, currentStageIdx, isSpeed, pts);
+    markStageCleared(currentGrade, currentStageIdx, isSpeed, pts, blocked);
     updateTotalPtsDisplay();
     if (fbUser) syncQuizPtsToFirestore();
   }
@@ -1907,10 +1942,16 @@ function onAnswer(key) {
   if (isCorrect) {
     btnNext.textContent = isRowCleared(currentGrade, rowNum) ? '🎉 週クリア！' : '次の問題へ →';
     btnNext.className   = 'btn-next';
+    btnNext.style.display = '';
     btnSkip.style.display = 'none';
+  } else if (lockedOut) {
+    // 5回連続不正解: 総当たりでの正解を防ぐため、再挑戦は今日はさせずスキップのみ
+    btnNext.style.display = 'none';
+    btnSkip.style.display = '';
   } else {
     btnNext.textContent   = 'もう一度挑戦 →';
     btnNext.className     = 'btn-next btn-retry';
+    btnNext.style.display = '';
     btnSkip.style.display = '';
   }
   $('stageActions').style.display = 'flex';
