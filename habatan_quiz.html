@@ -817,6 +817,10 @@
   submitChallengeScore = function () { if (isAnon()) return; return _sc.apply(this, arguments); };
   var _sr = submitScoreToRanking;
   submitScoreToRanking = function () { if (isAnon()) return; return _sr.apply(this, arguments); };
+  // updateOverallRankingはログインボーナス・ボス討伐ボーナスからも直接呼ばれるため、
+  // 上の2つとは別に単独でもラップが必要（ここを漏らすとrankings_overallだけ匿名が混ざる）
+  var _uor = updateOverallRanking;
+  updateOverallRanking = function () { if (isAnon()) return; return _uor.apply(this, arguments); };
 
   // 未ログインなら匿名サインイン（上記ラップを全て仕込んだ後に発火させる）
   fbAuth.onAuthStateChanged(function (u) {
