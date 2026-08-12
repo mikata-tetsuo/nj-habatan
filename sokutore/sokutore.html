@@ -1367,6 +1367,18 @@ async function mergeProgressFromCloud(user) {
   } catch(e) { console.error('ProgSync:', e); }
 }
 function stageKey(grade, idx) { return grade + '_' + idx; }
+// 「不正解／ヒントで答えを見た」問題は、その日のうちの正解はpt獲得なし（進捗・クリアは通常通り）。
+// 翌日以降に再挑戦して正解すれば満点pt。答えを覚えてすぐ稼ぐ抜け道を防ぎつつ、学習目的の再挑戦は妨げない。
+function markAnswerSeenToday(key) {
+  const p = loadProgress();
+  if (!p.wrongDate) p.wrongDate = {};
+  p.wrongDate[key] = getTodayJST();
+  saveProgress(p);
+}
+function isPtsBlockedToday(key) {
+  const p = loadProgress();
+  return !!(p.wrongDate && p.wrongDate[key] === getTodayJST());
+}
 function isStageCleared(grade, idx) {
   return !!loadProgress().cleared[stageKey(grade, idx)];
 }
@@ -1758,6 +1770,7 @@ function typingShowAnswer() {
   if (!t) return;
   $('typingDiff').innerHTML = '<div class="typing-reveal">💡 ' + escapeHtml(t) + '</div>';
   $('typingInput').focus();
+  markAnswerSeenToday(stageKey(currentGrade, currentStageIdx));
 }
 function renderTypingDiff(user, target, ok) {
   const twRaw = String(target).trim().split(/\s+/);
@@ -1799,7 +1812,8 @@ function typingComplete() {
   stageAnsweredOK = true;
   $('typingInputRow').style.display = 'none';
 
-  const pts = calcQuizPts(currentGrade, false);
+  const blocked = isPtsBlockedToday(stageKey(currentGrade, currentStageIdx));
+  const pts = blocked ? 0 : calcQuizPts(currentGrade, false);
   markStageCleared(currentGrade, currentStageIdx, false, pts);
   updateTotalPtsDisplay();
   if (fbUser) { syncQuizPtsToFirestore(); markSokutoreDaily(); }
@@ -1807,7 +1821,7 @@ function typingComplete() {
   const fb = $('feedbackDiv');
   fb.className = 'feedback show correct-fb';
   $('feedbackIcon').textContent = '🎉';
-  $('feedbackMsg').textContent  = 'ぜんぶ入力できた！ +' + pts + 'pt';
+  $('feedbackMsg').textContent  = 'ぜんぶ入力できた！' + (pts > 0 ? ' +' + pts + 'pt' : '');
   $('reviewBtns').style.display = 'flex';
 
   const rowNum  = Math.floor(currentStageIdx / ROW_SIZE);
@@ -1862,6 +1876,7 @@ function onAnswer(key) {
     fb.className = 'feedback show wrong-fb';
     $('feedbackIcon').textContent = '✖';
     $('feedbackMsg').textContent  = '不正解… 正解は ' + q.answer.toUpperCase() + ' でした';
+    markAnswerSeenToday(stageKey(currentGrade, currentStageIdx));
   }
 
   // 効果音
@@ -1869,9 +1884,10 @@ function onAnswer(key) {
   else if (isCorrect)       { playSound('correct'); }
   else                      { playSound('wrong'); }
 
-  // 正解なら即記録
+  // 正解なら即記録（今日すでに不正解で答えを見ていたらpt獲得なし。クリア扱いは通常通り）
   if (isCorrect) {
-    const pts = calcQuizPts(currentGrade, isSpeed);
+    const blocked = isPtsBlockedToday(stageKey(currentGrade, currentStageIdx));
+    const pts = blocked ? 0 : calcQuizPts(currentGrade, isSpeed);
     markStageCleared(currentGrade, currentStageIdx, isSpeed, pts);
     updateTotalPtsDisplay();
     if (fbUser) syncQuizPtsToFirestore();
