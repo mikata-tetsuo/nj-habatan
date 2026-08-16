@@ -804,20 +804,26 @@
   function isAnon() { return !!(fbAuth.currentUser && fbAuth.currentUser.isAnonymous); }
 
   // 匿名の間は「ニックネーム設定」「招待コード」モーダルを自動表示しない（静かに記録）。
-  // さらに自動表示(isEdit=false)は1.2秒置いて再判定する：匿名→Googleの切替時、
-  // 匿名ユーザー向けの古い認証ハンドラが「ニックネーム未設定＝初回」と誤判定して
-  // モーダルを出し、本来の名前が上書きされるレースがあった（2026-08-16実害）。
-  // 待つ間にGoogleユーザーの読み込みが終わりfbNicknameが入れば表示しない。
+  // 自動表示(isEdit=false)は必ずFirestoreを実際に読んで「本当に未設定か」を確かめてから出す。
+  // 認証切替の直後は古いハンドラが「ニックネーム未設定＝初回」と誤判定してモーダルを出し、
+  // 入力すると本来の名前を上書きしてしまう事故があった（2026-08-16実害）。
+  // 待ち時間で判定すると回線が遅い端末で取りこぼすため、時間ではなく実データで判定する。
   var _nick = openNicknameModal;
   openNicknameModal = function (isEdit) {
     if (isEdit) return _nick.apply(this, arguments); // ✏️編集は即時
     var self = this, args = arguments;
-    setTimeout(function () {
-      if (isAnon()) return;
-      if (!fbAuth.currentUser) return;
-      if (typeof fbNickname !== 'undefined' && fbNickname) return; // 設定済みと判明
-      _nick.apply(self, args);
-    }, 1200);
+    var u = fbAuth.currentUser;
+    if (!u || u.isAnonymous) return;
+    fbDb.collection('users').doc(u.uid).get().then(function (doc) {
+      var nick = doc.exists ? (doc.data() || {}).nickname : null;
+      if (nick) { // 設定済み → 表示せず、グローバルにも正しい値を戻す
+        if (typeof fbNickname !== 'undefined') fbNickname = nick;
+        if (typeof updateAuthUI === 'function') updateAuthUI();
+        return;
+      }
+      var cur = fbAuth.currentUser; // 読んでいる間に切り替わっていないか最終確認
+      if (cur && cur.uid === u.uid && !cur.isAnonymous) _nick.apply(self, args);
+    }).catch(function (e) { console.error('nickCheck:', e); });
   };
   var _inv = showInviteModal;
   showInviteModal = function () { if (isAnon()) return; return _inv.apply(this, arguments); };
@@ -832,14 +838,26 @@
   var _uor = updateOverallRanking;
   updateOverallRanking = function () { if (isAnon()) return; return _uor.apply(this, arguments); };
 
-  // 未ログインなら匿名サインイン（上記ラップを全て仕込んだ後に発火させる）。
-  // 即時ではなく1.5秒待って再確認：ログアウト→Googleログインの切替中に発火すると
-  // 無駄な匿名アカウントを量産し、切替レースの引き金にもなるため。
+  // 匿名サインインは「この端末で誰もプレイしたことがない完全な新規訪問者」に限る。
+  // 端末に進捗(habitanChallenge)が残っている＝以前ログインして遊んだ人の端末で、
+  // そこで匿名サインインすると残っていた進捗が匿名アカウントの記録として吸い上げられ、
+  // 同じptを持つ匿名アカウントが量産される（2026-08-16に7件発生）。
+  // ログアウト直後もこれに該当するため、ログイン画面のまま静かに待つのが正しい。
+  function hasLocalProgress() {
+    try {
+      var p = localStorage.getItem('habitanChallenge');
+      return !!(p && Object.keys(JSON.parse(p)).length);
+    } catch (e) { return true; } // 判断できない時は作らない側に倒す
+  }
+
   // ログイン済みなら、集計（経営ダッシュボード）で「実ログイン/匿名」を区別できるようFirestoreに記録。
   fbAuth.onAuthStateChanged(function (u) {
     if (!u) {
+      if (hasLocalProgress()) return; // 既存ユーザーの端末：匿名アカウントを作らない
       setTimeout(function () {
-        if (!fbAuth.currentUser) fbAuth.signInAnonymously().catch(function (e) { console.error('anonAuth:', e); });
+        if (!fbAuth.currentUser && !hasLocalProgress()) {
+          fbAuth.signInAnonymously().catch(function (e) { console.error('anonAuth:', e); });
+        }
       }, 1500);
       return;
     }
