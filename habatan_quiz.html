@@ -848,5 +848,50 @@
   });
 })();
 </script>
+<script>
+// ===== ログインで困ったときの案内 =====
+// アカウント切替時に進捗が消えたように見えるケースがあったため、
+// 自力で復旧できない子が連絡できる導線をホーム画面に常設する。
+(function () {
+  var MAIL = 'mikata@n-juku.net';
+  var bar = document.querySelector('.auth-bar');
+  if (!bar) return;
+
+  var link = document.createElement('button');
+  link.type = 'button';
+  link.id = 'btnLoginHelp';
+  link.textContent = '？ ログインで困ったら';
+  link.style.cssText = 'display:block;margin:6px auto 0;padding:4px 10px;border:none;background:none;' +
+    'color:#94A3B8;font-size:0.72rem;cursor:pointer;text-decoration:underline;font-family:inherit;';
+  bar.parentNode.insertBefore(link, bar.nextSibling);
+
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.style.display = 'none';
+  modal.innerHTML =
+    '<div class="modal-box" style="max-width:320px;">' +
+      '<div class="modal-icon">🔑</div>' +
+      '<div class="modal-title">ログインで困ったら</div>' +
+      '<div style="color:#64748B;font-size:0.82rem;line-height:1.7;text-align:left;margin:12px 0 16px;">' +
+        '<b>まず確認してね</b><br>' +
+        'ポイントや記録は<b>Googleアカウントごと</b>に保存されています。' +
+        'いつもと違うアカウントでログインすると、記録が空に見えることがあります。' +
+        '一度ログアウトして、<b>いつも使っているアカウント</b>を選び直してみてください。<br><br>' +
+        'それでも記録が戻らないときは、下のアドレスまで連絡してね。こちらで確認します。' +
+      '</div>' +
+      '<div style="background:#F1F5F9;border-radius:10px;padding:10px;font-size:0.8rem;font-weight:700;' +
+        'color:#334155;word-break:break-all;user-select:all;">' + MAIL + '</div>' +
+      '<div style="font-size:0.7rem;color:#9CA3AF;margin:8px 0 14px;">' +
+        '※ ニックネームと、いつ頃までの記録があったかを書いてもらえると助かります' +
+      '</div>' +
+      '<button class="btn-modal-close" id="btnLoginHelpClose">とじる</button>' +
+    '</div>';
+  document.body.appendChild(modal);
+
+  link.addEventListener('click', function () { modal.style.display = 'flex'; });
+  modal.querySelector('#btnLoginHelpClose').addEventListener('click', function () { modal.style.display = 'none'; });
+  modal.addEventListener('click', function (e) { if (e.target === modal) modal.style.display = 'none'; });
+})();
+</script>
 
 </body> </html>
