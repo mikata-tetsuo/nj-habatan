@@ -803,11 +803,21 @@
 (function () {
   function isAnon() { return !!(fbAuth.currentUser && fbAuth.currentUser.isAnonymous); }
 
-  // 匿名の間は「ニックネーム設定」「招待コード」モーダルを自動表示しない（静かに記録）
+  // 匿名の間は「ニックネーム設定」「招待コード」モーダルを自動表示しない（静かに記録）。
+  // さらに自動表示(isEdit=false)は1.2秒置いて再判定する：匿名→Googleの切替時、
+  // 匿名ユーザー向けの古い認証ハンドラが「ニックネーム未設定＝初回」と誤判定して
+  // モーダルを出し、本来の名前が上書きされるレースがあった（2026-08-16実害）。
+  // 待つ間にGoogleユーザーの読み込みが終わりfbNicknameが入れば表示しない。
   var _nick = openNicknameModal;
   openNicknameModal = function (isEdit) {
-    if (!isEdit && isAnon()) return; // 自動表示のみ抑制。✏️編集(isEdit=true)は通す
-    return _nick.apply(this, arguments);
+    if (isEdit) return _nick.apply(this, arguments); // ✏️編集は即時
+    var self = this, args = arguments;
+    setTimeout(function () {
+      if (isAnon()) return;
+      if (!fbAuth.currentUser) return;
+      if (typeof fbNickname !== 'undefined' && fbNickname) return; // 設定済みと判明
+      _nick.apply(self, args);
+    }, 1200);
   };
   var _inv = showInviteModal;
   showInviteModal = function () { if (isAnon()) return; return _inv.apply(this, arguments); };
@@ -823,9 +833,16 @@
   updateOverallRanking = function () { if (isAnon()) return; return _uor.apply(this, arguments); };
 
   // 未ログインなら匿名サインイン（上記ラップを全て仕込んだ後に発火させる）。
+  // 即時ではなく1.5秒待って再確認：ログアウト→Googleログインの切替中に発火すると
+  // 無駄な匿名アカウントを量産し、切替レースの引き金にもなるため。
   // ログイン済みなら、集計（経営ダッシュボード）で「実ログイン/匿名」を区別できるようFirestoreに記録。
   fbAuth.onAuthStateChanged(function (u) {
-    if (!u) { fbAuth.signInAnonymously().catch(function (e) { console.error('anonAuth:', e); }); return; }
+    if (!u) {
+      setTimeout(function () {
+        if (!fbAuth.currentUser) fbAuth.signInAnonymously().catch(function (e) { console.error('anonAuth:', e); });
+      }, 1500);
+      return;
+    }
     fbDb.collection('users').doc(u.uid).set({ isAnonymousAuth: !!u.isAnonymous }, { merge: true })
       .catch(function (e) { console.error('authFlag:', e); });
   });
