@@ -822,9 +822,12 @@
   var _uor = updateOverallRanking;
   updateOverallRanking = function () { if (isAnon()) return; return _uor.apply(this, arguments); };
 
-  // 未ログインなら匿名サインイン（上記ラップを全て仕込んだ後に発火させる）
+  // 未ログインなら匿名サインイン（上記ラップを全て仕込んだ後に発火させる）。
+  // ログイン済みなら、集計（経営ダッシュボード）で「実ログイン/匿名」を区別できるようFirestoreに記録。
   fbAuth.onAuthStateChanged(function (u) {
-    if (!u) fbAuth.signInAnonymously().catch(function (e) { console.error('anonAuth:', e); });
+    if (!u) { fbAuth.signInAnonymously().catch(function (e) { console.error('anonAuth:', e); }); return; }
+    fbDb.collection('users').doc(u.uid).set({ isAnonymousAuth: !!u.isAnonymous }, { merge: true })
+      .catch(function (e) { console.error('authFlag:', e); });
   });
 })();
 </script>

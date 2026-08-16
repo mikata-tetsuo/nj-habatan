@@ -3099,6 +3099,18 @@ $('btnSpeakQuestion').addEventListener('click', () => {
   }
 })();
 </script>
+<script>
+// 集計（経営ダッシュボード）で「実ログイン/匿名」を区別できるようFirestoreに記録。
+// 匿名サインイン自体はhabatan_quiz.html側の役割（速トレは単体で直接開かれても
+// 既にログイン済みならここでフラグを記録する）。
+if (typeof fbAuth !== 'undefined') {
+  fbAuth.onAuthStateChanged(function (u) {
+    if (!u || typeof fbDb === 'undefined') return;
+    fbDb.collection('users').doc(u.uid).set({ isAnonymousAuth: !!u.isAnonymous }, { merge: true })
+      .catch(function (e) { console.error('authFlag:', e); });
+  });
+}
+</script>
 
 </body>
 </html>
