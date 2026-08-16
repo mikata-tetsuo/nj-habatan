@@ -3100,10 +3100,26 @@ $('btnSpeakQuestion').addEventListener('click', () => {
 })();
 </script>
 <script>
-// 集計（経営ダッシュボード）で「実ログイン/匿名」を区別できるようFirestoreに記録。
-// 匿名サインイン自体はhabatan_quiz.html側の役割（速トレは単体で直接開かれても
-// 既にログイン済みならここでフラグを記録する）。
+// 塾生アプリ（nj-user-app）から ?nj= で渡ってくるカスタムトークンでサインインする。
+// 速トレを直接開く導線でもGoogleログインなしで入れるようにするため、はばトレ側と同じ処理を持つ。
+// トークンは使い終わったらURLから消す（履歴・ブックマークに残さない）。
 if (typeof fbAuth !== 'undefined') {
+  (function () {
+    try {
+      var q = new URLSearchParams(location.search);
+      var t = q.get('nj');
+      if (t) {
+        q.delete('nj');
+        var rest = q.toString();
+        history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+        fbAuth.signInWithCustomToken(t).catch(function (e) { console.error('njAuth:', e); });
+      }
+    } catch (e) { /* URLを触れない環境でも本体は動かす */ }
+  })();
+
+  // 集計（経営ダッシュボード）で「実ログイン/匿名」を区別できるようFirestoreに記録。
+  // 匿名サインイン自体はhabatan_quiz.html側の役割（速トレは単体で直接開かれても
+  // 既にログイン済みならここでフラグを記録する）。
   fbAuth.onAuthStateChanged(function (u) {
     if (!u || typeof fbDb === 'undefined') return;
     fbDb.collection('users').doc(u.uid).set({ isAnonymousAuth: !!u.isAnonymous }, { merge: true })

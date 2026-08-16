@@ -850,10 +850,33 @@
     } catch (e) { return true; } // 判断できない時は作らない側に倒す
   }
 
+  // 塾生アプリ（nj-user-app）からの入場。
+  // LIFFで本人確認済みの塾生に発行されたカスタムトークンが ?nj= で渡ってくるので、
+  // Googleログインなしでその子としてサインインする。トークンは1回使えば十分なので、
+  // 履歴やブックマークに残らないよう使用後すぐURLから消す。
+  var njToken = null;
+  try {
+    var q = new URLSearchParams(location.search);
+    njToken = q.get('nj');
+    if (njToken) {
+      q.delete('nj');
+      var rest = q.toString();
+      history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+    }
+  } catch (e) { /* URLを触れない環境でも本体は動かす */ }
+
+  if (njToken) {
+    fbAuth.signInWithCustomToken(njToken).catch(function (e) {
+      console.error('njAuth:', e);
+      alert('塾生アプリからのログインに失敗しました。もう一度アプリから開いてみてください。');
+    });
+  }
+
   // ログイン済みなら、集計（経営ダッシュボード）で「実ログイン/匿名」を区別できるようFirestoreに記録。
   fbAuth.onAuthStateChanged(function (u) {
     if (!u) {
-      if (hasLocalProgress()) return; // 既存ユーザーの端末：匿名アカウントを作らない
+      if (njToken) return;             // カスタムトークンでのサインイン処理中
+      if (hasLocalProgress()) return;  // 既存ユーザーの端末：匿名アカウントを作らない
       setTimeout(function () {
         if (!fbAuth.currentUser && !hasLocalProgress()) {
           fbAuth.signInAnonymously().catch(function (e) { console.error('anonAuth:', e); });
