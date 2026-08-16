@@ -854,12 +854,16 @@
   // LIFFで本人確認済みの塾生に発行されたカスタムトークンが ?nj= で渡ってくるので、
   // Googleログインなしでその子としてサインインする。トークンは1回使えば十分なので、
   // 履歴やブックマークに残らないよう使用後すぐURLから消す。
-  var njToken = null;
+  // ?link=<塾生番号> は「引き継ぎ」用。既にGoogleログインで遊んでいる子が塾生アプリから
+  // この形で開き、いつものGoogleでログインすると、そのアカウントに塾生番号が保存される。
+  // 以降はアプリから普通に入っても同じアカウントに解決されるので、記録が分かれない。
+  var njToken = null, linkNo = null;
   try {
     var q = new URLSearchParams(location.search);
     njToken = q.get('nj');
-    if (njToken) {
-      q.delete('nj');
+    linkNo = q.get('link');
+    if (njToken || linkNo) {
+      q.delete('nj'); q.delete('link');
       var rest = q.toString();
       history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
     }
@@ -870,12 +874,21 @@
       console.error('njAuth:', e);
       alert('塾生アプリからのログインに失敗しました。もう一度アプリから開いてみてください。');
     });
+  } else if (linkNo) {
+    // 引き継ぎたいのは「いつも使っているGoogleアカウント」なので、匿名のままでは意味がない。
+    // 未ログインならその場でGoogleログインを促す。
+    if (!fbAuth.currentUser || fbAuth.currentUser.isAnonymous) {
+      var p = new firebase.auth.GoogleAuthProvider();
+      p.setCustomParameters({ prompt: 'select_account' });
+      fbAuth.signInWithPopup(p).catch(function (e) { console.error('linkLogin:', e); });
+    }
   }
 
   // ログイン済みなら、集計（経営ダッシュボード）で「実ログイン/匿名」を区別できるようFirestoreに記録。
   fbAuth.onAuthStateChanged(function (u) {
     if (!u) {
       if (njToken) return;             // カスタムトークンでのサインイン処理中
+      if (linkNo) return;              // 引き継ぎのGoogleログイン待ち
       if (hasLocalProgress()) return;  // 既存ユーザーの端末：匿名アカウントを作らない
       setTimeout(function () {
         if (!fbAuth.currentUser && !hasLocalProgress()) {
@@ -884,7 +897,23 @@
       }, 1500);
       return;
     }
-    fbDb.collection('users').doc(u.uid).set({ isAnonymousAuth: !!u.isAnonymous }, { merge: true })
+    var rec = { isAnonymousAuth: !!u.isAnonymous };
+    // 引き継ぎ: Googleでログインし終えたこのアカウントに塾生番号を焼き付ける。
+    // 匿名アカウントに付けても意味がない（次に消える）ので、非匿名のときだけ。
+    if (linkNo && !u.isAnonymous) {
+      rec.comiruNo = linkNo;
+      rec.isStudent = true;
+      var done = linkNo; linkNo = null; // 二重実行と、以後の匿名抑止の解除
+      fbDb.collection('users').doc(u.uid).set(rec, { merge: true }).then(function () {
+        alert('引き継ぎが完了しました！\nこれからは塾生アプリの「はばトレ」から入っても、この記録の続きから遊べます。');
+      }).catch(function (e) {
+        console.error('linkSave:', e);
+        linkNo = done;
+        alert('引き継ぎに失敗しました。通信状態を確かめて、もう一度お試しください。');
+      });
+      return;
+    }
+    fbDb.collection('users').doc(u.uid).set(rec, { merge: true })
       .catch(function (e) { console.error('authFlag:', e); });
   });
 })();
