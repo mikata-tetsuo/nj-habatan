@@ -963,5 +963,61 @@
   modal.addEventListener('click', function (e) { if (e.target === modal) modal.style.display = 'none'; });
 })();
 </script>
+<script>
+// ===== 総合ptの取りこぼしを直す =====
+// showChallengeResult は submitChallengeScore() → syncChallengePtsToFirestore() の順に呼ぶが、
+// 総合ptを書くのは前者で、チャレンジptを更新するのは後者。つまり総合ptは常に1回分古い値で
+// 計算されていて、遊ぶのをやめた時点のズレがそのまま残る（52人中11人・最大6,170pt損していた）。
+// グローバル変数の更新順に依存しないよう、Firestoreの実値から計算し直して書き戻す。
+(function () {
+  if (typeof fbAuth === 'undefined' || typeof fbDb === 'undefined') return;
+  if (typeof calcChallengePeriodUpdates !== 'function') return;
+
+  var busy = false;
+
+  async function recalcOverall() {
+    var u = fbAuth.currentUser;
+    if (!u || u.isAnonymous || busy) return;
+    busy = true;
+    try {
+      var ref = fbDb.collection('rankings_overall').doc(u.uid);
+      var res = await Promise.all([
+        fbDb.collection('users').doc(u.uid).get(),
+        fbDb.collection('rankings_test').doc(u.uid).get(),
+        ref.get(),
+      ]);
+      var ud = res[0].data() || {}, td = res[1].data() || {}, ex = res[2].data();
+      // 総合ランキングに未登録の人はここでは作らない（通常の投稿経路に任せる）
+      if (!ex) return;
+      var total = (ud.totalBonusPoints || 0) + (ud.totalChallengePoints || 0) + (td.score || 0);
+      if (total <= 0 || total === (ex.score || 0)) return;
+      var upd = calcChallengePeriodUpdates(ex, total);
+      upd.score = total;
+      await ref.set(upd, { merge: true });
+    } catch (e) {
+      console.error('recalcOverall:', e);
+    } finally {
+      busy = false;
+    }
+  }
+
+  // 遊び終わった直後（チャレンジptの保存が終わってから）
+  if (typeof syncChallengePtsToFirestore === 'function') {
+    var _sync = syncChallengePtsToFirestore;
+    syncChallengePtsToFirestore = function () {
+      var r = _sync.apply(this, arguments);
+      Promise.resolve(r).then(recalcOverall).catch(function () {});
+      return r;
+    };
+  }
+
+  // 開いたとき（過去に取りこぼした分をここで解消する）。
+  // 本体が各ptを読み終えるのを待ちたいので少し置く。
+  fbAuth.onAuthStateChanged(function (u) {
+    if (!u || u.isAnonymous) return;
+    setTimeout(recalcOverall, 3000);
+  });
+})();
+</script>
 
 </body> </html>
