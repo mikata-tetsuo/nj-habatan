@@ -990,9 +990,17 @@
       // 総合ランキングに未登録の人はここでは作らない（通常の投稿経路に任せる）
       if (!ex) return;
       var total = (ud.totalBonusPoints || 0) + (ud.totalChallengePoints || 0) + (td.score || 0);
-      if (total <= 0 || total === (ex.score || 0)) return;
-      var upd = calcChallengePeriodUpdates(ex, total);
-      upd.score = total;
+      if (total <= 0) return;
+      // 塾生の★も揃える。塾生番号を登録した子は招待コードを通っていないことがあり、
+      // イベント（塾生番号で判定）では★が付くのに通常ランキング（isStudentで判定）では
+      // 付かない、という食い違いが起きていた。番号があれば塾生として扱う。
+      var isStu = ud.isStudent === true || !!ud.comiruNo;
+      var fixScore = total !== (ex.score || 0);
+      var fixStar  = isStu !== !!ex.isStudent;
+      if (!fixScore && !fixStar) return; // 直すところが無ければ書かない
+      var upd = fixScore ? calcChallengePeriodUpdates(ex, total) : {};
+      if (fixScore) upd.score = total;
+      if (fixStar)  upd.isStudent = isStu;
       await ref.set(upd, { merge: true });
     } catch (e) {
       console.error('recalcOverall:', e);
