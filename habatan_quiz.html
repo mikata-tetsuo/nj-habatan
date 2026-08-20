@@ -1040,7 +1040,11 @@
       // 名前が「名前はまだない」に化けていたら戻す。ログイン直後、ニックネームを読み終える前に
       // ランキング更新が走ると、その既定値で本人の名前を上書きしてしまうことがある。
       var fixName  = !!ud.nickname && (!ex.displayName || ex.displayName === '名前はまだない');
-      var fixScore = total !== (ex.score || 0);
+      // 総合ptは増える方向にしか直さない。
+      // 端末の進捗が失われると users 側の数字だけが減ることがあり、そのまま書き戻すと
+      // ランキングの記録まで巻き添えで下がってしまう（実際に上位者が転落した）。
+      // 取りこぼし（少なく出ている）を直すのが目的なので、下げないことを優先する。
+      var fixScore = total > (ex.score || 0);
       var fixStar  = isStu !== !!ex.isStudent;
       if (!fixScore && !fixStar && !fixName) return; // 直すところが無ければ書かない
       var upd = fixScore ? calcChallengePeriodUpdates(ex, total) : {};
@@ -1055,10 +1059,25 @@
     }
   }
 
-  // 遊び終わった直後（チャレンジptの保存が終わってから）
-  if (typeof syncChallengePtsToFirestore === 'function') {
+  // 遊び終わった直後（チャレンジptの保存が終わってから）。
+  // あわせて、端末側のポイントがクラウドの記録より少ないときは保存しない。
+  // クリアは取り消せないのでポイントが減ることは本来ありえず、少ないのは
+  // 「クラウドからの復元がまだ終わっていない」状態。そこで書き込むと本人の記録を
+  // 消してしまう（8/13に232ステージあった子が8/19に0まで落ちた）。
+  if (typeof syncChallengePtsToFirestore === 'function' && typeof chGetTotalScore === 'function') {
     var _sync = syncChallengePtsToFirestore;
-    syncChallengePtsToFirestore = function () {
+    syncChallengePtsToFirestore = async function () {
+      var u = fbAuth.currentUser;
+      if (!u) return;
+      try {
+        var doc = await fbDb.collection('users').doc(u.uid).get();
+        var remote = (doc.data() || {}).totalChallengePoints || 0;
+        var local = chGetTotalScore() || 0;
+        if (local < remote) { // 復元待ち。上書きせず、次の機会に任せる
+          console.warn('syncChPts: skip (local ' + local + ' < remote ' + remote + ')');
+          return;
+        }
+      } catch (e) { /* 確認できないときは従来どおり保存する */ }
       var r = _sync.apply(this, arguments);
       Promise.resolve(r).then(recalcOverall).catch(function () {});
       return r;
