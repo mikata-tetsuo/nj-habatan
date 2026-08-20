@@ -412,6 +412,12 @@
 .evt26-hero-tag{display:inline-block;background:rgba(255,255,255,.25);border-radius:12px;padding:2px 12px;font-size:.72rem;font-weight:800;letter-spacing:.05em;}
 .evt26-hero-title{font-size:1.32rem;font-weight:900;margin-top:6px;text-shadow:0 2px 6px rgba(0,0,0,.25);line-height:1.3;}
 .evt26-hero-prizes{margin-top:10px;background:rgba(255,255,255,.2);border-radius:10px;padding:9px 12px;font-size:.8rem;font-weight:800;text-align:center;}
+/* 残り時間はバナーで一番目立たせる（数字だけさらに大きく） */
+.evt26-countdown{margin-top:8px;display:flex;flex-direction:column;align-items:center;gap:1px;}
+.evt26-countdown .evt26-cd-lead{font-size:.72rem;font-weight:700;opacity:.9;letter-spacing:.04em;}
+.evt26-countdown .evt26-cd-main{font-size:1.15rem;font-weight:900;line-height:1.15;text-shadow:0 2px 6px rgba(0,0,0,.25);}
+.evt26-countdown .evt26-cd-num{font-size:1.85rem;font-weight:900;margin:0 1px;}
+.evt26-countdown .evt26-cd-hurry{color:#FFE066;}
 .evt26-hero-btn{margin-top:10px;background:#fff;color:#7c3aed;border-radius:11px;padding:10px;text-align:center;font-weight:900;font-size:.95rem;box-shadow:0 3px 8px rgba(0,0,0,.18);}
 .evt26-ovl{position:fixed;inset:0;z-index:9500;background:rgba(15,23,42,.55);display:flex;
   align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px 40px;}
@@ -492,6 +498,34 @@
   }
 
   // ---- ホームのイベントバナー ----
+  // 終了までのカウントダウン。残りが実感できるよう、1日を切ったら分まで見せる。
+  // 締切間際は1分ごと、まだ日があるうちは1分放置しても表示が変わらないので同じ間隔で足りる。
+  function countdownHtml(){
+    var mode = evtMode();
+    if (mode === 'pre')  return '<span class="evt26-cd-lead">開幕まで</span><span class="evt26-cd-main">あと' + daysUntilStart() + '日</span>';
+    if (mode === 'end')  return '<span class="evt26-cd-main">終了しました</span>';
+    var ms = EVT_END - new Date();
+    if (ms <= 0) return '<span class="evt26-cd-main">終了しました</span>';
+    var totalMin = Math.floor(ms / 60000);
+    var days = Math.floor(totalMin / 1440);
+    var hours = Math.floor((totalMin % 1440) / 60);
+    var mins = totalMin % 60;
+    var main = days > 0
+      ? '<span class="evt26-cd-num">' + days + '</span>日 <span class="evt26-cd-num">' + hours + '</span>時間 <span class="evt26-cd-num">' + mins + '</span>分'
+      : '<span class="evt26-cd-num">' + hours + '</span>時間 <span class="evt26-cd-num">' + mins + '</span>分';
+    return '<span class="evt26-cd-lead">⏳ 終了まで</span><span class="evt26-cd-main' + (days === 0 ? ' evt26-cd-hurry' : '') + '">' + main + '</span>';
+  }
+
+  function startCountdown(el){
+    if (!el) return;
+    var tick = function(){
+      if (!document.body.contains(el)) { clearInterval(t); return; }
+      el.innerHTML = countdownHtml();
+    };
+    tick();
+    var t = setInterval(tick, 30000);
+  }
+
   function injectBanner(){
     if (document.getElementById('evt26Banner')) return;
     var ticker = document.getElementById('newsTicker');
@@ -505,12 +539,11 @@
     d.className = 'evt26-banner evt26-hero';
     var tag = mode === 'pre' ? '⏰ 7/20（月）開幕' : mode === 'active' ? '🔥 SUMMER EVENT 開催中' : '🏁 イベント終了';
     var btn = mode === 'pre' ? '参加準備をする' : mode === 'active' ? '🏆 ランキングを見る' : '🏆 結果を見る';
-    var left = Math.max(0, Math.ceil((EVT_END - new Date()) / 86400000));
     d.innerHTML =
       '<div style="text-align:center;">' +
       '<span class="evt26-hero-tag">' + tag + '</span>' +
       '<div class="evt26-hero-title">⌨️ サマー・タイピング<br>チャレンジ</div>' +
-      '<div class="evt26-b-sub" style="margin-top:3px;">7/20〜8/23｜はばトレ×速トレ 合同ランキング' + (mode === 'active' ? '｜⏳ 残り' + left + '日' : '') + '</div>' +
+      '<div class="evt26-countdown" id="evt26Countdown"></div>' +
       '</div>' +
       '<div class="evt26-hero-prizes"><div style="font-size:.98rem;">🥇 上位3名 <b>Bluetoothキーボード</b></div>' +
       '<div style="margin-top:2px;">🥤 4〜6位 コカチケ3枚 ／ 7〜10位 コカチケ1枚</div></div>' +
@@ -522,6 +555,8 @@
     } else {
       ticker.parentNode.insertBefore(d, ticker.nextSibling);
     }
+    // 画面に入れてから動かす（DOMに無い状態で走らせると初回で止まる）
+    startCountdown(d.querySelector('#evt26Countdown'));
   }
 
   // ---- チャレンジ画面のタイピングボタンを光らせる ----
