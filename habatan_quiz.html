@@ -673,6 +673,13 @@
   async function saveComiru(){
     var inp = document.getElementById('evt26NumInput');
     if (!inp || !fbUser || !fbDb) return;
+    // 匿名のまま登録させない。匿名アカウントは開くたびに別物になるため、
+    // 同じ塾生番号が複数のアカウントに散り、ポイントが合算されないまま
+    // ランキングに反映されなくなる（実際に1人で8アカウントに分裂した）。
+    if (fbUser.isAnonymous) {
+      alert('塾生番号の登録にはログインが必要です。\nホームの「Googleでログイン」から入り直してね。');
+      return;
+    }
     var v = String(inp.value || '').trim()
       .replace(/[０-９]/g, function(c){ return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); })
       .replace(/[^0-9]/g, '');
@@ -1030,12 +1037,16 @@
       // イベント（塾生番号で判定）では★が付くのに通常ランキング（isStudentで判定）では
       // 付かない、という食い違いが起きていた。番号があれば塾生として扱う。
       var isStu = ud.isStudent === true || !!ud.comiruNo;
+      // 名前が「名前はまだない」に化けていたら戻す。ログイン直後、ニックネームを読み終える前に
+      // ランキング更新が走ると、その既定値で本人の名前を上書きしてしまうことがある。
+      var fixName  = !!ud.nickname && (!ex.displayName || ex.displayName === '名前はまだない');
       var fixScore = total !== (ex.score || 0);
       var fixStar  = isStu !== !!ex.isStudent;
-      if (!fixScore && !fixStar) return; // 直すところが無ければ書かない
+      if (!fixScore && !fixStar && !fixName) return; // 直すところが無ければ書かない
       var upd = fixScore ? calcChallengePeriodUpdates(ex, total) : {};
       if (fixScore) upd.score = total;
       if (fixStar)  upd.isStudent = isStu;
+      if (fixName)  upd.displayName = ud.nickname;
       await ref.set(upd, { merge: true });
     } catch (e) {
       console.error('recalcOverall:', e);
